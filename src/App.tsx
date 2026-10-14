@@ -383,11 +383,17 @@ export default function App() {
         }
 
         // 5. Sync jobs list in real-time only if changed
-        if (bootstrap.jobs && Array.isArray(bootstrap.jobs)) {
+        if (bootstrap.jobs && Array.isArray(bootstrap.jobs) && bootstrap.jobs.length > 0) {
           const cleanJobs = bootstrap.jobs.filter((j: any) =>
             !['job-1', 'job-2', 'job-3', 'job-demo-1', 'job-demo-2'].includes(j.id)
           );
           setJobs(prev => {
+            // Protection: Jangan pernah menimpa data Google Sheet dengan cache server yang lebih sedikit atau kadaluarsa
+            if (settings.isGoogleSheetConnected || settings.googleAppsScriptUrl?.trim() || isDataLoadedFromSheetsRef.current) {
+              if (cleanJobs.length < prev.length) {
+                return prev;
+              }
+            }
             if (isDataDifferent(cleanJobs, prev)) {
               return cleanJobs;
             }
@@ -396,13 +402,18 @@ export default function App() {
         }
 
         // 6. Sync planning tasks only if changed
-        if (bootstrap.planningTasks && Array.isArray(bootstrap.planningTasks)) {
+        if (bootstrap.planningTasks && Array.isArray(bootstrap.planningTasks) && bootstrap.planningTasks.length > 0) {
           const cleanPlans = bootstrap.planningTasks.filter((p: any) =>
             !['plan-1', 'plan-2', 'plan-3', 'plan-demo-1', 'plan-demo-2'].includes(p.id) &&
             !p.detailPekerjaan?.includes('Hendra') &&
             !p.detailPekerjaan?.includes('Klender')
           );
           setPlanningTasks(prev => {
+            if (settings.isGoogleSheetConnected || settings.googleAppsScriptUrl?.trim() || isDataLoadedFromSheetsRef.current) {
+              if (cleanPlans.length < prev.length) {
+                return prev;
+              }
+            }
             if (isDataDifferent(cleanPlans, prev)) {
               return cleanPlans;
             }

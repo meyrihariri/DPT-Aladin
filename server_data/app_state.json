@@ -1,7 +1,8 @@
 {
   "settings": {
-    "namaPerusahaan": "DPT AlaDin",
-    "alamatPerusahaan": "Jl. Utama RT/RW Net No. 88, Jakarta East",
+    "namaPerusahaan": "DPT-AlaDin",
+    "alamatPerusahaan": "Jl. Raya Merdeka No. 1945 Indonesia Raya",
+    "logoUrl": "https://lh3.googleusercontent.com/d/15UkXvneSLPZbr3JxQQn0j6Qwy50uoRBz",
     "adminUsername": "admin",
     "adminPassword": "Admin143",
     "jamMasukDefinisikan": "08:00",
@@ -13,7 +14,7 @@
       "Jumat"
     ],
     "tanggalLiburKhusus": [
-      "2026-10-14"
+      "2026-10-07"
     ],
     "jumlahCutiMaksimalPerBulan": 2,
     "totalCutiPerTahun": 12,
@@ -22,9 +23,12 @@
     "waApiUrl": "https://api.fonnte.com/send",
     "autoNotifyTechnicianOnPlanning": true,
     "notifyViaBrowserPush": true,
-    "notifyViaWhatsApp": true
+    "notifyViaWhatsApp": true,
+    "googleSheetUrl": "",
+    "googleAppsScriptUrl": "https://script.google.com/macros/s/AKfycbyVyW9TxnWgCAQLS-sehGPay574Vnne2Fhn8t-mKqTX3PlvBwpS8kEbLzFF31dSaUj5/exec",
+    "isGoogleSheetConnected": true
   },
-  "lastUpdated": "2026-10-14T05:23:39.072Z",
+  "lastUpdated": "2026-10-14T05:34:28.882Z",
   "servers": [
     {
       "id": "srv-1788698535178",
@@ -605,42 +609,268 @@
   ],
   "jobs": [
     {
-      "id": "job-1791796801606",
-      "tanggal": "2026-10-12",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1791590828141"
+      "id": "job-1791943863675",
+      "tanggal": "2026-10-14",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "Ifanur Rohman"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Amar"
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
+      "jenisPekerjaanId": "jp-1788736746767",
+      "jenisPekerjaanNama": "Pemeliharaan Jaringan",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
+      "jumlahTitik": 0,
+      "panjangKabelMeter": 296,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 138400,
+      "honorPerTeknisi": 69200,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1imvyHjz21K6TAoYz6RQ8ZRKwyIdRd2w7&export=view",
+        "https://drive.usercontent.google.com/download?id=1wpd-7F8QtmsSJtw-XN13pS_en8A0cttp&export=view"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1791590828141": "Inventaris"
-      },
-      "jenisPekerjaanId": "jp-1788736039453",
-      "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "Instalasi ODC/ODP",
-      "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735730659",
-      "wilayahIds": [
-        "wil-1788735730659",
-        "wil-1788698580605"
+      "catatan": "Pelepasan kabel bekas htb dari rumah nalam kerumah Ghafur ponjenan timur"
+    },
+    {
+      "id": "job-1791943410518",
+      "tanggal": "2026-10-14",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "Ifanur Rohman"
       ],
-      "wilayahNamas": [
-        "Waru Barat",
-        "Dsn. Tengah"
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
+      "jenisPekerjaanId": "jp-1788736746767",
+      "jenisPekerjaanNama": "Pemeliharaan Jaringan",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
+      "jumlahTitik": 0,
+      "panjangKabelMeter": 192,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 96800,
+      "honorPerTeknisi": 48400,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1M6lQjKhFLE6_4yjgJGKNpFJiN470kRzq&export=view",
+        "https://drive.usercontent.google.com/download?id=16MhdcSGOHS_Ug7w3wzPcAXDRtR55_48I&export=view"
       ],
-      "totalTransportWilayah": 5000,
-      "transport": 5000,
+      "catatan": "Penurunan kabel bekas htb dari rumah mideh ke rumah makan ponjenan timur"
+    },
+    {
+      "id": "job-1791870285134",
+      "tanggal": "2026-10-13",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "Ifanur Rohman"
+      ],
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
+      "jenisPekerjaanId": "jp-1788736746767",
+      "jenisPekerjaanNama": "Pemeliharaan Jaringan",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "wilayahNama": "Perreng Sokon",
+      "biayaTransportWilayah": 4000,
+      "jumlahTitik": 0,
+      "panjangKabelMeter": 703,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 301200,
+      "honorPerTeknisi": 150600,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1i-1G1cGLAQEKmVDXJBA13DR_T3IgXDUy&export=view",
+        "https://drive.usercontent.google.com/download?id=1xPe5A_ZOV8ld3cgzIvAD2YqYEbeT26Fa&export=view"
+      ],
+      "catatan": "Pelepasan kabel pelanggan atas nama Ra toyyib sokon"
+    },
+    {
+      "id": "job-1791861840824",
+      "tanggal": "2026-10-13",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "-"
+      ],
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris)",
+      "jenisPekerjaanId": "jp-1788736746767",
+      "jenisPekerjaanNama": "Pemeliharaan Jaringan",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
+      "jumlahTitik": 0,
+      "panjangKabelMeter": 58,
+      "adaLembur": true,
+      "menitLembur": 120,
+      "lemburApproved": false,
+      "lemburApprovedBy": "Admin",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 63200,
+      "honorPerTeknisi": 63200,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1KHpVPN5QjDXWUxORB1YVIW5Qz93oE_WZ&export=view",
+        "https://drive.usercontent.google.com/download?id=1uFTnIvhaplIRvByPAr3IJW7WFMXZ4kkM&export=view"
+      ],
+      "catatan": "Ganti kabel pelanggan atas nama mideh"
+    },
+    {
+      "id": "job-1791859061116",
+      "tanggal": "2026-10-13",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "Ifanur Rohman"
+      ],
+      "kendaraanTeknisi": "Moh. Maulidi (Pribadi); Ifanur Rohman (Inventaris)",
+      "jenisPekerjaanId": "jp-1788736487687",
+      "jenisPekerjaanNama": "Trouble/Maintenance",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
+      "serverId": "srv-1789988639345",
+      "serverNama": "AlviNet",
+      "wilayahNama": "Mor Gunung",
+      "biayaTransportWilayah": 7000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 50000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 50000,
+      "honorPerTeknisi": 25000,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1MPOigZjx_PWr3zffWVpjLztsQy-FSP67&export=view",
+        "https://drive.usercontent.google.com/download?id=1_LcDPwf4FzflhUVR10saHslSGNvBs3ED&export=view"
+      ],
+      "catatan": "Spilicing kabel patcore di mor gunong"
+    },
+    {
+      "id": "job-1791858669246",
+      "tanggal": "2026-10-13",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "Ifanur Rohman"
+      ],
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
+      "jenisPekerjaanId": "jp-1788772392649",
+      "jenisPekerjaanNama": "Pemeliharaan Jaringan",
+      "subPekerjaan": "Splicing Kabel Feeder",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Daya",
+      "biayaTransportWilayah": 4000,
+      "jumlahTitik": 3,
+      "panjangKabelMeter": 0,
+      "adaLembur": true,
+      "menitLembur": 120,
+      "lemburApproved": false,
+      "lemburApprovedBy": "Admin",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 191000,
+      "honorPerTeknisi": 95500,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1GEhMm3ELPJNAho-dCKK5P24C_T8uVhWK&export=view",
+        "https://drive.usercontent.google.com/download?id=1h4H1654KuF0zWzuUtcv-LiqBSwhGDRl1&export=view"
+      ],
+      "catatan": "Spilicing kabel utama di tagangser daya"
+    },
+    {
+      "id": "job-1791857856431",
+      "tanggal": "2026-10-13",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "Ifanur Rohman"
+      ],
+      "kendaraanTeknisi": "Moh. Maulidi (Pribadi); Ifanur Rohman (Inventaris)",
+      "jenisPekerjaanId": "jp-1788736487687",
+      "jenisPekerjaanNama": "Trouble/Maintenance",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
+      "serverId": "srv-1789988639345",
+      "serverNama": "AlviNet",
+      "wilayahNama": "Mor Gunung",
+      "biayaTransportWilayah": 7000,
+      "jumlahTitik": 2,
+      "panjangKabelMeter": 0,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 50000,
+      "honorPerTeknisi": 25000,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1u7Y60_1zeNhbBrRz_1g6GO9vzXSw0ijX&export=view",
+        "https://drive.usercontent.google.com/download?id=1TGLG-A9DCLU7bJLyBJwD5ttcwLSRDVZz&export=view"
+      ],
+      "catatan": "Spilicing kabel patcore di odp atas nama halis dan sattina morgunong"
+    },
+    {
+      "id": "job-1791843267423",
+      "tanggal": "2026-10-12",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Amar"
+      ],
+      "kendaraanTeknisi": "Ribut (Pribadi); Amar (Inventaris)",
+      "jenisPekerjaanId": "jp-1788736704408",
+      "jenisPekerjaanNama": "Pemeliharaan Jaringan",
+      "subPekerjaan": "Pengecekan Redaman ODP/ODC",
+      "serverId": "srv-1788695298813",
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Kappuwen",
+      "biayaTransportWilayah": 3000,
+      "jumlahTitik": 2,
+      "panjangKabelMeter": 0,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 20000,
+      "honorPerTeknisi": 10000,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1UZpa4-EWBOJrIoaIMsaba_Bl_EvHfAnn&export=view",
+        "https://drive.usercontent.google.com/download?id=1ZnHquEbrJzar4k2HNTnDq2WouJA8jYE3&export=view"
+      ],
+      "catatan": "Pengecekan redaman ODP timur Topek dan Fitriyah Kappuwen"
+    },
+    {
+      "id": "job-1791796801606",
+      "tanggal": "2026-10-12",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Amar"
+      ],
+      "kendaraanTeknisi": "Ribut (Pribadi); Amar (Inventaris)",
+      "jenisPekerjaanId": "jp-1788736039453",
+      "jenisPekerjaanNama": "Instalasi",
+      "subPekerjaan": "Instalasi ODC/ODP",
+      "serverId": "srv-1788695298813",
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Waru Barat, Dsn. Tengah",
+      "biayaTransportWilayah": 5000,
+      "jumlahTitik": 2,
+      "panjangKabelMeter": 0,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 50000,
       "honorPerTeknisi": 25000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1GP1q-w3mrU5B8OTHeJ2iINOgW111cWUF&export=view",
@@ -651,40 +881,26 @@
     {
       "id": "job-1791796413449",
       "tanggal": "2026-10-12",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1791590828141"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Amar"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1791590828141": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Amar (Inventaris)",
       "jenisPekerjaanId": "jp-1788735939199",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "PSB Pelanggan",
+      "subPekerjaan": "PSB Pelanggan",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735730659",
-      "wilayahIds": [
-        "wil-1788735730659",
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Waru Barat",
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 5000,
-      "transport": 5000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Waru Barat, Dsn. Tengah",
+      "biayaTransportWilayah": 5000,
       "jumlahTitik": 3,
       "panjangKabelMeter": 275,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 202500,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 202500,
       "honorPerTeknisi": 101250,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1OfnphHkwuh5I0dk4DrHzXzM9xnlpUIrT&export=view",
@@ -695,38 +911,26 @@
     {
       "id": "job-1791796024523",
       "tanggal": "2026-10-12",
-      "teknisiIds": [
-        "emp-1788737577045",
-        "emp-1788737513190"
-      ],
-      "teknisiNamas": [
-        "Ifanur Rohman",
+      "teknisiNama": "Ifanur Rohman",
+      "teknisiPendukung": [
         "Moh. Maulidi"
       ],
-      "teknisiVehicles": {
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ifanur Rohman (Inventaris); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1791078534297",
       "jenisPekerjaanNama": "Distribusi Jaringan",
-      "subPekerjaanNama": "Pindah Jalur / Lepas Kabel Feeder",
+      "subPekerjaan": "Pindah Jalur / Lepas Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735825470",
-      "wilayahIds": [
-        "wil-1788735825470"
-      ],
-      "wilayahNamas": [
-        "Perreng Sokon"
-      ],
-      "totalTransportWilayah": 4000,
-      "transport": 4000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Perreng Sokon",
+      "biayaTransportWilayah": 4000,
       "jumlahTitik": 0,
       "panjangKabelMeter": 115,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 77500,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 77500,
       "honorPerTeknisi": 38750,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1xTPSeidu5uyd46BhFA2UOndajd8XKIfL&export=view",
@@ -737,38 +941,26 @@
     {
       "id": "job-1791794889740",
       "tanggal": "2026-10-12",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1791078534297",
       "jenisPekerjaanNama": "Distribusi Jaringan",
-      "subPekerjaanNama": "Pindah Jalur / Lepas Kabel Feeder",
+      "subPekerjaan": "Pindah Jalur / Lepas Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 0,
       "panjangKabelMeter": 108,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 74000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 74000,
       "honorPerTeknisi": 37000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1VUZoQFRhkg4FUm74fDAN4emudt1Bim3b&export=view",
@@ -779,35 +971,26 @@
     {
       "id": "job-1791712125657",
       "tanggal": "2026-10-11",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736425029",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Ganti Router/ONT",
+      "subPekerjaan": "Ganti Router/ONT",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735730659",
-      "wilayahIds": [
-        "wil-1788735730659"
-      ],
-      "wilayahNamas": [
-        "Waru Barat"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Waru Barat",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 10000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 10000,
       "honorPerTeknisi": 10000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1BO2zNlj7_mHDZpzTpHJmQPe24BibcDXA&export=view",
@@ -818,38 +1001,26 @@
     {
       "id": "job-1791711636069",
       "tanggal": "2026-10-11",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1791590828141"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Amar"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1791590828141": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Amar (Inventaris)",
       "jenisPekerjaanId": "jp-1788772392649",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "subPekerjaan": "Splicing Kabel Feeder",
       "serverId": "srv-1789988639345",
-      "namaServer": "AlviNet",
-      "wilayahId": "wil-1789988768310",
-      "wilayahIds": [
-        "wil-1789988768310"
-      ],
-      "wilayahNamas": [
-        "Kembang Kanti"
-      ],
-      "totalTransportWilayah": 5000,
-      "transport": 5000,
+      "serverNama": "AlviNet",
+      "wilayahNama": "Kembang Kanti",
+      "biayaTransportWilayah": 5000,
       "jumlahTitik": 10,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 270000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 270000,
       "honorPerTeknisi": 135000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=10RW-Z4-ebNyh-tFvy6_l7ttdDuMXrzXR&export=view",
@@ -860,38 +1031,26 @@
     {
       "id": "job-1791711397472",
       "tanggal": "2026-10-11",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1791590828141"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Amar"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1791590828141": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Amar (Inventaris)",
       "jenisPekerjaanId": "jp-1788736550408",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Perbaikan ODP",
+      "subPekerjaan": "Perbaikan ODP",
       "serverId": "srv-1789988639345",
-      "namaServer": "AlviNet",
-      "wilayahId": "wil-1789988768310",
-      "wilayahIds": [
-        "wil-1789988768310"
-      ],
-      "wilayahNamas": [
-        "Kembang Kanti"
-      ],
-      "totalTransportWilayah": 5000,
-      "transport": 5000,
+      "serverNama": "AlviNet",
+      "wilayahNama": "Kembang Kanti",
+      "biayaTransportWilayah": 5000,
       "jumlahTitik": 5,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 165000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 165000,
       "honorPerTeknisi": 82500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1VKIt0rpRy-ylqrtqIs5XErJe8aBhuh3o&export=view",
@@ -902,37 +1061,26 @@
     {
       "id": "job-1791440806426",
       "tanggal": "2026-10-08",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736425029",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Ganti Router/ONT",
+      "subPekerjaan": "Ganti Router/ONT",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735730659",
-      "wilayahIds": [
-        "wil-1788735730659",
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Waru Barat",
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 5000,
-      "transport": 5000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Waru Barat, Dsn. Tengah",
+      "biayaTransportWilayah": 5000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 15000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 15000,
       "honorPerTeknisi": 15000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1M69Tn9sB_EBFgAtbBY6hOvs3vGQY7DWq&export=view",
@@ -945,40 +1093,26 @@
     {
       "id": "job-1791354837232",
       "tanggal": "2026-10-07",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 3,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 60,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Sistem (Otomatis Hari Libur)",
       "lemburApprovedAt": "2026-10-07T17:00:00.000Z",
-      "estimasiTotalHonor": 104960,
+      "estimasiHonor": 104960,
       "honorPerTeknisi": 52480,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1_RSwOXJAbp6hpcCyMwka4zSjGfGbM8T6&export=view",
@@ -989,40 +1123,26 @@
     {
       "id": "job-1791354744568",
       "tanggal": "2026-10-07",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736655113",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Migrasi HTB",
+      "subPekerjaan": "Migrasi HTB",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 119,
       "adaLembur": true,
       "menitLembur": 60,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Sistem (Otomatis Hari Libur)",
       "lemburApprovedAt": "2026-10-07T17:00:00.000Z",
-      "estimasiTotalHonor": 133600,
+      "estimasiHonor": 133600,
       "honorPerTeknisi": 66800,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=18WQ5gT7g2-s5N2T3ptSsI9uQx_k4Y2DL&export=view",
@@ -1035,41 +1155,26 @@
     {
       "id": "job-1791078757337",
       "tanggal": "2026-10-03",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737718306",
-        "emp-1788737753097"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Andre Ariansyah, Moh. Abdurrohman"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Andre Ariansyah",
-        "Moh. Abdurrohman"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737718306": "Pribadi",
-        "emp-1788737753097": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Andre Ariansyah (Pribadi); Moh. Abdurrohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788772392649",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "subPekerjaan": "Splicing Kabel Feeder",
       "serverId": "srv-1789988639345",
-      "namaServer": "AlviNet",
-      "wilayahId": "wil-1789988787668",
-      "wilayahIds": [
-        "wil-1789988787668"
-      ],
-      "wilayahNamas": [
-        "Mor Gunung"
-      ],
-      "totalTransportWilayah": 3500,
-      "transport": 3500,
+      "serverNama": "AlviNet",
+      "wilayahNama": "Mor Gunung",
+      "biayaTransportWilayah": 3500,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 85000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 85000,
       "honorPerTeknisi": 60000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1oaABx4cSKvOx9TQ5ERa_e_QTXC-9IJUc&export=view",
@@ -1080,41 +1185,26 @@
     {
       "id": "job-1791078658931",
       "tanggal": "2026-10-03",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737718306",
-        "emp-1788737753097"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Andre Ariansyah, Moh. Abdurrohman"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Andre Ariansyah",
-        "Moh. Abdurrohman"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737718306": "Pribadi",
-        "emp-1788737753097": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Andre Ariansyah (Pribadi); Moh. Abdurrohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736817596",
       "jenisPekerjaanNama": "Distribusi Jaringan",
-      "subPekerjaanNama": "Tarik Kabel Feeder",
+      "subPekerjaan": "Tarik Kabel Feeder",
       "serverId": "srv-1789988639345",
-      "namaServer": "AlviNet",
-      "wilayahId": "wil-1789988787668",
-      "wilayahIds": [
-        "wil-1789988787668"
-      ],
-      "wilayahNamas": [
-        "Mor Gunung"
-      ],
-      "totalTransportWilayah": 3500,
-      "transport": 3500,
+      "serverNama": "AlviNet",
+      "wilayahNama": "Mor Gunung",
+      "biayaTransportWilayah": 3500,
       "jumlahTitik": 1,
       "panjangKabelMeter": 103,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 112700,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 112700,
       "honorPerTeknisi": 81800,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1uxbZTA2Bjx0TRzw30pKPlNSXZDBQB2T3&export=view",
@@ -1125,45 +1215,26 @@
     {
       "id": "job-1790910227070",
       "tanggal": "2026-10-02",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045",
-        "emp-1788736945517"
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Ribut"
       ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
-        "Ifanur Rohman",
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris",
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris); Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736746767",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah Jalur/Pelepasan Kabel",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1791078186775",
-      "wilayahIds": [
-        "wil-1791078186775",
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Sungai Teteh",
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 4500,
-      "transport": 4500,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Sungai Teteh, Dsn. Tengah",
+      "biayaTransportWilayah": 4500,
       "jumlahTitik": 0,
       "panjangKabelMeter": 200,
       "adaLembur": true,
       "menitLembur": 120,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Sistem (Otomatis Hari Libur)",
       "lemburApprovedAt": "2026-10-02T03:04:04.059Z",
-      "estimasiTotalHonor": 200001,
+      "estimasiHonor": 200001,
       "honorPerTeknisi": 66667,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=14R0VnsA3M4NCyNsB0Emjj-cZkYLoXjya&export=view",
@@ -1176,37 +1247,26 @@
     {
       "id": "job-1790909188966",
       "tanggal": "2026-09-21",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735703828",
-      "wilayahIds": [
-        "wil-1788735703828"
-      ],
-      "wilayahNamas": [
-        "Dsn. Kappuwen"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Kappuwen",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 0,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 30,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Administrator",
       "lemburApprovedAt": "2026-10-02T02:46:28.966Z",
-      "estimasiTotalHonor": 19990,
+      "estimasiHonor": 19990,
       "honorPerTeknisi": 19990,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=10PJAPzgBwJl5eXOwIXhvit3ULeyYqlBM&export=view",
@@ -1217,38 +1277,26 @@
     {
       "id": "job-1790830837702",
       "tanggal": "2026-10-01",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736817596",
       "jenisPekerjaanNama": "Distribusi Jaringan",
-      "subPekerjaanNama": "Tarik Kabel Feeder",
+      "subPekerjaan": "Tarik Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 120,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 112000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 112000,
       "honorPerTeknisi": 56000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1a4v8wVBnKpnj-fYUp_bv_5TCSfw98a-p&export=view",
@@ -1259,38 +1307,26 @@
     {
       "id": "job-1790830711535",
       "tanggal": "2026-10-01",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1yqCBJbFG0h2hL4ll5MhDl8tjbTcaOPC1&export=view",
@@ -1301,38 +1337,26 @@
     {
       "id": "job-1790753168915",
       "tanggal": "2026-09-30",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736039453",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "Instalasi ODC/ODP",
+      "subPekerjaan": "Instalasi ODC/ODP",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1zA1U3f_HxGjJSIqNjCwAw70ZvYW3tkt9&export=view",
@@ -1343,38 +1367,26 @@
     {
       "id": "job-1790753007950",
       "tanggal": "2026-09-30",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736817596",
       "jenisPekerjaanNama": "Distribusi Jaringan",
-      "subPekerjaanNama": "Tarik Kabel Feeder",
+      "subPekerjaan": "Tarik Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 95,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 97000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 97000,
       "honorPerTeknisi": 48500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1Y6SONOj_dNNm_bbC0ahi-COM737UbHKq&export=view",
@@ -1385,38 +1397,26 @@
     {
       "id": "job-1790737874604",
       "tanggal": "2026-09-30",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788772392649",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "subPekerjaan": "Splicing Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 70000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 70000,
       "honorPerTeknisi": 35000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1TspchOS8F8EI4RWLCXwUvA-brPy2qifP&export=view",
@@ -1429,37 +1429,26 @@
     {
       "id": "job-1790500050047",
       "tanggal": "2026-09-27",
-      "teknisiIds": [
-        "emp-1788737513190"
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736425029",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Ganti Router/ONT",
+      "subPekerjaan": "Ganti Router/ONT",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735850973",
-      "wilayahIds": [
-        "wil-1788735850973"
-      ],
-      "wilayahNamas": [
-        "Be Gunung"
-      ],
-      "totalTransportWilayah": 4000,
-      "transport": 4000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Be Gunung",
+      "biayaTransportWilayah": 4000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 60,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Sistem (Otomatis Hari Libur)",
       "lemburApprovedAt": "2026-09-27T17:00:00.000Z",
-      "estimasiTotalHonor": 25000,
+      "estimasiHonor": 25000,
       "honorPerTeknisi": 25000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1X8axyr9EHmbImN6eTrULuGv6fgpcejmm&export=view",
@@ -1470,42 +1459,26 @@
     {
       "id": "job-1790499947848",
       "tanggal": "2026-09-27",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735825470",
-      "wilayahIds": [
-        "wil-1788735825470",
-        "wil-1788735770166"
-      ],
-      "wilayahNamas": [
-        "Perreng Sokon",
-        "Tag. Daya"
-      ],
-      "totalTransportWilayah": 8000,
-      "transport": 8000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Perreng Sokon, Tag. Daya",
+      "biayaTransportWilayah": 8000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 35,
       "adaLembur": true,
       "menitLembur": 60,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Sistem (Otomatis Hari Libur)",
       "lemburApprovedAt": "2026-09-27T17:00:00.000Z",
-      "estimasiTotalHonor": 107460,
+      "estimasiHonor": 107460,
       "honorPerTeknisi": 53730,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1wVwGywtMNL110viC1l_rWVVKm-HUtMj9&export=view",
@@ -1518,37 +1491,26 @@
     {
       "id": "job-1790494402368",
       "tanggal": "2026-09-27",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Inventaris)",
       "jenisPekerjaanId": "jp-1788735939199",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "PSB Pelanggan",
+      "subPekerjaan": "PSB Pelanggan",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 100,
       "adaLembur": true,
       "menitLembur": 60,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Sistem (Otomatis Hari Libur)",
       "lemburApprovedAt": "2026-09-27T17:00:00.000Z",
-      "estimasiTotalHonor": 93000,
+      "estimasiHonor": 93000,
       "honorPerTeknisi": 93000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=19cGkp1cX35w-btlOajKhv3FkPq9xM-4P&export=view",
@@ -1559,38 +1521,26 @@
     {
       "id": "job-1790409000293",
       "tanggal": "2026-09-26",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736746767",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah Jalur/Pelepasan Kabel",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 20000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 20000,
       "honorPerTeknisi": 10000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=161015i8Cd76zjBV7aqOgHltDpSicujiK&export=view",
@@ -1601,38 +1551,26 @@
     {
       "id": "job-1790408804668",
       "tanggal": "2026-09-26",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736039453",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "Instalasi ODC/ODP",
+      "subPekerjaan": "Instalasi ODC/ODP",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1DdeyiW8Ts3PX-2Z9X9LPI0MlVXllzRx0&export=view",
@@ -1643,38 +1581,26 @@
     {
       "id": "job-1790408682772",
       "tanggal": "2026-09-26",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736817596",
       "jenisPekerjaanNama": "Distribusi Jaringan",
-      "subPekerjaanNama": "Tarik Kabel Feeder",
+      "subPekerjaan": "Tarik Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 179,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 147400,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 147400,
       "honorPerTeknisi": 73700,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=11wdtnk4C-41D2HHJKcXKkI404I48KN2A&export=view",
@@ -1685,37 +1611,26 @@
     {
       "id": "job-1790356186139",
       "tanggal": "2026-09-25",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788772392649",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "subPekerjaan": "Splicing Kabel Feeder",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735703828",
-      "wilayahIds": [
-        "wil-1788735703828"
-      ],
-      "wilayahNamas": [
-        "Dsn. Kappuwen"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Kappuwen",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 90,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Administrator",
       "lemburApprovedAt": "2026-09-25T17:09:46.139Z",
-      "estimasiTotalHonor": 71000,
+      "estimasiHonor": 71000,
       "honorPerTeknisi": 71000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1L4Pvg3up4rOM_T56IKO1a2K-7nTv4zAI&export=view",
@@ -1726,37 +1641,26 @@
     {
       "id": "job-1790299306916",
       "tanggal": "2026-09-24",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736425029",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Ganti Router/ONT",
+      "subPekerjaan": "Ganti Router/ONT",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735703828",
-      "wilayahIds": [
-        "wil-1788735703828"
-      ],
-      "wilayahNamas": [
-        "Dsn. Kappuwen"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Kappuwen",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 30,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Administrator",
       "lemburApprovedAt": "2026-09-25T01:21:46.916Z",
-      "estimasiTotalHonor": 22500,
+      "estimasiHonor": 22500,
       "honorPerTeknisi": 22500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1VHfRbElEGZ8poN5E2xNJB-DNer_a3fxB&export=view",
@@ -1767,38 +1671,26 @@
     {
       "id": "job-1790249374034",
       "tanggal": "2026-09-24",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788772392649",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "subPekerjaan": "Splicing Kabel Feeder",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 45000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 45000,
       "honorPerTeknisi": 22500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=10wFqM93IdhdOJ5qAtoWRsQz638iwHl-D&export=view",
@@ -1809,38 +1701,26 @@
     {
       "id": "job-1790249272109",
       "tanggal": "2026-09-24",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 7,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 38500,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 38500,
       "honorPerTeknisi": 19250,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=16YVUhMeAaYvek1eNuNU5vGDyQmSZmEje&export=view",
@@ -1851,38 +1731,26 @@
     {
       "id": "job-1790237631828",
       "tanggal": "2026-09-24",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788735939199",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "PSB Pelanggan",
+      "subPekerjaan": "PSB Pelanggan",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 145,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 107500,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 107500,
       "honorPerTeknisi": 53750,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1qtNgSyN3hb_2OfKujQ-rdIA9w47A8MB_&export=view",
@@ -1893,35 +1761,26 @@
     {
       "id": "job-1790237453043",
       "tanggal": "2026-09-24",
-      "teknisiIds": [
-        "emp-1788737513190"
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736746767",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah Jalur/Pelepasan Kabel",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735770166",
-      "wilayahIds": [
-        "wil-1788735770166"
-      ],
-      "wilayahNamas": [
-        "Tag. Daya"
-      ],
-      "totalTransportWilayah": 4000,
-      "transport": 4000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Daya",
+      "biayaTransportWilayah": 4000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 25,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 20000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 20000,
       "honorPerTeknisi": 20000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1kyOv8WTzQc9DzmCEGAQ8j6qj8PFmf0xt&export=view",
@@ -1932,35 +1791,26 @@
     {
       "id": "job-1790224104812",
       "tanggal": "2026-09-24",
-      "teknisiIds": [
-        "emp-1788737513190"
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736425029",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Ganti Router/ONT",
+      "subPekerjaan": "Ganti Router/ONT",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735825470",
-      "wilayahIds": [
-        "wil-1788735825470"
-      ],
-      "wilayahNamas": [
-        "Perreng Sokon"
-      ],
-      "totalTransportWilayah": 4000,
-      "transport": 4000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Perreng Sokon",
+      "biayaTransportWilayah": 4000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 15000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 15000,
       "honorPerTeknisi": 15000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1gAB8hgvvNnHOR3-wPME1AAL_6yo8W6LK&export=view",
@@ -1973,38 +1823,26 @@
     {
       "id": "job-1790157934503",
       "tanggal": "2026-09-23",
-      "teknisiIds": [
-        "emp-1788737577045",
-        "emp-1788737513190"
-      ],
-      "teknisiNamas": [
-        "Ifanur Rohman",
+      "teknisiNama": "Ifanur Rohman",
+      "teknisiPendukung": [
         "Moh. Maulidi"
       ],
-      "teknisiVehicles": {
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ifanur Rohman (Inventaris); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736704408",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pengecekan Redaman ODP/ODC",
+      "subPekerjaan": "Pengecekan Redaman ODP/ODC",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 15000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 15000,
       "honorPerTeknisi": 7500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1IQNGvpOjVoJmsqeE34U0fuclD_nzfj6X&export=view",
@@ -2015,38 +1853,26 @@
     {
       "id": "job-1790157847996",
       "tanggal": "2026-09-23",
-      "teknisiIds": [
-        "emp-1788737577045",
-        "emp-1788737513190"
-      ],
-      "teknisiNamas": [
-        "Ifanur Rohman",
+      "teknisiNama": "Ifanur Rohman",
+      "teknisiPendukung": [
         "Moh. Maulidi"
       ],
-      "teknisiVehicles": {
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ifanur Rohman (Inventaris); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735825470",
-      "wilayahIds": [
-        "wil-1788735825470"
-      ],
-      "wilayahNamas": [
-        "Perreng Sokon"
-      ],
-      "totalTransportWilayah": 4000,
-      "transport": 4000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Perreng Sokon",
+      "biayaTransportWilayah": 4000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1CH2ItudijCyEOIXtydmPy_EPD7FHkVWO&export=view",
@@ -2057,38 +1883,26 @@
     {
       "id": "job-1790157544218",
       "tanggal": "2026-09-23",
-      "teknisiIds": [
-        "emp-1788737577045",
-        "emp-1788737513190"
-      ],
-      "teknisiNamas": [
-        "Ifanur Rohman",
+      "teknisiNama": "Ifanur Rohman",
+      "teknisiPendukung": [
         "Moh. Maulidi"
       ],
-      "teknisiVehicles": {
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ifanur Rohman (Inventaris); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736746767",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah Jalur/Pelepasan Kabel",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 387,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 174800,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 174800,
       "honorPerTeknisi": 87400,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=&export=view",
@@ -2099,35 +1913,26 @@
     {
       "id": "job-1789990590026",
       "tanggal": "2026-09-21",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Inventaris)",
       "jenisPekerjaanId": "jp-1788772392649",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "subPekerjaan": "Splicing Kabel Feeder",
       "serverId": "srv-1789988639345",
-      "namaServer": "AlviNet",
-      "wilayahId": "wil-1789988768310",
-      "wilayahIds": [
-        "wil-1789988768310"
-      ],
-      "wilayahNamas": [
-        "Kembang Kanti"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlviNet",
+      "wilayahNama": "Kembang Kanti",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 35000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1xcnUEeEVfUdIF-zG2kEUilAkMycgDgAa&export=view",
@@ -2138,35 +1943,26 @@
     {
       "id": "job-1789990507013",
       "tanggal": "2026-09-21",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736880838",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah/Ganti ODP ODC",
+      "subPekerjaan": "Pindah/Ganti ODP ODC",
       "serverId": "srv-1789988639345",
-      "namaServer": "AlviNet",
-      "wilayahId": "wil-1789988787668",
-      "wilayahIds": [
-        "wil-1789988787668"
-      ],
-      "wilayahNamas": [
-        "Mor Gunung"
-      ],
-      "totalTransportWilayah": 3500,
-      "transport": 3500,
+      "serverNama": "AlviNet",
+      "wilayahNama": "Mor Gunung",
+      "biayaTransportWilayah": 3500,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 50000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 50000,
       "honorPerTeknisi": 50000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1GtkKRd9JlmgxhjJPONUvVilx5E48BoiW&export=view",
@@ -2177,37 +1973,26 @@
     {
       "id": "job-1789987327803",
       "tanggal": "2026-09-18",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736746767",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah Jalur/Pelepasan Kabel",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 30,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Administrator",
       "lemburApprovedAt": "2026-09-21T10:42:07.803Z",
-      "estimasiTotalHonor": 17500,
+      "estimasiHonor": 17500,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1R1Pjq8aeoH8EZ63ToFEd-j_Nk4QFh6Sv&export=view",
@@ -2218,40 +2003,26 @@
     {
       "id": "job-1789807528195",
       "tanggal": "2026-09-19",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788735939199",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "PSB Pelanggan",
+      "subPekerjaan": "PSB Pelanggan",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735825470",
-      "wilayahIds": [
-        "wil-1788735825470",
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Perreng Sokon",
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 6000,
-      "transport": 6000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Perreng Sokon, Tag. Laok",
+      "biayaTransportWilayah": 6000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 257,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 178500,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 178500,
       "honorPerTeknisi": 89250,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1MZvv_L0JwI0bjPv-PORckmLvax6YBH7c&export=view",
@@ -2264,38 +2035,26 @@
     {
       "id": "job-1789626769721",
       "tanggal": "2026-09-17",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788735939199",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "PSB Pelanggan",
+      "subPekerjaan": "PSB Pelanggan",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 168,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 119000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 119000,
       "honorPerTeknisi": 59500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1Rt9-5RsqjY9Ip-YM1prRZxcbsSkTtair&export=view",
@@ -2306,35 +2065,26 @@
     {
       "id": "job-1789545471202",
       "tanggal": "2026-09-16",
-      "teknisiIds": [
-        "emp-1788737513190"
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Pribadi"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Pribadi)",
       "jenisPekerjaanId": "jp-1788736425029",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Ganti Router/ONT",
+      "subPekerjaan": "Ganti Router/ONT",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 10000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 10000,
       "honorPerTeknisi": 10000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1y85SvW9wg6WfYY2y2OmbNKbdg7oXxe-q&export=view",
@@ -2345,41 +2095,26 @@
     {
       "id": "job-1789542370124",
       "tanggal": "2026-09-16",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045",
-        "emp-1788737513190"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Moh. Maulidi"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Ifanur Rohman",
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Pribadi",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Pribadi); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736880838",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah/Ganti ODP ODC",
+      "subPekerjaan": "Pindah/Ganti ODP ODC",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735703828",
-      "wilayahIds": [
-        "wil-1788735703828"
-      ],
-      "wilayahNamas": [
-        "Dsn. Kappuwen"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Kappuwen",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 50001,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 50001,
       "honorPerTeknisi": 16667,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1VZuZz4e33_mL2FZws682aAXB4-YH70Ho&export=view",
@@ -2390,38 +2125,26 @@
     {
       "id": "job-1789542129040",
       "tanggal": "2026-09-16",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735730659",
-      "wilayahIds": [
-        "wil-1788735730659"
-      ],
-      "wilayahNamas": [
-        "Waru Barat"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Waru Barat",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1hUszTOjq2GiuwbaNUzJeDTxcOZQ3lROx&export=view",
@@ -2432,41 +2155,26 @@
     {
       "id": "job-1789541741148",
       "tanggal": "2026-09-16",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045",
-        "emp-1788737513190"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Moh. Maulidi"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Ifanur Rohman",
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris); Moh. Maulidi (Pribadi)",
       "jenisPekerjaanId": "jp-1788735939199",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "PSB Pelanggan",
+      "subPekerjaan": "PSB Pelanggan",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735703828",
-      "wilayahIds": [
-        "wil-1788735703828"
-      ],
-      "wilayahNamas": [
-        "Dsn. Kappuwen"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Kappuwen",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 188,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 138999,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 138999,
       "honorPerTeknisi": 46333,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1hMYNkB2E0V9CZaY0vTUGy-SMWAci4h6H&export=view",
@@ -2477,35 +2185,26 @@
     {
       "id": "job-1789460685920",
       "tanggal": "2026-09-15",
-      "teknisiIds": [
-        "emp-1788737577045"
+      "teknisiNama": "Ifanur Rohman",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ifanur Rohman"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736425029",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Ganti Router/ONT",
+      "subPekerjaan": "Ganti Router/ONT",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735770166",
-      "wilayahIds": [
-        "wil-1788735770166"
-      ],
-      "wilayahNamas": [
-        "Tag. Daya"
-      ],
-      "totalTransportWilayah": 4000,
-      "transport": 4000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Daya",
+      "biayaTransportWilayah": 4000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 15000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 15000,
       "honorPerTeknisi": 15000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1R4JG9S7Lq2ZPLCZtY5io08fLhO71YHSB&export=view",
@@ -2516,35 +2215,26 @@
     {
       "id": "job-1789459951446",
       "tanggal": "2026-09-15",
-      "teknisiIds": [
-        "emp-1788737513190"
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Pribadi"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Pribadi)",
       "jenisPekerjaanId": "jp-1788736383285",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Internet PPPoE",
+      "subPekerjaan": "Internet PPPoE",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 15000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 15000,
       "honorPerTeknisi": 15000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1aQ--Z4NYCSv8Sx_kk1r5vaOQq30PK-D4&export=view",
@@ -2555,38 +2245,26 @@
     {
       "id": "job-1789459878464",
       "tanggal": "2026-09-15",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736746767",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah Jalur/Pelepasan Kabel",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735770166",
-      "wilayahIds": [
-        "wil-1788735770166"
-      ],
-      "wilayahNamas": [
-        "Tag. Daya"
-      ],
-      "totalTransportWilayah": 4000,
-      "transport": 4000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Daya",
+      "biayaTransportWilayah": 4000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 10,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 24000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 24000,
       "honorPerTeknisi": 12000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1fbIl5KWNshGuLJnnOWaDAml0smPOPyCq&export=view",
@@ -2597,40 +2275,26 @@
     {
       "id": "job-1789386538894",
       "tanggal": "2026-09-14",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735678549",
-      "wilayahIds": [
-        "wil-1788735678549"
-      ],
-      "wilayahNamas": [
-        "Dsn. Duko"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Duko",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 60,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Admin",
       "lemburApprovedAt": "2026-09-14T12:54:11.950Z",
-      "estimasiTotalHonor": 74960,
+      "estimasiHonor": 74960,
       "honorPerTeknisi": 37480,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1DBv7-Qn9RRIsr51JMUUn6vqrT06y5BnO&export=view",
@@ -2642,38 +2306,26 @@
     {
       "id": "job-1789375184160",
       "tanggal": "2026-09-14",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 50000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 50000,
       "honorPerTeknisi": 25000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1ZAq_NevnFZe0O7rtp90LBSs10CV6OiS_&export=view",
@@ -2686,38 +2338,26 @@
     {
       "id": "job-1789359466755",
       "tanggal": "2026-09-14",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788772392649",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "subPekerjaan": "Splicing Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 70000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 70000,
       "honorPerTeknisi": 35000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1F8JNRaSxmPlyy9BAOMQytf2HhHPP_5e-&export=view",
@@ -2730,37 +2370,26 @@
     {
       "id": "job-1789285136279",
       "tanggal": "2026-09-13",
-      "teknisiIds": [
-        "emp-1788737513190"
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 60,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Sistem (Otomatis Hari Libur)",
       "lemburApprovedAt": "2026-09-13T17:00:00.000Z",
-      "estimasiTotalHonor": 44980,
+      "estimasiHonor": 44980,
       "honorPerTeknisi": 44980,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1yUo_5_1aK2qXH38y9lfKGrXBxNBX4mPU&export=view",
@@ -2771,41 +2400,26 @@
     {
       "id": "job-1789213798887",
       "tanggal": "2026-09-12",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045",
-        "emp-1788737513190"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Moh. Maulidi"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Ifanur Rohman",
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735678549",
-      "wilayahIds": [
-        "wil-1788735678549"
-      ],
-      "wilayahNamas": [
-        "Dsn. Duko"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Duko",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 5,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 62499,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 62499,
       "honorPerTeknisi": 20833,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1uSOoGCXG2rbbD3AkpO5DPZlGV_rY35UR&export=view",
@@ -2816,38 +2430,26 @@
     {
       "id": "job-1789030306559",
       "tanggal": "2026-09-10",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736655113",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Migrasi HTB",
+      "subPekerjaan": "Migrasi HTB",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 25,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 45000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 45000,
       "honorPerTeknisi": 22500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1Ab2huC-9yv5ykoANuADwVRDhspSTWl97&export=view",
@@ -2858,38 +2460,26 @@
     {
       "id": "job-1789030065735",
       "tanggal": "2026-09-10",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736039453",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "Instalasi ODC/ODP",
+      "subPekerjaan": "Instalasi ODC/ODP",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1odFjDWc6lzBvT_ck7qh2mBMQF-7msQWH&export=view",
@@ -2900,38 +2490,26 @@
     {
       "id": "job-1789029928609",
       "tanggal": "2026-09-10",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736817596",
       "jenisPekerjaanNama": "Distribusi Jaringan",
-      "subPekerjaanNama": "Tarik Kabel Feeder",
+      "subPekerjaan": "Tarik Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 105,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 103000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 103000,
       "honorPerTeknisi": 51500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1rFpEO2DEl3jEp5mr0hqvuFc69rJ3NXjI&export=view",
@@ -2942,35 +2520,26 @@
     {
       "id": "job-1789017287228",
       "tanggal": "2026-09-10",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736425029",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Ganti Router/ONT",
+      "subPekerjaan": "Ganti Router/ONT",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 10000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 10000,
       "honorPerTeknisi": 10000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1wYh2egyIY1pDeBNE17FIJdII3FxwGVx0&export=view",
@@ -2981,40 +2550,26 @@
     {
       "id": "job-1789015269414",
       "tanggal": "2026-09-05",
-      "teknisiIds": [
-        "emp-1788737753097",
-        "emp-1788737718306"
-      ],
-      "teknisiNamas": [
-        "Moh. Abdurrohman",
+      "teknisiNama": "Moh. Abdurrohman",
+      "teknisiPendukung": [
         "Andre Ariansyah"
       ],
-      "teknisiVehicles": {
-        "emp-1788737753097": "Pribadi",
-        "emp-1788737718306": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Abdurrohman (Pribadi); Andre Ariansyah (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735678549",
-      "wilayahIds": [
-        "wil-1788735678549"
-      ],
-      "wilayahNamas": [
-        "Dsn. Duko"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Duko",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 0,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 100,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Administrator",
       "lemburApprovedAt": "2026-09-10T04:41:09.414Z",
-      "estimasiTotalHonor": 66600,
+      "estimasiHonor": 66600,
       "honorPerTeknisi": 33300,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=&export=view",
@@ -3025,40 +2580,26 @@
     {
       "id": "job-1789015143290",
       "tanggal": "2026-09-05",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735678549",
-      "wilayahIds": [
-        "wil-1788735678549"
-      ],
-      "wilayahNamas": [
-        "Dsn. Duko"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Duko",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 5,
       "adaLembur": true,
       "menitLembur": 100,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Administrator",
       "lemburApprovedAt": "2026-09-10T04:39:03.290Z",
-      "estimasiTotalHonor": 104100,
+      "estimasiHonor": 104100,
       "honorPerTeknisi": 52050,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1F-1Vkxvs2qUMSjxNO10CXMLqkat41wvs&export=view",
@@ -3069,38 +2610,26 @@
     {
       "id": "job-1789015044589",
       "tanggal": "2026-09-05",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737753097"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Moh. Abdurrohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737753097": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Moh. Abdurrohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788772392649",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "subPekerjaan": "Splicing Kabel Feeder",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735678549",
-      "wilayahIds": [
-        "wil-1788735678549"
-      ],
-      "wilayahNamas": [
-        "Dsn. Duko"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Duko",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 47500,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 47500,
       "honorPerTeknisi": 35000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1l7oDPy31nvcQ-yS3KptCnHYXjV-3uqsG&export=view",
@@ -3111,38 +2640,26 @@
     {
       "id": "job-1789014911714",
       "tanggal": "2026-09-05",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735678549",
-      "wilayahIds": [
-        "wil-1788735678549"
-      ],
-      "wilayahNamas": [
-        "Dsn. Duko"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Duko",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 4,
       "panjangKabelMeter": 10,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 85000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 85000,
       "honorPerTeknisi": 42500,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1T6JasiXUKUJhlzYr44Sfd6L94wSKAxMp&export=view",
@@ -3153,38 +2670,26 @@
     {
       "id": "job-1789014757367",
       "tanggal": "2026-09-05",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736880838",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah/Ganti ODP ODC",
+      "subPekerjaan": "Pindah/Ganti ODP ODC",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735678549",
-      "wilayahIds": [
-        "wil-1788735678549"
-      ],
-      "wilayahNamas": [
-        "Dsn. Duko"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Duko",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 40000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 40000,
       "honorPerTeknisi": 20000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1ybQGJiPHmkyzSC1zDWnEiT0bdEw9MS5V&export=view",
@@ -3195,35 +2700,26 @@
     {
       "id": "job-1788944530325",
       "tanggal": "2026-09-09",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735770166",
-      "wilayahIds": [
-        "wil-1788735770166"
-      ],
-      "wilayahNamas": [
-        "Tag. Daya"
-      ],
-      "totalTransportWilayah": 4000,
-      "transport": 4000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Daya",
+      "biayaTransportWilayah": 4000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 25000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 25000,
       "honorPerTeknisi": 25000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1qwsLWo5ctSHIHLG95rVsfz0TEPvSgvY3&export=view",
@@ -3234,40 +2730,26 @@
     {
       "id": "job-1788942936294",
       "tanggal": "2026-09-02",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737513190"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Moh. Maulidi"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Jalan Kaki",
-        "emp-1788737513190": "Jalan Kaki"
-      },
+      "kendaraanTeknisi": "Ribut (Jalan Kaki); Moh. Maulidi (Jalan Kaki)",
       "jenisPekerjaanId": "jp-1788736880838",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah/Ganti ODP ODC",
+      "subPekerjaan": "Pindah/Ganti ODP ODC",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 30,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Administrator",
       "lemburApprovedAt": "2026-09-09T08:35:36.294Z",
-      "estimasiTotalHonor": 61000,
+      "estimasiHonor": 61000,
       "honorPerTeknisi": 30500,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1-mrdvWrxXjeeLyws8t7EHlejxuGCtCXC",
@@ -3278,35 +2760,26 @@
     {
       "id": "job-1788941387558",
       "tanggal": "2026-09-09",
-      "teknisiIds": [
-        "emp-1788737513190"
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736425029",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Ganti Router/ONT",
+      "subPekerjaan": "Ganti Router/ONT",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 10000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 10000,
       "honorPerTeknisi": 10000,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1y09f2rRZoDek3ix2YGEMuzYsTIgc49Gi",
@@ -3317,38 +2790,26 @@
     {
       "id": "job-1788924714298",
       "tanggal": "2026-09-09",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735770166",
-      "wilayahIds": [
-        "wil-1788735770166"
-      ],
-      "wilayahNamas": [
-        "Tag. Daya"
-      ],
-      "totalTransportWilayah": 4000,
-      "transport": 4000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Daya",
+      "biayaTransportWilayah": 4000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1VBFJFvmmjqbpTQ5-WnERSORKa-FWSsoG",
@@ -3359,43 +2820,26 @@
     {
       "id": "job-1788866761170",
       "tanggal": "2026-09-06",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045",
-        "emp-1788737513190"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Moh. Maulidi"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Ifanur Rohman",
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Pribadi",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Pribadi); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788735939199",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "PSB Pelanggan",
+      "subPekerjaan": "PSB Pelanggan",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 161,
       "adaLembur": true,
       "menitLembur": 60,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Sistem (Otomatis Hari Libur)",
       "lemburApprovedAt": "2026-09-06T17:00:00.000Z",
-      "estimasiTotalHonor": 194499,
+      "estimasiHonor": 194499,
       "honorPerTeknisi": 64833,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1Z50lhSQax2HzI7EAlvR7tlpnJFtolBQW",
@@ -3406,37 +2850,26 @@
     {
       "id": "job-1788866668681",
       "tanggal": "2026-09-06",
-      "teknisiIds": [
-        "emp-1788736945517"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "-"
       ],
-      "teknisiNamas": [
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735703828",
-      "wilayahIds": [
-        "wil-1788735703828"
-      ],
-      "wilayahNamas": [
-        "Dsn. Kappuwen"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Kappuwen",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 60,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Sistem (Otomatis Hari Libur)",
       "lemburApprovedAt": "2026-09-06T17:00:00.000Z",
-      "estimasiTotalHonor": 44980,
+      "estimasiHonor": 44980,
       "honorPerTeknisi": 44980,
       "buktiFotoUrls": [
         "[Foto Upload Tersimpan]",
@@ -3447,38 +2880,26 @@
     {
       "id": "job-1788866538310",
       "tanggal": "2026-09-03",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736611374",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Perbaikan Redaman",
+      "subPekerjaan": "Perbaikan Redaman",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735678549",
-      "wilayahIds": [
-        "wil-1788735678549"
-      ],
-      "wilayahNamas": [
-        "Dsn. Duko"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Duko",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 25000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 25000,
       "honorPerTeknisi": 12500,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1na9-GZeDa6mCKezrfcnrSLv6g8olo0io",
@@ -3489,43 +2910,26 @@
     {
       "id": "job-1788866431506",
       "tanggal": "2026-09-03",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045",
-        "emp-1788736945517"
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Ribut"
       ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
-        "Ifanur Rohman",
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris",
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris); Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2500,
-      "transport": 2500,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2500,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 30,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Administrator",
       "lemburApprovedAt": "2026-09-08T11:20:31.506Z",
-      "estimasiTotalHonor": 74970,
+      "estimasiHonor": 74970,
       "honorPerTeknisi": 24990,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1jxtK1jPsISfH6gv8E1Q6CmhwU3YW95c6",
@@ -3536,43 +2940,26 @@
     {
       "id": "job-1788847687490",
       "tanggal": "2026-09-08",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045",
-        "emp-1788736945517"
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Ribut"
       ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
-        "Ifanur Rohman",
-        "Ribut"
-      ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Pribadi",
-        "emp-1788737577045": "Inventaris",
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Pribadi); Ifanur Rohman (Inventaris); Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736580204",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Perbaikan ODC",
+      "subPekerjaan": "Perbaikan ODC",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735770166",
-      "wilayahIds": [
-        "wil-1788735770166",
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Daya",
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 6000,
-      "transport": 6000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Daya, Tag. Laok",
+      "biayaTransportWilayah": 6000,
       "jumlahTitik": 3,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 150000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 150000,
       "honorPerTeknisi": 50000,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1CDdIz2wG8COwCc1qtSA9ExuEkD2jZB0_",
@@ -3583,38 +2970,26 @@
     {
       "id": "job-1788837983211",
       "tanggal": "2026-09-08",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735770166",
-      "wilayahIds": [
-        "wil-1788735770166"
-      ],
-      "wilayahNamas": [
-        "Tag. Daya"
-      ],
-      "totalTransportWilayah": 4000,
-      "transport": 4000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Daya",
+      "biayaTransportWilayah": 4000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1f2t7NKF7Gra24QR8vtr9cp7A3JxKT-Ps",
@@ -3625,40 +3000,26 @@
     {
       "id": "job-1788831044277",
       "tanggal": "2026-09-02",
-      "teknisiIds": [
-        "emp-1788737753097",
-        "emp-1788737718306"
-      ],
-      "teknisiNamas": [
-        "Moh. Abdurrohman",
+      "teknisiNama": "Moh. Abdurrohman",
+      "teknisiPendukung": [
         "Andre Ariansyah"
       ],
-      "teknisiVehicles": {
-        "emp-1788737753097": "Inventaris",
-        "emp-1788737718306": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Abdurrohman (Inventaris); Andre Ariansyah (Inventaris)",
       "jenisPekerjaanId": "jp-1788736580204",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Perbaikan ODC",
+      "subPekerjaan": "Perbaikan ODC",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 0,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 120,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Administrator",
       "lemburApprovedAt": "2026-09-08T09:46:14.076Z",
-      "estimasiTotalHonor": 96000,
+      "estimasiHonor": 96000,
       "honorPerTeknisi": 48000,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1ef8j1Do-Q93U6E99CO1CwX4OEDBpuYLP",
@@ -3669,40 +3030,26 @@
     {
       "id": "job-1788830912219",
       "tanggal": "2026-09-02",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736580204",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Perbaikan ODC",
+      "subPekerjaan": "Perbaikan ODC",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": true,
       "menitLembur": 120,
-      "lemburApproved": true,
+      "lemburApproved": false,
       "lemburApprovedBy": "Administrator",
       "lemburApprovedAt": "2026-09-08T09:46:16.716Z",
-      "estimasiTotalHonor": 196000,
+      "estimasiHonor": 196000,
       "honorPerTeknisi": 98000,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1mOWW2tvblS45kMt4lgeMH00QkUafN0Zb",
@@ -3713,38 +3060,26 @@
     {
       "id": "job-1788830743260",
       "tanggal": "2026-09-02",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736039453",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "Instalasi ODC/ODP",
+      "subPekerjaan": "Instalasi ODC/ODP",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1wSDWiuMQeltzgEoJeYgO-3XtYa73Sszs",
@@ -3755,38 +3090,26 @@
     {
       "id": "job-1788830641552",
       "tanggal": "2026-09-02",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736817596",
       "jenisPekerjaanNama": "Distribusi Jaringan",
-      "subPekerjaanNama": "Tarik Kabel Feeder",
+      "subPekerjaan": "Tarik Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 451,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 310600,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 310600,
       "honorPerTeknisi": 155300,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1VCPQN6H-O0wXsDrG2KP_uabvAKxF2j6_",
@@ -3797,38 +3120,26 @@
     {
       "id": "job-1788830542381",
       "tanggal": "2026-09-02",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788737577045"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ifanur Rohman"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Inventaris",
-        "emp-1788737577045": "Inventaris"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Inventaris); Ifanur Rohman (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735678549",
-      "wilayahIds": [
-        "wil-1788735678549"
-      ],
-      "wilayahNamas": [
-        "Dsn. Duko"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Duko",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1QSQZv9ta6Kae_KghD-wHAZc4LiQRk2Ut",
@@ -3839,38 +3150,26 @@
     {
       "id": "job-1788830375274",
       "tanggal": "2026-09-01",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788736945517"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ribut"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Jalan Kaki",
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Jalan Kaki); Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736880838",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah/Ganti ODP ODC",
+      "subPekerjaan": "Pindah/Ganti ODP ODC",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 40000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 40000,
       "honorPerTeknisi": 20000,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1kXdfTxQira2ngSbTaUx0LOt_1IJaqOb8",
@@ -3881,38 +3180,26 @@
     {
       "id": "job-1788830256151",
       "tanggal": "2026-09-01",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737513190"
-      ],
-      "teknisiNamas": [
-        "Ribut",
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
         "Moh. Maulidi"
       ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736746767",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Pindah Jalur/Pelepasan Kabel",
+      "subPekerjaan": "Pindah Jalur/Pelepasan Kabel",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 3,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 20000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 20000,
       "honorPerTeknisi": 10000,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1Qp0-NVg4p2FRSpqfICeWMqDGW4PWrbAr",
@@ -3923,38 +3210,26 @@
     {
       "id": "job-1788830074348",
       "tanggal": "2026-09-01",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788736945517"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ribut"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Pribadi",
-        "emp-1788736945517": "Pribadi"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Pribadi); Ribut (Pribadi)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 35000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 35000,
       "honorPerTeknisi": 17500,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1V2TH8JCZfwg6-hDhxI5c7TOCasWrlviu",
@@ -3965,38 +3240,26 @@
     {
       "id": "job-1788829929412",
       "tanggal": "2026-09-01",
-      "teknisiIds": [
-        "emp-1788737513190",
-        "emp-1788736945517"
-      ],
-      "teknisiNamas": [
-        "Moh. Maulidi",
+      "teknisiNama": "Moh. Maulidi",
+      "teknisiPendukung": [
         "Ribut"
       ],
-      "teknisiVehicles": {
-        "emp-1788737513190": "Jalan Kaki",
-        "emp-1788736945517": "Jalan Kaki"
-      },
+      "kendaraanTeknisi": "Moh. Maulidi (Jalan Kaki); Ribut (Jalan Kaki)",
       "jenisPekerjaanId": "jp-1788735939199",
       "jenisPekerjaanNama": "Instalasi",
-      "subPekerjaanNama": "PSB Pelanggan",
+      "subPekerjaan": "PSB Pelanggan",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788698580605",
-      "wilayahIds": [
-        "wil-1788698580605"
-      ],
-      "wilayahNamas": [
-        "Dsn. Tengah"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Tengah",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 155,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 112500,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 112500,
       "honorPerTeknisi": 56250,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1A_EL8r2zqhJB_AHH5TfJP6-yz_bbbE6f&export=view",
@@ -4007,41 +3270,26 @@
     {
       "id": "job-1788771136002",
       "tanggal": "2026-09-07",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045",
-        "emp-1788737513190"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Moh. Maulidi"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Ifanur Rohman",
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788772392649",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "subPekerjaan": "Splicing Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 54999,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 54999,
       "honorPerTeknisi": 18333,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1WOqMyeOamVVDyJkA2bqxrrFprhm7y0gp",
@@ -4052,41 +3300,26 @@
     {
       "id": "job-1788770769180",
       "tanggal": "2026-09-07",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045",
-        "emp-1788737513190"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Moh. Maulidi"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Ifanur Rohman",
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788772392649",
       "jenisPekerjaanNama": "Pemeliharaan Jaringan",
-      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "subPekerjaan": "Splicing Kabel Feeder",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735753357",
-      "wilayahIds": [
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 2000,
-      "transport": 2000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Tag. Laok",
+      "biayaTransportWilayah": 2000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 54999,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 54999,
       "honorPerTeknisi": 18333,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1EKHkR0adOuAoPTeLhO2Gaf4WkchB6xLh",
@@ -4097,43 +3330,26 @@
     {
       "id": "job-1788770502125",
       "tanggal": "2026-09-07",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045",
-        "emp-1788737513190"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Moh. Maulidi"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Ifanur Rohman",
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736550408",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Perbaikan ODP",
+      "subPekerjaan": "Perbaikan ODP",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108",
-        "wil-1788735753357"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW",
-        "Tag. Laok"
-      ],
-      "totalTransportWilayah": 5000,
-      "transport": 5000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW, Tag. Laok",
+      "biayaTransportWilayah": 5000,
       "jumlahTitik": 2,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 110001,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 110001,
       "honorPerTeknisi": 36667,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1GBj7H4Xk8WJI1kYl0r-qltpG0_6hqEy8",
@@ -4144,41 +3360,26 @@
     {
       "id": "job-1788770247651",
       "tanggal": "2026-09-07",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045",
-        "emp-1788737513190"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Moh. Maulidi"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Ifanur Rohman",
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736580204",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Perbaikan ODC",
+      "subPekerjaan": "Perbaikan ODC",
       "serverId": "srv-1788698535178",
-      "namaServer": "DindaNet",
-      "wilayahId": "wil-1788735801108",
-      "wilayahIds": [
-        "wil-1788735801108"
-      ],
-      "wilayahNamas": [
-        "Pontim & WDW"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "DindaNet",
+      "wilayahNama": "Pontim & WDW",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 99999,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 99999,
       "honorPerTeknisi": 33333,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1F_5VYawcrQOBj-V5KM0CU_Qugmgw31O5",
@@ -4189,41 +3390,26 @@
     {
       "id": "job-1788769633483",
       "tanggal": "2026-09-07",
-      "teknisiIds": [
-        "emp-1788736945517",
-        "emp-1788737577045",
-        "emp-1788737513190"
+      "teknisiNama": "Ribut",
+      "teknisiPendukung": [
+        "Ifanur Rohman, Moh. Maulidi"
       ],
-      "teknisiNamas": [
-        "Ribut",
-        "Ifanur Rohman",
-        "Moh. Maulidi"
-      ],
-      "teknisiVehicles": {
-        "emp-1788736945517": "Pribadi",
-        "emp-1788737577045": "Inventaris",
-        "emp-1788737513190": "Inventaris"
-      },
+      "kendaraanTeknisi": "Ribut (Pribadi); Ifanur Rohman (Inventaris); Moh. Maulidi (Inventaris)",
       "jenisPekerjaanId": "jp-1788736487687",
       "jenisPekerjaanNama": "Trouble/Maintenance",
-      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "subPekerjaan": "Splicing Kabel/Pathcord",
       "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "wilayahId": "wil-1788735678549",
-      "wilayahIds": [
-        "wil-1788735678549"
-      ],
-      "wilayahNamas": [
-        "Dsn. Duko"
-      ],
-      "totalTransportWilayah": 3000,
-      "transport": 3000,
+      "serverNama": "AlbiNet",
+      "wilayahNama": "Dsn. Duko",
+      "biayaTransportWilayah": 3000,
       "jumlahTitik": 1,
       "panjangKabelMeter": 0,
       "adaLembur": false,
       "menitLembur": 0,
       "lemburApproved": false,
-      "estimasiTotalHonor": 45000,
+      "lemburApprovedBy": "-",
+      "lemburApprovedAt": "-",
+      "estimasiHonor": 45000,
       "honorPerTeknisi": 15000,
       "buktiFotoUrls": [
         "https://lh3.googleusercontent.com/d/1gPYGGN1VmPKKGUsTxn8enE_Wo1V95OqL",
@@ -4232,48 +3418,7 @@
       "catatan": "Splicing kabel putus pelanggan a. N Muslihah"
     }
   ],
-  "planningTasks": [
-    {
-      "id": "plan-1791789646262",
-      "tanggal": "2026-10-12",
-      "targetTeknisiIds": [
-        "emp-1788736945517",
-        "emp-1791590828141"
-      ],
-      "targetTeknisiNamas": [
-        "Ribut",
-        "Amar"
-      ],
-      "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "jenisPekerjaanId": "jp-1788735939199",
-      "subPekerjaanNama": "PSB Pelanggan",
-      "detailPekerjaan": "PSB Pelanggan a/n Muhdar",
-      "fotoLokasiUrl": "",
-      "status": "Pending",
-      "createdById": "admin"
-    },
-    {
-      "id": "plan-1791717984294",
-      "tanggal": "2026-10-12",
-      "targetTeknisiIds": [
-        "emp-1791590828141",
-        "emp-1788736945517"
-      ],
-      "targetTeknisiNamas": [
-        "Amar",
-        "Ribut"
-      ],
-      "serverId": "srv-1788695298813",
-      "namaServer": "AlbiNet",
-      "jenisPekerjaanId": "jp-1788735939199",
-      "subPekerjaanNama": "PSB Pelanggan",
-      "detailPekerjaan": "Pasang Baru Pelanggan a/n Wathie",
-      "fotoLokasiUrl": "",
-      "status": "Pending",
-      "createdById": "admin"
-    }
-  ],
+  "planningTasks": [],
   "attendanceList": [
     {
       "id": "att-1791076191499",
@@ -6051,7 +5196,7 @@
       "teknisiNama": "Ribut",
       "jamMasuk": "15:57",
       "fotoProofUrl": "[Foto Masuk Tersimpan]",
-      "jamPulang": "16:28",
+      "jamPulang": "17:00",
       "fotoPulangUrl": "https://drive.usercontent.google.com/download?id=14RP6LgK1O41b8wCyeTxa3Y-cdDEO34wR&export=view",
       "serverId": "srv-1788695298813",
       "serverNama": "AlbiNet",
@@ -6071,7 +5216,7 @@
       "teknisiNama": "Amar",
       "jamMasuk": "15:59",
       "fotoProofUrl": "[Foto Masuk Tersimpan]",
-      "jamPulang": "16:30",
+      "jamPulang": "17:00",
       "fotoPulangUrl": "[Foto Pulang Tersimpan]",
       "serverId": "srv-1788695298813",
       "serverNama": "AlbiNet",

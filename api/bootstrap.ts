@@ -57,14 +57,18 @@ export default async function handler(req: any, res: any) {
     };
   }
 
-  // Ensure defaultUrl is always filled if missing
-  if (state.settings && (!state.settings.googleAppsScriptUrl || !state.settings.googleAppsScriptUrl.trim())) {
-    state.settings.googleAppsScriptUrl = defaultUrl;
-    state.settings.isGoogleSheetConnected = true;
-  }
+  // Google Sheets is the source of truth for business data (jobs, attendance, etc.).
+  // In serverless environments, avoid sending static arrays that would overwrite live Google Sheets data.
+  const cleanState = {
+    settings: state.settings,
+    resolvedAttendanceKeys: state.resolvedAttendanceKeys || [],
+    deletedAttendanceIds: state.deletedAttendanceIds || [],
+    approvedLemburMap: state.approvedLemburMap || {},
+    employees: state.employees || []
+  };
 
   return res.status(200).json({
     success: true,
-    data: state
+    data: cleanState
   });
 }
