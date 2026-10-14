@@ -1,8 +1,7 @@
 {
   "settings": {
-    "namaPerusahaan": "DPT-AlaDin",
-    "alamatPerusahaan": "Jl. Raya Merdeka No. 1945 Indonesia Raya",
-    "logoUrl": "https://lh3.googleusercontent.com/d/15UkXvneSLPZbr3JxQQn0j6Qwy50uoRBz",
+    "namaPerusahaan": "DPT AlaDin",
+    "alamatPerusahaan": "Jl. Utama RT/RW Net No. 88, Jakarta East",
     "adminUsername": "admin",
     "adminPassword": "Admin143",
     "jamMasukDefinisikan": "08:00",
@@ -14,7 +13,7 @@
       "Jumat"
     ],
     "tanggalLiburKhusus": [
-      "2026-10-07"
+      "2026-10-14"
     ],
     "jumlahCutiMaksimalPerBulan": 2,
     "totalCutiPerTahun": 12,
@@ -25,7 +24,7 @@
     "notifyViaBrowserPush": true,
     "notifyViaWhatsApp": true
   },
-  "lastUpdated": "2026-10-12T10:02:44.160Z",
+  "lastUpdated": "2026-10-14T05:23:39.072Z",
   "servers": [
     {
       "id": "srv-1788698535178",
@@ -6062,7 +6061,8 @@
       "keterangan": "Terlambat hadir (15:57 WIB, batas toleransi 08:15)",
       "potonganOtomatis": 0,
       "needsApproval": false,
-      "isApproved": true
+      "isApproved": true,
+      "isManual": false
     },
     {
       "id": "att-1791795545166",
@@ -6079,6 +6079,85 @@
       "isWithinRadius": true,
       "status": "Hadir",
       "keterangan": "Terlambat hadir (15:59 WIB, batas toleransi 08:15)",
+      "potonganOtomatis": 0,
+      "needsApproval": false,
+      "isApproved": true,
+      "isManual": false
+    },
+    {
+      "id": "att-1791942682079",
+      "tanggal": "2026-10-14",
+      "teknisiId": "emp-1788737577045",
+      "teknisiNama": "Ifanur Rohman",
+      "jamMasuk": "08:51",
+      "fotoProofUrl": "https://drive.usercontent.google.com/download?id=1STZQaumtPoDBVZnBQjAXR0IKIHRiszud&export=view",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "distanceMeter": 26,
+      "isWithinRadius": true,
+      "status": "Pending Approval",
+      "keterangan": "Terlambat hadir (08:51 WIB, batas toleransi 08:15)",
+      "potonganOtomatis": 25000,
+      "needsApproval": true,
+      "approvalType": "Terlambat",
+      "isApproved": false,
+      "fotoPulangUrl": "",
+      "keteranganPulang": ""
+    },
+    {
+      "id": "att-1791942772873",
+      "tanggal": "2026-10-14",
+      "teknisiId": "emp-1788737513190",
+      "teknisiNama": "Moh. Maulidi",
+      "jamMasuk": "08:52",
+      "fotoProofUrl": "https://drive.usercontent.google.com/download?id=1ibdqG68VIDSnj-hk8a_JBl0xUDct_GFs&export=view",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "distanceMeter": 16,
+      "isWithinRadius": true,
+      "status": "Pending Approval",
+      "keterangan": "Terlambat hadir (08:52 WIB, batas toleransi 08:15)",
+      "potonganOtomatis": 25000,
+      "needsApproval": true,
+      "approvalType": "Terlambat",
+      "isApproved": false,
+      "fotoPulangUrl": "",
+      "keteranganPulang": ""
+    },
+    {
+      "id": "att-1791857467770",
+      "tanggal": "2026-10-13",
+      "teknisiId": "emp-1788737577045",
+      "teknisiNama": "Ifanur Rohman",
+      "jamMasuk": "09:11",
+      "fotoProofUrl": "https://drive.usercontent.google.com/download?id=1C1TjB1WYlDqXszddEOsbHPoyYk-fiLEZ&export=view",
+      "jamPulang": "15:20",
+      "fotoPulangUrl": "[Foto Pulang Tersimpan]",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "distanceMeter": 15,
+      "isWithinRadius": true,
+      "status": "Hadir",
+      "keterangan": "Terlambat hadir (09:11 WIB, batas toleransi 08:15)",
+      "potonganOtomatis": 0,
+      "needsApproval": false,
+      "isApproved": true
+    },
+    {
+      "id": "att-1791857504239",
+      "tanggal": "2026-10-13",
+      "teknisiId": "emp-1788737513190",
+      "teknisiNama": "Moh. Maulidi",
+      "jamMasuk": "09:11",
+      "fotoProofUrl": "https://drive.usercontent.google.com/download?id=13qQOZOZkqybgj6XbFIo-WBuyXL9xrKSP&export=view",
+      "jamPulang": "15:15",
+      "fotoPulangUrl": "https://drive.usercontent.google.com/download?id=1jBahqZKl3MmaLaegqW7L7aJHbWX2S1Sb&export=view",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "distanceMeter": 22,
+      "isWithinRadius": true,
+      "status": "Hadir",
+      "keterangan": "Terlambat hadir (09:11 WIB, batas toleransi 08:15)",
       "potonganOtomatis": 0,
       "needsApproval": false,
       "isApproved": true
