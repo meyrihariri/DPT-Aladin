@@ -253,24 +253,28 @@ const initialAttendance: AttendanceRecord[] = [];
 
 const initialLeave: LeaveRequest[] = [];
 
+export const DEFAULT_GOOGLE_APPS_SCRIPT_URL =
+  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GOOGLE_APPS_SCRIPT_URL) ||
+  'https://script.google.com/macros/s/AKfycbyVyW9TxnWgCAQLS-sehGPay574Vnne2Fhn8t-mKqTX3PlvBwpS8kEbLzFF31dSaUj5/exec';
+
 const initialSettings: AppSettings = {
   namaPerusahaan: 'DPT AlaDin',
   alamatPerusahaan: 'Jl. Utama RT/RW Net No. 88, Jakarta East',
-  logoUrl: '',
+  logoUrl: 'https://lh3.googleusercontent.com/d/15UkXvneSLPZbr3JxQQn0j6Qwy50uoRBz',
   adminUsername: 'admin',
   adminPassword: 'Admin143',
   jamMasukDefinisikan: '08:00',
   jamPulangDefinisikan: '17:00',
   hariLibur: ['Minggu'],
-  tanggalLiburKhusus: [],
+  tanggalLiburKhusus: ['2026-10-14'],
   jumlahCutiMaksimalPerBulan: 2,
   totalCutiPerTahun: 12,
   toleransiKeterlambatanMenit: 15,
   potonganPerKeterlambatan: 25000,
   potonganPulangAwal: 20000,
   googleSheetUrl: '',
-  googleAppsScriptUrl: '',
-  isGoogleSheetConnected: false,
+  googleAppsScriptUrl: DEFAULT_GOOGLE_APPS_SCRIPT_URL,
+  isGoogleSheetConnected: true,
   waGatewayProvider: 'fonnte',
   waApiToken: '',
   waApiUrl: 'https://api.fonnte.com/send',
@@ -1174,8 +1178,12 @@ export const StorageService = {
 
   getSettings: (): AppSettings => {
     const s = getStorage(STORAGE_KEYS.SETTINGS, initialSettings);
+    const scriptUrl = (s.googleAppsScriptUrl && s.googleAppsScriptUrl.trim()) || DEFAULT_GOOGLE_APPS_SCRIPT_URL;
     return {
+      ...initialSettings,
       ...s,
+      googleAppsScriptUrl: scriptUrl,
+      isGoogleSheetConnected: Boolean(scriptUrl && scriptUrl.trim()),
       jamMasukDefinisikan: sanitizeTimeString(s.jamMasukDefinisikan, '08:00'),
       jamPulangDefinisikan: sanitizeTimeString(s.jamPulangDefinisikan, '17:00')
     };

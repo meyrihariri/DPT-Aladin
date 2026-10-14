@@ -1188,9 +1188,10 @@ export async function sendToGoogleAppsScript(scriptUrl: string, payload: any) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ scriptUrl: cleanUrl, payload })
     });
-    if (proxyRes.ok) {
+    const cType = proxyRes.headers.get('content-type') || '';
+    if (proxyRes.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
       const json = await proxyRes.json();
-      if (json.success) {
+      if (json && json.success) {
         return { success: true, data: json.data };
       }
     }
@@ -1257,7 +1258,8 @@ export async function uploadPhotoToGoogleDrive(
       })
     });
 
-    if (proxyRes.ok) {
+    const cType = proxyRes.headers.get('content-type') || '';
+    if (proxyRes.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
       const data = await proxyRes.json();
       if (data && (data.success || data.fileId || data.fileUrl)) {
         const fileId = data.fileId || '';
@@ -1447,27 +1449,36 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string) {
   const cleanUrl = scriptUrl.trim();
   const result: Record<string, any[][]> = {};
 
-  // Try via server proxy first (avoids browser iframe CORS or redirect restrictions)
+  // 1. Try via server proxy first (avoids browser iframe CORS or redirect restrictions)
   try {
     const proxyRes = await fetch(`/api/proxy/sheets?url=${encodeURIComponent(cleanUrl)}&action=getAllData`);
-    if (proxyRes.ok) {
+    const cType = proxyRes.headers.get('content-type') || '';
+    if (proxyRes.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
       const json = await proxyRes.json();
-      if (json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
+      if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
         return json.data as Record<string, any[][]>;
       }
     }
-  } catch {
-    // Continue to direct fetch below if server proxy isn't available
+  } catch (proxyErr) {
+    console.warn('Proxy fetch failed, falling back to direct fetch:', proxyErr);
   }
 
+  // 2. Direct fetch with CORS mode and redirect follow
   try {
-    const res = await fetch(`${cleanUrl}?action=getAllData`);
-    const json = await res.json();
-    if (json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
-      return json.data as Record<string, any[][]>;
+    const res = await fetch(`${cleanUrl}?action=getAllData`, {
+      method: 'GET',
+      redirect: 'follow',
+      headers: { 'Accept': 'application/json' }
+    });
+    const cType = res.headers.get('content-type') || '';
+    if (res.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
+      const json = await res.json();
+      if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
+        return json.data as Record<string, any[][]>;
+      }
     }
   } catch (e) {
-    console.warn('getAllData failed, trying individual sheet fetch:', e);
+    console.warn('getAllData direct fetch failed, trying individual sheet fetch:', e);
   }
 
   const sheetsToFetch = [
@@ -1485,9 +1496,30 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string) {
 
   for (const sheetName of sheetsToFetch) {
     try {
-      const res = await fetch(`${cleanUrl}?action=getData&sheet=${encodeURIComponent(sheetName)}`);
-      const json = await res.json();
-      if (json.status === 'success' && Array.isArray(json.data)) {
+      let json: any = null;
+      // Try proxy first
+      try {
+        const proxyRes = await fetch(`/api/proxy/sheets?url=${encodeURIComponent(cleanUrl)}&action=getData&sheet=${encodeURIComponent(sheetName)}`);
+        const cType = proxyRes.headers.get('content-type') || '';
+        if (proxyRes.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
+          json = await proxyRes.json();
+        }
+      } catch {}
+
+      // Fallback direct
+      if (!json || json.status !== 'success') {
+        const res = await fetch(`${cleanUrl}?action=getData&sheet=${encodeURIComponent(sheetName)}`, {
+          method: 'GET',
+          redirect: 'follow',
+          headers: { 'Accept': 'application/json' }
+        });
+        const cType = res.headers.get('content-type') || '';
+        if (res.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
+          json = await res.json();
+        }
+      }
+
+      if (json && json.status === 'success' && Array.isArray(json.data)) {
         result[sheetName] = json.data;
       }
     } catch (err) {
