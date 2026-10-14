@@ -1,0 +1,6 @@
+{
+  "name": "DPT-AlaDin",
+  "description": "DPT-AlaDin - Manajemen Pekerjaan & Honor Teknisi",
+  "requestFramePermissions": ["geolocation", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

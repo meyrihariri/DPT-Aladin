@@ -1,0 +1,84 @@
+{
+  "id": "/",
+  "short_name": "DPT-AlaDin",
+  "name": "DPT-AlaDin - Manajemen Pekerjaan & Honor Teknisi",
+  "description": "Aplikasi Manajemen Pekerjaan & Honor Teknisi RT/RW Net",
+  "icons": [
+    {
+      "src": "/pwa-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/desktop-screenshot.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "DPT AlaDin Desktop Dashboard"
+    },
+    {
+      "src": "/mobile-screenshot.png",
+      "sizes": "640x1136",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "DPT AlaDin Mobile Teknisi"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard Utama",
+      "short_name": "Dashboard",
+      "description": "Buka Dashboard Pemantauan Presensi dan Pekerjaan",
+      "url": "/",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Approval Presensi",
+      "short_name": "Presensi",
+      "description": "Buka Approval Presensi Teknisi Harian",
+      "url": "/?tab=approval",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Daftar Pekerjaan",
+      "short_name": "Pekerjaan",
+      "description": "Buka Manajemen Daftar Pekerjaan Teknisi",
+      "url": "/?tab=pekerjaan",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Rekap Honor & Slip",
+      "short_name": "Rekap Honor",
+      "description": "Buka Rekapitulasi Honor & Cetak Slip Gaji",
+      "url": "/?tab=rekap",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0F172A",
+  "theme_color": "#800020",
+  "categories": ["business", "productivity", "utilities"]
+}

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <script>
+      // Gracefully filter benign Vite HMR websocket reconnection notices in sandboxed container preview
+      (function() {
+        if (typeof window === 'undefined') return;
+        var origError = console.error;
+        var origWarn = console.warn;
+
+        function isViteBenign(arg) {
+          if (!arg) return false;
+          if (typeof arg === 'string') {
+            return arg.indexOf('[vite]') !== -1 ||
+                   arg.indexOf('failed to connect to websocket') !== -1 ||
+                   arg.indexOf('WebSocket closed without opened') !== -1 ||
+                   arg.indexOf('vite-hmr') !== -1 ||
+                   arg.indexOf('vite-ping') !== -1 ||
+                   arg.indexOf('@vite/client') !== -1;
+          }
+          if (typeof arg === 'object') {
+            // Check if it's an Event or WebSocket error event
+            if (arg.type === 'error') {
+              if (arg.target && (arg.target instanceof WebSocket || String(arg.target.url || '').indexOf('vite') !== -1 || String(arg.target.url || '').indexOf('24678') !== -1)) {
+                return true;
+              }
+            }
+            var text = '' + (arg.message || '') + ' ' + (arg.stack || '') + ' ' + (arg.name || '');
+            if (arg.reason) {
+              text += ' ' + (arg.reason.message || arg.reason.stack || String(arg.reason));
+            }
+            return text.indexOf('[vite]') !== -1 ||
+                   text.indexOf('failed to connect to websocket') !== -1 ||
+                   text.indexOf('WebSocket closed without opened') !== -1 ||
+                   text.indexOf('vite-hmr') !== -1 ||
+                   text.indexOf('vite-ping') !== -1 ||
+                   text.indexOf('@vite/client') !== -1;
+          }
+          return false;
+        }
+
+        console.error = function() {
+          for (var i = 0; i < arguments.length; i++) {
+            if (isViteBenign(arguments[i])) return;
+          }
+          return origError.apply(console, arguments);
+        };
+
+        console.warn = function() {
+          for (var i = 0; i < arguments.length; i++) {
+            if (isViteBenign(arguments[i])) return;
+          }
+          return origWarn.apply(console, arguments);
+        };
+
+        window.addEventListener('unhandledrejection', function(event) {
+          if (!event) return;
+          if (isViteBenign(event.reason) || (event.reason && (event.reason.type === 'error' || (event.reason.target && event.reason.target instanceof WebSocket)))) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+
+        window.addEventListener('error', function(event) {
+          if (!event) return;
+          if (isViteBenign(event.message) || isViteBenign(event.error) || (event.filename && event.filename.indexOf('@vite/client') !== -1)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>DPT-AlaDin - Manajemen Pekerjaan & Honor Teknisi</title>
+    <meta name="description" content="DPT-AlaDin - Manajemen Pekerjaan & Honor Teknisi" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#800020" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="DPT-AlaDin" />
+    <meta name="application-name" content="DPT-AlaDin" />
+    <meta property="og:title" content="DPT-AlaDin - Manajemen Pekerjaan & Honor Teknisi" />
+    <meta property="og:description" content="Aplikasi DPT-AlaDin - Manajemen Pekerjaan & Honor Teknisi" />
+    <meta property="og:image" content="/pwa-512x512.png" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body class="bg-[#F8FAFC] text-slate-800 select-none touch-manipulation antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "evt-1791532374832-e1z22",
+    "type": "technician_online",
+    "title": "🟢 Teknisi Online",
+    "body": "Andre Ariansyah baru saja membuka aplikasi / aktif online.",
+    "timestamp": 1791532374832,
+    "data": {
+      "technicianId": "emp-1788737718306",
+      "technicianName": "Andre Ariansyah",
+      "senderId": "emp-1788737718306",
+      "teknisiId": "emp-1788737718306",
+      "senderName": "Andre Ariansyah",
+      "senderRole": "Teknisi"
+    }
+  },
+  {
+    "id": "evt-1790421179073-2blp2",
+    "type": "job_submitted",
+    "title": "Test Job",
+    "body": "Test input pekerjaan",
+    "timestamp": 1790421179074,
+    "data": {
+      "senderId": "emp-test",
+      "senderRole": "Teknisi",
+      "teknisiNama": "Test"
+    }
+  },
+  {
+    "id": "evt-1790420667116-b95uv",
+    "type": "technician_online",
+    "title": "🟢 Teknisi Online",
+    "body": "Andre Ariansyah baru saja membuka aplikasi / aktif online.",
+    "timestamp": 1790420667116,
+    "data": {
+      "technicianId": "emp-1788737718306",
+      "technicianName": "Andre Ariansyah"
+    }
+  },
+  {
+    "id": "evt-1790420662876-s7a2e",
+    "type": "technician_online",
+    "title": "🟢 Teknisi Online",
+    "body": "Moh. Abdurrohman baru saja membuka aplikasi / aktif online.",
+    "timestamp": 1790420662876,
+    "data": {
+      "technicianId": "emp-1788737753097",
+      "technicianName": "Moh. Abdurrohman"
+    }
+  },
+  {
+    "id": "evt-1790420442017-n76mw",
+    "type": "technician_online",
+    "title": "🟢 Teknisi Online",
+    "body": "Moh. Abdurrohman baru saja membuka aplikasi / aktif online.",
+    "timestamp": 1790420442017,
+    "data": {
+      "technicianId": "emp-1788737753097",
+      "technicianName": "Moh. Abdurrohman"
+    }
+  }
+]
