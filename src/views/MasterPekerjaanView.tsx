@@ -1491,7 +1491,7 @@ const MasterPekerjaanViewComponent: React.FC<MasterPekerjaanViewProps> = ({
                               <td className="py-3.5 px-3.5">
                                 <div className="space-y-1">
                                   {job.teknisiIds.map((techId, tIdx) => {
-                                    const name = job.teknisiNamas[tIdx] || 'Teknisi';
+                                    const name = (job.teknisiNamas && job.teknisiNamas[tIdx]) || 'Teknisi';
                                     const veh = (job.teknisiVehicles && job.teknisiVehicles[techId]) || 'Inventaris';
                                     const isPribadi = veh === 'Pribadi';
                                     const isJalanKaki = veh === 'Jalan Kaki';
@@ -1652,7 +1652,7 @@ const MasterPekerjaanViewComponent: React.FC<MasterPekerjaanViewProps> = ({
                             <td className="py-3.5 px-3.5">
                               <div className="space-y-1">
                                 {job.teknisiIds.map((techId, tIdx) => {
-                                  const name = job.teknisiNamas[tIdx] || 'Teknisi';
+                                  const name = (job.teknisiNamas && job.teknisiNamas[tIdx]) || 'Teknisi';
                                   const veh = (job.teknisiVehicles && job.teknisiVehicles[techId]) || 'Inventaris';
                                   const isPribadi = veh === 'Pribadi';
                                   const isJalanKaki = veh === 'Jalan Kaki';
@@ -1976,7 +1976,7 @@ const MasterPekerjaanViewComponent: React.FC<MasterPekerjaanViewProps> = ({
                                 <Users className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
                                 <div className="flex flex-wrap gap-1">
                                   {job.teknisiIds.map((techId, tIdx) => {
-                                    const name = job.teknisiNamas[tIdx] || 'Teknisi';
+                                    const name = (job.teknisiNamas && job.teknisiNamas[tIdx]) || 'Teknisi';
                                     const veh = (job.teknisiVehicles && job.teknisiVehicles[techId]) || 'Inventaris';
                                     const isPribadi = veh === 'Pribadi';
                                     const isJalanKaki = veh === 'Jalan Kaki';
@@ -2138,7 +2138,7 @@ const MasterPekerjaanViewComponent: React.FC<MasterPekerjaanViewProps> = ({
                               <Users className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
                               <div className="flex flex-wrap gap-1">
                                 {job.teknisiIds.map((techId, tIdx) => {
-                                  const name = job.teknisiNamas[tIdx] || 'Teknisi';
+                                  const name = (job.teknisiNamas && job.teknisiNamas[tIdx]) || 'Teknisi';
                                   const veh = (job.teknisiVehicles && job.teknisiVehicles[techId]) || 'Inventaris';
                                   const isPribadi = veh === 'Pribadi';
                                   const isJalanKaki = veh === 'Jalan Kaki';

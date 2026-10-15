@@ -1839,7 +1839,11 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
                     {/* 1. Nama Teknisi */}
                     <p className="text-xs text-slate-700">
                       <span>Teknisi: </span>
-                      <strong className="text-slate-900 font-extrabold">{job.teknisiNamas.join(', ')}</strong>
+                      <strong className="text-slate-900 font-extrabold">
+                        {Array.isArray(job.teknisiNamas) && job.teknisiNamas.length > 0
+                          ? job.teknisiNamas.join(', ')
+                          : 'Teknisi'}
+                      </strong>
                     </p>
 
                     {/* 2. Jenis & Sub Pekerjaan (sejajar/1 baris) */}

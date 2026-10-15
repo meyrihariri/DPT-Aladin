@@ -1708,7 +1708,7 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
                         <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-800">
                           <span className="text-[10px] text-slate-400 font-extrabold">#{idx + 1}</span>
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{job.tanggal.slice(0, 10)}</span>
+                          <span>{(job.tanggal || '').slice(0, 10)}</span>
                         </div>
                         <span className="font-black text-indigo-700 text-sm">
                           {formatRupiah(job.estimasiTotalHonor || 0)}
@@ -1736,7 +1736,7 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
                       <div className="bg-slate-50/90 p-2 rounded-xl border border-slate-100 space-y-1">
                         <span className="text-[10px] text-slate-400 font-bold block uppercase">Teknisi Bertugas:</span>
                         <div className="flex flex-wrap gap-1">
-                          {job.teknisiNamas.map((nama, nIdx) => {
+                          {(job.teknisiNamas || []).map((nama, nIdx) => {
                             const tId = job.teknisiIds ? job.teknisiIds[nIdx] : undefined;
                             const namaClean = (nama || '').toLowerCase().trim();
                             const emp = employees.find(e => 
@@ -1840,7 +1840,7 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
                         <tr key={job.id} className="hover:bg-slate-50/80">
                           <td className="p-3 text-slate-400 font-bold">{idx + 1}</td>
                           <td className="p-3 font-semibold text-slate-800 whitespace-nowrap">
-                            {job.tanggal.slice(0, 10)}
+                            {(job.tanggal || '').slice(0, 10)}
                           </td>
                           <td className="p-3">
                             <p className="font-bold text-slate-900">{job.jenisPekerjaanNama}</p>
@@ -1852,7 +1852,7 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
                           </td>
                           <td className="p-3">
                             <div className="flex flex-wrap gap-1 max-w-[200px]">
-                              {job.teknisiNamas.map((nama, nIdx) => {
+                              {(job.teknisiNamas || []).map((nama, nIdx) => {
                                 const tId = job.teknisiIds ? job.teknisiIds[nIdx] : undefined;
                                 const namaClean = (nama || '').toLowerCase().trim();
                                 const emp = employees.find(e => 

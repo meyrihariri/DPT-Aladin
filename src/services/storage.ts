@@ -953,6 +953,19 @@ export const StorageService = {
     let modified = false;
     const resolved = cleaned.map(j => {
       let updated = { ...j };
+      if (!Array.isArray(updated.teknisiIds)) {
+        updated.teknisiIds = updated.teknisiIds ? [String(updated.teknisiIds)] : ['emp-1'];
+      }
+      if (!Array.isArray(updated.teknisiNamas) || updated.teknisiNamas.length === 0) {
+        updated.teknisiNamas = (updated.teknisiIds || []).map(id => emps.find(e => e.id === id)?.namaLengkap || id);
+        if (updated.teknisiNamas.length === 0) {
+          updated.teknisiNamas = ['Teknisi'];
+        }
+      }
+      if (!Array.isArray(updated.wilayahNamas)) {
+        updated.wilayahNamas = [];
+      }
+
       const match = srvs.find(s => s.id === j.serverId || s.id === j.namaServer || s.namaServer === j.namaServer);
       if (match && j.namaServer !== match.namaServer) {
         modified = true;
