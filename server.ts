@@ -607,7 +607,7 @@ app.get('/api/proxy/sheets', async (req, res) => {
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 18000);
     const response = await fetch(targetUrl, { redirect: 'follow', signal: controller.signal });
     clearTimeout(timeout);
 

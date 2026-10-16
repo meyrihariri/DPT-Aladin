@@ -30,6 +30,7 @@ import { MasterPekerjaanView } from './views/MasterPekerjaanView';
 import { ApprovalAbsensiView } from './views/ApprovalAbsensiView';
 import { AbsenManualView } from './views/AbsenManualView';
 import { HitungRekapHonorView } from './views/HitungRekapHonorView';
+import { PotonganManualView } from './views/PotonganManualView';
 import { PengaturanView } from './views/PengaturanView';
 import { TeknisiDashboardView } from './views/TeknisiDashboardView';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
@@ -982,6 +983,27 @@ export default function App() {
     }
   }, [currentUser, activeView]);
 
+  // 8-Hour User Session Timeout Monitor: Auto-logout after 8 hours
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const checkSession = () => {
+      if (StorageService.isSessionExpired()) {
+        StorageService.saveCurrentUser(null);
+        setCurrentUser(null);
+        showAppAlert({
+          title: 'Sesi Berakhir',
+          message: 'Sesi login Anda telah berakhir (batas waktu 8 jam). Silakan login kembali.',
+          type: 'info'
+        });
+      }
+    };
+
+    checkSession();
+    const interval = setInterval(checkSession, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
+
   // Ref tracking if initial data pull from Google Sheets has completed
   const isDataLoadedFromSheetsRef = React.useRef(false);
 
@@ -1001,8 +1023,21 @@ export default function App() {
     loadingTitle?: string;
     loadingMessage?: string;
   }): Promise<{ success: boolean; message?: string }> => {
+    const shouldShowLoading = overrides?.showLoading !== false;
+    if (shouldShowLoading) {
+      setLoadingOverlay({
+        isOpen: true,
+        title: overrides?.loadingTitle || 'Menyimpan...',
+        message: overrides?.loadingMessage || 'Menyimpan perubahan ke database...'
+      });
+    }
+
     const url = (overrides?.settings?.googleAppsScriptUrl || settings.googleAppsScriptUrl || '').trim();
     if (!url) {
+      if (shouldShowLoading) {
+        await new Promise(r => setTimeout(r, 350));
+        setLoadingOverlay(prev => ({ ...prev, isOpen: false }));
+      }
       return { success: false, message: 'URL Google Apps Script belum diisi di Pengaturan.' };
     }
 
@@ -1015,16 +1050,10 @@ export default function App() {
     // But if attendance list has items or jobs/servers/employees have items, allow sync!
     if (curServers.length === 0 && curEmployees.length === 0 && curJobs.length === 0 && curAttendance.length === 0) {
       console.warn('Sync skipped: Attempted to overwrite Google Sheets with completely empty dataset.');
+      if (shouldShowLoading) {
+        setLoadingOverlay(prev => ({ ...prev, isOpen: false }));
+      }
       return { success: false, message: 'Dataset kosong, sinkronisasi dibatalkan untuk keamanan data.' };
-    }
-
-    const shouldShowLoading = overrides?.showLoading !== false;
-    if (shouldShowLoading) {
-      setLoadingOverlay({
-        isOpen: true,
-        title: overrides?.loadingTitle || 'Menyimpan...',
-        message: overrides?.loadingMessage || 'Menyimpan perubahan ke database Google Sheets...'
-      });
     }
 
     try {
@@ -1078,11 +1107,14 @@ export default function App() {
       return false;
     }
 
-    setLoadingOverlay({
-      isOpen: true,
-      title: 'Please Wait...',
-      message: customMessage || 'Mengambil data dari Google Sheets...'
-    });
+    const shouldShowOverlay = !silent || (employees.length === 0 && jobs.length === 0);
+    if (shouldShowOverlay) {
+      setLoadingOverlay({
+        isOpen: true,
+        title: 'Please Wait...',
+        message: customMessage || 'Mengambil data dari Google Sheets...'
+      });
+    }
 
     if (!silent) {
       setIsSyncing(true);
@@ -1369,14 +1401,20 @@ export default function App() {
           }
         }
 
-        // 2. Tarik data terbaru dari Google Sheets saat aplikasi pertama dibuka dengan tanda loading spinner
+        // Tampilkan antarmuka aplikasi seketika (< 300ms) dari cache lokal & server bootstrap tanpa membekukan user
+        isDataLoadedFromSheetsRef.current = true;
+        setIsBootstrapLoaded(true);
+        setLoadingOverlay(prev => ({ ...prev, isOpen: false }));
+
+        // 2. Sinkronkan data terbaru dari Google Sheets di latar belakang
         if (activeScriptUrl) {
-          await handlePullDatabase(
+          handlePullDatabase(
             activeScriptUrl,
             true,
-            'Mengambil data dari Google Sheets...'
+            'Memperbarui data dari Google Sheets...',
+            false
           ).catch(err => {
-            console.warn('Bootstrap pull failed:', err);
+            console.warn('Bootstrap background pull failed:', err);
           });
         }
       } catch (err) {
@@ -2912,7 +2950,7 @@ export default function App() {
               />
             )}
 
-            {currentUser.role !== 'Teknisi' && (activeView === 'rekap_honor' || activeView === 'potongan_manual') && (
+            {currentUser.role !== 'Teknisi' && activeView === 'rekap_honor' && (
               <HitungRekapHonorView
                 employees={employees}
                 servers={servers}
@@ -2929,9 +2967,22 @@ export default function App() {
                 onSyncDatabase={handleSyncDatabase}
                 settings={settings}
                 currentUser={currentUser}
-                initialTab={activeView === 'potongan_manual' ? 'potongan' : 'rekap'}
+                initialTab="rekap"
                 onUpdateAttendance={handleUpdateAttendance}
                 onNavigateAbsenManual={() => handleSelectView('absen_manual_form')}
+              />
+            )}
+
+            {currentUser.role !== 'Teknisi' && activeView === 'potongan_manual' && (
+              <PotonganManualView
+                employees={employees}
+                servers={servers}
+                potonganManualList={potonganManualList}
+                onSavePotonganManual={handleSavePotonganManual}
+                onDeletePotonganManual={handleDeletePotonganManual}
+                onSyncDatabase={handleSyncDatabase}
+                currentUser={currentUser}
+                settings={settings}
               />
             )}
 

@@ -1210,7 +1210,52 @@ export const StorageService = {
     setStorage(STORAGE_KEYS.SETTINGS, sanitized);
   },
 
+  SESSION_TIMEOUT_MS: 8 * 60 * 60 * 1000, // 8 Jam session timeout (28.800.000 ms)
+
+  isSessionExpired: (): boolean => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const loginTimeStr = localStorage.getItem('dpt_aladin_session_login_time');
+      if (!loginTimeStr) return false;
+      const loginTime = parseInt(loginTimeStr, 10);
+      if (isNaN(loginTime)) return false;
+      return (Date.now() - loginTime) > (8 * 60 * 60 * 1000);
+    } catch {
+      return false;
+    }
+  },
+
+  getSessionTimeRemaining: (): number => {
+    if (typeof window === 'undefined') return 8 * 60 * 60 * 1000;
+    try {
+      const loginTimeStr = localStorage.getItem('dpt_aladin_session_login_time');
+      if (!loginTimeStr) return 8 * 60 * 60 * 1000;
+      const loginTime = parseInt(loginTimeStr, 10);
+      if (isNaN(loginTime)) return 8 * 60 * 60 * 1000;
+      const elapsed = Date.now() - loginTime;
+      const remaining = (8 * 60 * 60 * 1000) - elapsed;
+      return remaining > 0 ? remaining : 0;
+    } catch {
+      return 8 * 60 * 60 * 1000;
+    }
+  },
+
   getCurrentUser: (): Employee | null => {
+    // Check 8-hour session timeout first
+    if (typeof window !== 'undefined') {
+      try {
+        const loginTimeStr = localStorage.getItem('dpt_aladin_session_login_time');
+        if (loginTimeStr) {
+          const loginTime = parseInt(loginTimeStr, 10);
+          if (!isNaN(loginTime) && (Date.now() - loginTime) > (8 * 60 * 60 * 1000)) {
+            // Sesi 8 jam telah kedaluwarsa -> otomatis logout
+            StorageService.saveCurrentUser(null);
+            return null;
+          }
+        }
+      } catch {}
+    }
+
     // 1. Primary: In-memory cache & localStorage
     const user = getStorage<Employee | null>(STORAGE_KEYS.CURRENT_USER, null);
     if (user && user.id) return user;
@@ -1229,7 +1274,7 @@ export const StorageService = {
       } catch {}
     }
 
-    // 3. Tertiary: Persistent Cookie (Crucial for smartphone Safari / Chrome / PWA reload reliability)
+    // 3. Tertiary: Persistent Cookie
     if (typeof document !== 'undefined') {
       try {
         const match = document.cookie.match(new RegExp('(^|;\\s*)' + 'dpt_aladin_auth_session' + '=([^;]+)'));
@@ -1245,15 +1290,19 @@ export const StorageService = {
     }
     return null;
   },
+
   saveCurrentUser: (user: Employee | null) => {
     setStorage(STORAGE_KEYS.CURRENT_USER, user);
     if (typeof window !== 'undefined') {
       try {
         if (user) {
+          localStorage.setItem('dpt_aladin_session_login_time', String(Date.now()));
           sessionStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
           const cookieVal = encodeURIComponent(JSON.stringify(user));
-          document.cookie = `dpt_aladin_auth_session=${cookieVal}; max-age=31536000; path=/; SameSite=Lax`;
+          // Cookie expires in 8 hours (28800 seconds)
+          document.cookie = `dpt_aladin_auth_session=${cookieVal}; max-age=28800; path=/; SameSite=Lax`;
         } else {
+          localStorage.removeItem('dpt_aladin_session_login_time');
           sessionStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
           document.cookie = 'dpt_aladin_auth_session=; max-age=0; path=/; SameSite=Lax';
         }

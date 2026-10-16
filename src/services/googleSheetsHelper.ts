@@ -408,7 +408,7 @@ function doPost(e) {
         function normalizeDateForMatch(dStr) {
           if (!dStr) return '';
           var s = String(dStr).trim().split('T')[0];
-          var dmy = s.match(/^([0-9]{1,2})[-/.]([0-9]{1,2})[-/.]([0-9]{2,4})$/);
+          var dmy = s.match(/^([0-9]{1,2})[/.\\-]([0-9]{1,2})[/.\\-]([0-9]{2,4})$/);
           if (dmy) {
             var y = dmy[3].length === 2 ? ('20' + dmy[3]) : dmy[3];
             return y + '-' + ('0' + dmy[2]).slice(-2) + '-' + ('0' + dmy[1]).slice(-2);
@@ -1470,7 +1470,7 @@ export function parsePengaturanFromSheetRows(rows: any[][]): Partial<AppSettings
 
 // In-memory client cache to make menu switching and repeat calls fast & lightweight
 let cachedFullDatabase: { data: Record<string, any[][]>; timestamp: number } | null = null;
-const CLIENT_CACHE_TTL_MS = 15000; // 15 seconds fast client cache
+const CLIENT_CACHE_TTL_MS = 30000; // 30 seconds fast client cache
 
 export function invalidateClientDatabaseCache() {
   cachedFullDatabase = null;
@@ -1488,10 +1488,10 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, force
 
   const result: Record<string, any[][]> = {};
 
-  // 1. Try via server proxy first with 4.5s timeout (avoids browser iframe CORS or redirect restrictions)
+  // 1. Try via server proxy first with 15s timeout (avoids browser iframe CORS or redirect restrictions)
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4500);
+    const timer = setTimeout(() => controller.abort(), 15000);
     const proxyRes = await fetch(`/api/proxy/sheets?url=${encodeURIComponent(cleanUrl)}&action=getAllData${forceRefresh ? '&force=true' : ''}`, {
       signal: controller.signal
     });
@@ -1511,10 +1511,10 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, force
     // Proxy not reachable or timed out, will proceed with direct fetch
   }
 
-  // 2. Direct fetch with CORS mode and redirect follow (without custom headers to prevent CORS preflight blocking)
+  // 2. Direct fetch with CORS mode and redirect follow (10s timeout)
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
+    const timer = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(`${cleanUrl}?action=getAllData`, {
       method: 'GET',
       redirect: 'follow',
@@ -1536,7 +1536,7 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, force
     console.warn('getAllData direct fetch failed, trying parallel sheet fetch:', e);
   }
 
-  // 3. Fallback: Fetch all sheets IN PARALLEL via Promise.allSettled (cuts sequential 18s wait to ~2s)
+  // 3. Fallback: Fetch all sheets IN PARALLEL with 3.5s timeout per request
   const sheetsToFetch = [
     'DataServer',
     'DataWilayah',
@@ -1553,10 +1553,15 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, force
   await Promise.allSettled(
     sheetsToFetch.map(async (sheetName) => {
       try {
+        const subCtrl = new AbortController();
+        const subTimer = setTimeout(() => subCtrl.abort(), 3500);
         const res = await fetch(`${cleanUrl}?action=getData&sheet=${encodeURIComponent(sheetName)}`, {
           method: 'GET',
-          redirect: 'follow'
+          redirect: 'follow',
+          signal: subCtrl.signal
         });
+        clearTimeout(subTimer);
+
         if (res.ok) {
           const text = await res.text();
           try {
@@ -1567,7 +1572,7 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, force
           } catch {}
         }
       } catch (err) {
-        console.warn(`Failed parallel fetch for sheet ${sheetName}:`, err);
+        // Individual sheet fetch timed out or failed
       }
     })
   );
