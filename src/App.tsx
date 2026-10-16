@@ -174,7 +174,7 @@ export default function App() {
         const menuLabel = getViewMenuLabel(view);
         handlePullDatabaseRef.current(
           activeUrl,
-          true,
+          false,
           `Mengambil data ${menuLabel} dari Google Sheets...`
         ).catch(err => {
           console.warn(`Gagal menarik data untuk menu ${view}:`, err);
@@ -1282,21 +1282,7 @@ export default function App() {
       // Mark that initial data load from Google Sheets is complete
       isDataLoadedFromSheetsRef.current = true;
 
-      if (!silent) {
-        if (hasLoadedAny) {
-          showAppAlert({
-            title: 'Sinkronisasi Berhasil',
-            message: 'Berhasil menarik & menyinkronkan data terbaru dari Google Sheets!',
-            type: 'success'
-          });
-        } else {
-          showAppAlert({
-            title: 'Koneksi Berhasil',
-            message: 'Koneksi Google Sheets berhasil, tetapi spreadsheet belum memiliki data.',
-            type: 'info'
-          });
-        }
-      }
+      // Spinner will close automatically in finally block without showing success popup
       return true;
     } catch (err: any) {
       console.error('Error pulling from Google Sheets:', err);
@@ -2465,11 +2451,6 @@ export default function App() {
         const res = await sendToGoogleAppsScript(settings.googleAppsScriptUrl, payload);
         if (res.success) {
           setSettings(prev => ({ ...prev, isGoogleSheetConnected: true }));
-          showAppAlert({
-            title: 'Sinkronisasi Berhasil',
-            message: 'Semua data (Server, Wilayah, Pekerjaan, Karyawan, HonorLunas, PengaturanApp) telah berhasil disinkronkan ke Google Sheets.',
-            type: 'success'
-          });
         } else {
           showAppAlert({
             title: 'Gagal Terhubung',
@@ -2477,12 +2458,6 @@ export default function App() {
             type: 'error'
           });
         }
-      } else {
-        showAppAlert({
-          title: 'Tersimpan Lokal',
-          message: 'Data berhasil disinkronkan di penyimpanan lokal browser. (URL Google Sheets belum diatur di menu Pengaturan).',
-          type: 'info'
-        });
       }
     } catch (err: any) {
       showAppAlert({

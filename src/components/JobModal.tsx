@@ -384,71 +384,25 @@ const JobModalContent: React.FC<JobModalProps> = ({
         });
       }
     } else {
-      const savedDraft = StorageService.getJobDraft();
-      const todayStr = getEffectiveTodayISO();
-      const isAdmin = currentUser?.role === 'Admin';
-      const myId = currentUser?.role === 'Teknisi' ? currentUser.id : '';
-      const canDefault = isAdmin || (myId && checkTechAbsen(myId, todayStr));
-      const appSettings = settings || StorageService.getSettings();
-      const isJobHoliday = isHolidayDate(todayStr, appSettings).isHoliday;
-
-      const hasValidDraft = Boolean(
-        savedDraft &&
-        typeof savedDraft === 'object' &&
-        !savedDraft._editingJobId &&
-        (
-          savedDraft.catatan ||
-          savedDraft.jenisPekerjaanId ||
-          savedDraft.serverId ||
-          (Array.isArray(savedDraft.wilayahIds) && savedDraft.wilayahIds.length > 0) ||
-          Number(savedDraft.jumlahTitik) > 0 ||
-          Number(savedDraft.panjangKabelMeter) > 0 ||
-          (Array.isArray(savedDraft.buktiFotoUrls) && savedDraft.buktiFotoUrls.some((u: any) => Boolean(u && String(u).trim().length > 0))) ||
-          (savedDraft.teknisiUtamaId && savedDraft.teknisiUtamaId !== myId) ||
-          (Array.isArray(savedDraft.teknisiPendukungIds) && savedDraft.teknisiPendukungIds.length > 0) ||
-          savedDraft.adaLembur
-        )
-      );
-
-      if (hasValidDraft) {
-        setJobForm({
-          tanggal: savedDraft.tanggal || todayStr,
-          teknisiUtamaId: savedDraft.teknisiUtamaId || (canDefault ? myId : ''),
-          teknisiUtamaVehicle: savedDraft.teknisiUtamaVehicle || 'Inventaris',
-          teknisiPendukungIds: Array.isArray(savedDraft.teknisiPendukungIds) ? savedDraft.teknisiPendukungIds : [],
-          teknisiPendukungVehicles: savedDraft.teknisiPendukungVehicles || {},
-          jenisPekerjaanId: savedDraft.jenisPekerjaanId || '',
-          serverId: savedDraft.serverId || '',
-          wilayahIds: Array.isArray(savedDraft.wilayahIds) ? savedDraft.wilayahIds : [],
-          jumlahTitik: Number(savedDraft.jumlahTitik) || 0,
-          panjangKabelMeter: Number(savedDraft.panjangKabelMeter) || 0,
-          adaLembur: Boolean(savedDraft.adaLembur),
-          menitLembur: Number(savedDraft.menitLembur) || (isJobHoliday ? 60 : 0),
-          catatan: savedDraft.catatan || '',
-          buktiFotoUrls: Array.isArray(savedDraft.buktiFotoUrls) ? savedDraft.buktiFotoUrls : []
-        });
-        setLemburApprovedState(isAdmin || isJobHoliday || Boolean(savedDraft.adaLembur));
-        setHasDraftRestored(true);
-      } else {
-        setHasDraftRestored(false);
-        setLemburApprovedState(isAdmin || isJobHoliday);
-        setJobForm({
-          tanggal: todayStr,
-          teknisiUtamaId: canDefault ? myId : '',
-          teknisiUtamaVehicle: 'Inventaris',
-          teknisiPendukungIds: [],
-          teknisiPendukungVehicles: {},
-          jenisPekerjaanId: '',
-          serverId: '',
-          wilayahIds: [],
-          jumlahTitik: 0,
-          panjangKabelMeter: 0,
-          adaLembur: isJobHoliday,
-          menitLembur: isJobHoliday ? 60 : 0,
-          catatan: '',
-          buktiFotoUrls: []
-        });
-      }
+      StorageService.saveJobDraft(null);
+      setHasDraftRestored(false);
+      setLemburApprovedState(currentUser?.role === 'Admin');
+      setJobForm({
+        tanggal: getEffectiveTodayISO(),
+        teknisiUtamaId: '',
+        teknisiUtamaVehicle: 'Inventaris',
+        teknisiPendukungIds: [],
+        teknisiPendukungVehicles: {},
+        jenisPekerjaanId: '',
+        serverId: '',
+        wilayahIds: [],
+        jumlahTitik: 0,
+        panjangKabelMeter: 0,
+        adaLembur: false,
+        menitLembur: 0,
+        catatan: '',
+        buktiFotoUrls: []
+      });
     }
   }, [isOpen, editingJob?.id]);
 
