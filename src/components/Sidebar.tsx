@@ -152,9 +152,7 @@ const SidebarComponent: React.FC<SidebarProps> = ({
       pengaturan: isPengaturan
     });
 
-    if (activeView !== view) {
-      onSelectView(view);
-    }
+    onSelectView(view);
     // On smartphone / tablet screen (< 1024px), close sidebar drawer on navigation.
     // On desktop screen (>= 1024px), keep sidebar visible.
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {

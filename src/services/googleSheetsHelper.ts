@@ -159,18 +159,42 @@ function doGet(e) {
 
   if (action === 'getAllData') {
     var sheetNames = ['DataServer', 'DataWilayah', 'JenisPekerjaan', 'DataKaryawan', 'DaftarPekerjaan', 'PlanningPekerjaan', 'AbsensiHarian', 'ApprovalAbsensi', 'PotonganManual', 'HonorLunas', 'PengaturanApp'];
+    var allSheets = ss.getSheets();
+    var sheetMap = {};
+    for (var s = 0; s < allSheets.length; s++) {
+      sheetMap[allSheets[s].getName()] = allSheets[s];
+    }
     var result = {};
     for (var i = 0; i < sheetNames.length; i++) {
       var sName = sheetNames[i];
-      var sh = ss.getSheetByName(sName);
+      var sh = sheetMap[sName];
       if (sh) {
-        // Menggunakan getDisplayValues agar nilai jam kerja (08:00, 17:00) tidak diubah menjadi format tanggal ISO 1899
-        result[sName] = sh.getDataRange().getDisplayValues();
+        var lastRow = sh.getLastRow();
+        var lastCol = sh.getLastColumn();
+        if (lastRow > 0 && lastCol > 0) {
+          result[sName] = sh.getRange(1, 1, lastRow, lastCol).getDisplayValues();
+        } else {
+          result[sName] = [];
+        }
       }
     }
     return ContentService.createTextOutput(JSON.stringify({
       status: 'success',
       data: result
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (action === 'getData') {
+    var sheetName = e ? e.parameter.sheet : '';
+    if (!sheetName) return responseError('Parameter sheet diperlukan');
+    var sh = ss.getSheetByName(sheetName);
+    if (!sh) return responseError('Sheet tidak ditemukan: ' + sheetName);
+    var lastRow = sh.getLastRow();
+    var lastCol = sh.getLastColumn();
+    var values = (lastRow > 0 && lastCol > 0) ? sh.getRange(1, 1, lastRow, lastCol).getDisplayValues() : [];
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'success',
+      data: values
     })).setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -384,7 +408,7 @@ function doPost(e) {
         function normalizeDateForMatch(dStr) {
           if (!dStr) return '';
           var s = String(dStr).trim().split('T')[0];
-          var dmy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+          var dmy = s.match(/^([0-9]{1,2})[-/.]([0-9]{1,2})[-/.]([0-9]{2,4})$/);
           if (dmy) {
             var y = dmy[3].length === 2 ? ('20' + dmy[3]) : dmy[3];
             return y + '-' + ('0' + dmy[2]).slice(-2) + '-' + ('0' + dmy[1]).slice(-2);
@@ -1444,43 +1468,75 @@ export function parsePengaturanFromSheetRows(rows: any[][]): Partial<AppSettings
   return settingsObj;
 }
 
-// Helper to fetch live database from Google Sheets
-export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string) {
-  const cleanUrl = scriptUrl.trim();
-  const result: Record<string, any[][]> = {};
+// In-memory client cache to make menu switching and repeat calls fast & lightweight
+let cachedFullDatabase: { data: Record<string, any[][]>; timestamp: number } | null = null;
+const CLIENT_CACHE_TTL_MS = 15000; // 15 seconds fast client cache
 
-  // 1. Try via server proxy first (avoids browser iframe CORS or redirect restrictions)
-  try {
-    const proxyRes = await fetch(`/api/proxy/sheets?url=${encodeURIComponent(cleanUrl)}&action=getAllData`);
-    const cType = proxyRes.headers.get('content-type') || '';
-    if (proxyRes.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
-      const json = await proxyRes.json();
-      if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
-        return json.data as Record<string, any[][]>;
-      }
-    }
-  } catch (proxyErr) {
-    console.warn('Proxy fetch failed, falling back to direct fetch:', proxyErr);
+export function invalidateClientDatabaseCache() {
+  cachedFullDatabase = null;
+}
+
+// Helper to fetch live database from Google Sheets
+export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, forceRefresh = false) {
+  const cleanUrl = scriptUrl.trim();
+  if (!cleanUrl) return {};
+
+  const now = Date.now();
+  if (!forceRefresh && cachedFullDatabase && (now - cachedFullDatabase.timestamp < CLIENT_CACHE_TTL_MS)) {
+    return cachedFullDatabase.data;
   }
 
-  // 2. Direct fetch with CORS mode and redirect follow
+  const result: Record<string, any[][]> = {};
+
+  // 1. Try via server proxy first with 4.5s timeout (avoids browser iframe CORS or redirect restrictions)
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4500);
+    const proxyRes = await fetch(`/api/proxy/sheets?url=${encodeURIComponent(cleanUrl)}&action=getAllData${forceRefresh ? '&force=true' : ''}`, {
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+
+    if (proxyRes.ok) {
+      const text = await proxyRes.text();
+      try {
+        const json = JSON.parse(text);
+        if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
+          cachedFullDatabase = { data: json.data, timestamp: Date.now() };
+          return json.data as Record<string, any[][]>;
+        }
+      } catch {}
+    }
+  } catch (proxyErr) {
+    // Proxy not reachable or timed out, will proceed with direct fetch
+  }
+
+  // 2. Direct fetch with CORS mode and redirect follow (without custom headers to prevent CORS preflight blocking)
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(`${cleanUrl}?action=getAllData`, {
       method: 'GET',
       redirect: 'follow',
-      headers: { 'Accept': 'application/json' }
+      signal: controller.signal
     });
-    const cType = res.headers.get('content-type') || '';
-    if (res.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
-      const json = await res.json();
-      if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
-        return json.data as Record<string, any[][]>;
-      }
+    clearTimeout(timer);
+
+    if (res.ok) {
+      const text = await res.text();
+      try {
+        const json = JSON.parse(text);
+        if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
+          cachedFullDatabase = { data: json.data, timestamp: Date.now() };
+          return json.data as Record<string, any[][]>;
+        }
+      } catch {}
     }
   } catch (e) {
-    console.warn('getAllData direct fetch failed, trying individual sheet fetch:', e);
+    console.warn('getAllData direct fetch failed, trying parallel sheet fetch:', e);
   }
 
+  // 3. Fallback: Fetch all sheets IN PARALLEL via Promise.allSettled (cuts sequential 18s wait to ~2s)
   const sheetsToFetch = [
     'DataServer',
     'DataWilayah',
@@ -1494,37 +1550,30 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string) {
     'PengaturanApp'
   ];
 
-  for (const sheetName of sheetsToFetch) {
-    try {
-      let json: any = null;
-      // Try proxy first
+  await Promise.allSettled(
+    sheetsToFetch.map(async (sheetName) => {
       try {
-        const proxyRes = await fetch(`/api/proxy/sheets?url=${encodeURIComponent(cleanUrl)}&action=getData&sheet=${encodeURIComponent(sheetName)}`);
-        const cType = proxyRes.headers.get('content-type') || '';
-        if (proxyRes.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
-          json = await proxyRes.json();
-        }
-      } catch {}
-
-      // Fallback direct
-      if (!json || json.status !== 'success') {
         const res = await fetch(`${cleanUrl}?action=getData&sheet=${encodeURIComponent(sheetName)}`, {
           method: 'GET',
-          redirect: 'follow',
-          headers: { 'Accept': 'application/json' }
+          redirect: 'follow'
         });
-        const cType = res.headers.get('content-type') || '';
-        if (res.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
-          json = await res.json();
+        if (res.ok) {
+          const text = await res.text();
+          try {
+            const json = JSON.parse(text);
+            if (json && json.status === 'success' && Array.isArray(json.data)) {
+              result[sheetName] = json.data;
+            }
+          } catch {}
         }
+      } catch (err) {
+        console.warn(`Failed parallel fetch for sheet ${sheetName}:`, err);
       }
+    })
+  );
 
-      if (json && json.status === 'success' && Array.isArray(json.data)) {
-        result[sheetName] = json.data;
-      }
-    } catch (err) {
-      console.warn(`Failed to fetch sheet ${sheetName}:`, err);
-    }
+  if (Object.keys(result).length > 0) {
+    cachedFullDatabase = { data: result, timestamp: Date.now() };
   }
 
   return result;

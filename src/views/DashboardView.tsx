@@ -45,7 +45,6 @@ import { HonorCalculator } from '../components/HonorCalculator';
 import { SafeImage } from '../components/SafeImage';
 import { isValidPhotoUrl } from '../utils/imageHelper';
 import { EditPresensiModal } from '../components/EditPresensiModal';
-import { OnlineTechnicianTrendChart } from '../components/OnlineTechnicianTrendChart';
 import { useNetworkStatus } from '../utils/networkCheck';
 import { InternetStatusBadge } from '../components/InternetStatusBadge';
 
@@ -1148,14 +1147,6 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
             </div>
           </div>
         </div>
-
-        {/* FULL WIDTH Grafik Tren Teknisi Online 24 Jam Terakhir */}
-        <OnlineTechnicianTrendChart
-          servers={servers}
-          initialServerFilter={onlineTechServerFilter}
-          isPjServer={isPjServer}
-          userServer={userServer}
-        />
       </div>
 
       {/* ========================================================================= */}

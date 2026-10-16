@@ -606,8 +606,18 @@ app.get('/api/proxy/sheets', async (req, res) => {
       targetUrl += `&sheet=${encodeURIComponent(sheet)}`;
     }
 
-    const response = await fetch(targetUrl);
-    const data = await response.json();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const response = await fetch(targetUrl, { redirect: 'follow', signal: controller.signal });
+    clearTimeout(timeout);
+
+    const text = await response.text();
+    let data: any = null;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return res.status(502).json({ success: false, error: 'Respons dari Google Apps Script bukan JSON valid' });
+    }
 
     if (data && data.status === 'success') {
       GAS_PROXY_CACHE.set(cacheKey, { data, timestamp: now });

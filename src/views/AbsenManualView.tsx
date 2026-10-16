@@ -81,7 +81,6 @@ const AbsenManualViewComponent: React.FC<AbsenManualViewProps> = ({
   const [kategoriAlasan, setKategoriAlasan] = useState<string>(() => initialManualDraft?.kategoriAlasan || 'Kendala Jaringan / Sinyal');
   const [catatanAlasan, setCatatanAlasan] = useState<string>(() => initialManualDraft?.catatanAlasan || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
   // Auto-save draft
   React.useEffect(() => {
@@ -266,6 +265,43 @@ const AbsenManualViewComponent: React.FC<AbsenManualViewProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Direct Resolve: 1-click execution for problematic jobs with Maroon Loading Spinner
+  const handleDirectResolve = async (item: typeof problemJobs[0]) => {
+    const targetServer = servers.find(s => s.id === item.job.serverId || s.id === item.tech.serverId) || servers[0];
+    const fullAlasan = `[Absen Manual Admin] Koreksi Pekerjaan Tanpa Absen: ${item.job.subPekerjaanNama || item.job.jenisPekerjaanNama}`;
+    setIsSubmitting(true);
+    try {
+      await onSaveAttendance({
+        id: item.existingRecord?.id || `att-manual-${Date.now()}`,
+        tanggal: item.cleanTanggal,
+        teknisiId: item.tech.id,
+        teknisiNama: item.tech.namaLengkap,
+        jamMasuk: item.existingRecord?.jamMasuk && item.existingRecord.jamMasuk !== '-' ? item.existingRecord.jamMasuk : '08:00',
+        jamPulang: '17:00',
+        serverId: targetServer ? targetServer.id : '',
+        serverNama: targetServer ? targetServer.namaServer : 'Server Utama',
+        status: 'Hadir',
+        isApproved: true,
+        needsApproval: false,
+        isWithinRadius: true,
+        distanceMeter: 10,
+        potonganOtomatis: 0,
+        isManual: true,
+        keterangan: fullAlasan,
+        keteranganPulang: 'Absen pulang diverifikasi Admin (Manual)'
+      });
+    } catch (err: any) {
+      console.error('Error direct resolving attendance:', err);
+      showAppAlert({
+        title: 'Gagal Menyimpan',
+        message: `Terjadi kendala saat menyimpan absensi manual: ${err?.message || 'Silakan coba lagi.'}`,
+        type: 'error'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -327,10 +363,6 @@ const AbsenManualViewComponent: React.FC<AbsenManualViewProps> = ({
         keteranganPulang: isPulangIncluded ? 'Absen pulang diverifikasi Admin (Manual)' : '-'
       });
 
-      setSuccessBanner(
-        `Absen manual untuk ${tech.namaLengkap} pada tanggal ${cleanTgl} berhasil disimpan dan disetujui! Data pekerjaan pada tanggal tersebut kini valid untuk perhitungan rekap honor.`
-      );
-
       // Reset form but keep date for consecutive entries
       StorageService.clearManualAttendanceDraft();
       setCatatanAlasan('');
@@ -355,7 +387,6 @@ const AbsenManualViewComponent: React.FC<AbsenManualViewProps> = ({
     setIsPulangIncluded(true);
     setStatusKehadiran('Hadir');
     setCatatanAlasan('');
-    setSuccessBanner(null);
   };
 
   // Filtered attendance records for Table View (only computed on riwayat tab)
@@ -450,25 +481,6 @@ const AbsenManualViewComponent: React.FC<AbsenManualViewProps> = ({
           )}
         </div>
       </div>
-
-      {/* Success Notification Banner */}
-      {successBanner && (
-        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl text-xs font-semibold flex items-start justify-between shadow-xs animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="flex items-start space-x-2.5 text-left">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-            <div className="text-left">
-              <p className="font-bold text-emerald-950">Berhasil Disimpan!</p>
-              <p className="mt-0.5 text-emerald-800">{successBanner}</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setSuccessBanner(null)}
-            className="text-emerald-700 hover:text-emerald-950 font-bold px-2 py-1 text-xs"
-          >
-            Tutup
-          </button>
-        </div>
-      )}
 
       {/* Navigation Tabs */}
       <div className="flex items-center justify-start gap-2 border-b border-slate-200 pb-2 overflow-x-auto text-left">
@@ -833,8 +845,9 @@ const AbsenManualViewComponent: React.FC<AbsenManualViewProps> = ({
                       </p>
                       <button
                         type="button"
-                        onClick={() => handleQuickResolve(item)}
-                        className="w-full mt-1 px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10px] font-bold flex items-center justify-center space-x-1 cursor-pointer"
+                        onClick={() => handleDirectResolve(item)}
+                        disabled={isSubmitting}
+                        className="w-full mt-1 px-2 py-1 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-lg text-[10px] font-bold flex items-center justify-center space-x-1 cursor-pointer"
                       >
                         <Zap className="w-3 h-3" />
                         <span>Absenkan Sekarang</span>
@@ -916,11 +929,19 @@ const AbsenManualViewComponent: React.FC<AbsenManualViewProps> = ({
                   </div>
 
                   <button
-                    onClick={() => handleQuickResolve(item)}
-                    className="w-full py-2 bg-maroon-800 hover:bg-maroon-900 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 shadow-xs transition-all cursor-pointer"
+                    onClick={() => handleDirectResolve(item)}
+                    disabled={isSubmitting}
+                    className="w-full py-2 bg-maroon-800 hover:bg-maroon-900 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 shadow-xs transition-all cursor-pointer"
                   >
                     <Zap className="w-4 h-4 text-amber-300" />
                     <span>Input Absen Sekarang (Masuk 08:00 & Pulang 17:00)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickResolve(item)}
+                    className="w-full text-center text-[11px] font-semibold text-slate-500 hover:text-maroon-800 transition-colors py-0.5"
+                  >
+                    Atur Jam / Alasan Khusus di Form &rarr;
                   </button>
                 </div>
               ))}

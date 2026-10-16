@@ -43,6 +43,7 @@ import {
   sanitizeDateString,
   sanitizeTimeString,
   evaluateAttendanceApproval,
+  invalidateClientDatabaseCache,
   isHolidayDate,
   sendLemburStatusToSheets,
   uploadPhotoToGoogleDrive,
@@ -57,6 +58,51 @@ import { showAppAlert, showAppConfirm } from './utils/dialogService';
 import { Plus, X } from 'lucide-react';
 import { NotificationService } from './services/notificationService';
 import { AdminNotificationToast } from './components/AdminNotificationToast';
+import { MaroonLoadingOverlay } from './components/MaroonLoadingOverlay';
+
+// Helper label untuk judul loading menu
+const getViewMenuLabel = (view: NavView): string => {
+  switch (view) {
+    case 'master_server':
+      return 'Data Server';
+    case 'master_wilayah':
+      return 'Data Wilayah';
+    case 'master_jenis_pekerjaan':
+      return 'Data Jenis Pekerjaan';
+    case 'master_karyawan':
+      return 'Data Karyawan';
+    case 'pekerjaan_daftar':
+      return 'Daftar Pekerjaan';
+    case 'pekerjaan_planning':
+      return 'Planning Pekerjaan';
+    case 'approval_absensi':
+    case 'approval_perlu':
+    case 'approval_harian':
+    case 'approval_izin':
+    case 'approval_histori':
+      return 'Approval & Absensi';
+    case 'rekap_honor':
+    case 'potongan_manual':
+      return 'Rekap Honor';
+    case 'absen_manual':
+    case 'absen_manual_form':
+    case 'absen_manual_pekerjaan':
+    case 'absen_manual_riwayat':
+      return 'Absensi Manual';
+    case 'pengaturan':
+    case 'pengaturan_profil':
+    case 'pengaturan_jam_kerja':
+    case 'pengaturan_notifikasi':
+    case 'pengaturan_google_sheets':
+    case 'pengaturan_panduan_sheets':
+      return 'Pengaturan';
+    case 'teknisi_dashboard':
+      return 'Dashboard Teknisi';
+    case 'dashboard':
+    default:
+      return 'Dashboard';
+  }
+};
 
 export default function App() {
   // Persistence Data States
@@ -93,7 +139,21 @@ export default function App() {
 
   const [isBootstrapLoaded, setIsBootstrapLoaded] = useState(false);
 
-  // Optimized view switching to keep UI instant, crisp, and responsive
+  // Maroon theme loading overlay state for startup and menu navigation
+  const [loadingOverlay, setLoadingOverlay] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: true,
+    title: 'Please Wait...',
+    message: 'Mengambil data dari Google Sheets...'
+  });
+
+  const handlePullDatabaseRef = useRef<((urlOverride?: string, silent?: boolean, customMessage?: string, forceRefresh?: boolean) => Promise<boolean>) | null>(null);
+  const lastPulledViewRef = useRef<{ [view: string]: number }>({});
+
+  // Optimized view switching with on-demand Google Sheets fetch and maroon loading spinner
   const handleSelectView = useCallback((view: NavView) => {
     if (typeof window !== 'undefined') {
       try {
@@ -101,7 +161,26 @@ export default function App() {
       } catch {}
     }
     setActiveView(view);
-  }, []);
+
+    // Ambil data terbaru Google Sheets saat membuka menu dengan tanda loading spinner maroon
+    const activeUrl = settings.googleAppsScriptUrl?.trim();
+    if (activeUrl && handlePullDatabaseRef.current) {
+      const now = Date.now();
+      const lastPull = lastPulledViewRef.current[view] || 0;
+      // Beri batas minimal 2.5 detik jika mengklik menu yang sama agar tidak spam network
+      if (now - lastPull > 2500) {
+        lastPulledViewRef.current[view] = now;
+        const menuLabel = getViewMenuLabel(view);
+        handlePullDatabaseRef.current(
+          activeUrl,
+          true,
+          `Mengambil data ${menuLabel} dari Google Sheets...`
+        ).catch(err => {
+          console.warn(`Gagal menarik data untuk menu ${view}:`, err);
+        });
+      }
+    }
+  }, [settings.googleAppsScriptUrl]);
 
   // Point 2: Pada tampilan desktop navigasi sidebar selalu tampil (default open),
   // pada smartphone default tertutup (harus klik tombol icon menu garis 3 untuk menampilkan).
@@ -455,22 +534,11 @@ export default function App() {
       }
     };
 
-    // Execute immediately on mount/user change
+    // Execute once on mount/user change
     syncCrossDeviceState();
-    // 30-second interval for background multi-device sync (saves CPU, memory, and battery on low-end devices)
-    const interval = setInterval(syncCrossDeviceState, 30000);
-
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        syncCrossDeviceState();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [currentUser]);
 
@@ -813,7 +881,7 @@ export default function App() {
   };
 
   // SOP Guard: Teknisi must have checked in and not checked out yet today before opening Quick Job form
-  const handleOpenQuickJobWithSOPCheck = useCallback(() => {
+  const handleOpenQuickJobWithSOPCheck = useCallback(async () => {
     // 1. Internet connection check
     if (!isDeviceOnline()) {
       showAppAlert({
@@ -863,8 +931,22 @@ export default function App() {
       }
     }
 
+    // Ambil data terbaru formulir pekerjaan dari Google Sheets dengan tanda loading spinner
+    const activeUrl = settings.googleAppsScriptUrl?.trim();
+    if (activeUrl && handlePullDatabaseRef.current) {
+      try {
+        await handlePullDatabaseRef.current(
+          activeUrl,
+          true,
+          'Mengambil data formulir pekerjaan dari Google Sheets...'
+        );
+      } catch (err) {
+        console.warn('Gagal memuat formulir pekerjaan:', err);
+      }
+    }
+
     setIsQuickJobModalOpen(true);
-  }, [currentUser, attendanceList]);
+  }, [currentUser, attendanceList, settings.googleAppsScriptUrl]);
 
   // Memoized navigation callbacks for TeknisiDashboardView
   const handleTeknisiMainTabChange = useCallback((tab: string) => {
@@ -913,7 +995,11 @@ export default function App() {
     planningTasks?: PlanningTask[];
     attendanceList?: AttendanceRecord[];
     potonganManualList?: PotonganManual[];
+    honorLunasList?: HonorLunasRecord[];
     settings?: AppSettings;
+    showLoading?: boolean;
+    loadingTitle?: string;
+    loadingMessage?: string;
   }): Promise<{ success: boolean; message?: string }> => {
     const url = (overrides?.settings?.googleAppsScriptUrl || settings.googleAppsScriptUrl || '').trim();
     if (!url) {
@@ -932,6 +1018,15 @@ export default function App() {
       return { success: false, message: 'Dataset kosong, sinkronisasi dibatalkan untuk keamanan data.' };
     }
 
+    const shouldShowLoading = overrides?.showLoading !== false;
+    if (shouldShowLoading) {
+      setLoadingOverlay({
+        isOpen: true,
+        title: overrides?.loadingTitle || 'Menyimpan...',
+        message: overrides?.loadingMessage || 'Menyimpan perubahan ke database Google Sheets...'
+      });
+    }
+
     try {
       setIsSyncing(true);
       const payload = buildGoogleSheetsSyncPayload({
@@ -947,6 +1042,7 @@ export default function App() {
       });
 
       const res = await sendToGoogleAppsScript(url, payload);
+      invalidateClientDatabaseCache();
       if (!settings.isGoogleSheetConnected && res.success) {
         setSettings(prev => ({ ...prev, isGoogleSheetConnected: true }));
       }
@@ -956,11 +1052,19 @@ export default function App() {
       return { success: false, message: err.message || 'Gagal mengirim data ke Google Sheets' };
     } finally {
       setIsSyncing(false);
+      if (shouldShowLoading) {
+        setLoadingOverlay(prev => ({ ...prev, isOpen: false }));
+      }
     }
   };
 
-  // Pull database from Google Sheets into application state
-  const handlePullDatabase = async (urlOverride?: string, silent = false): Promise<boolean> => {
+  // Pull database from Google Sheets into application state with Maroon Loading Overlay
+  const handlePullDatabase = async (
+    urlOverride?: string,
+    silent = false,
+    customMessage?: string,
+    forceRefresh = false
+  ): Promise<boolean> => {
     const scriptUrl = (urlOverride || settings.googleAppsScriptUrl || '').trim();
     if (!scriptUrl) {
       if (!silent) {
@@ -974,11 +1078,17 @@ export default function App() {
       return false;
     }
 
+    setLoadingOverlay({
+      isOpen: true,
+      title: 'Please Wait...',
+      message: customMessage || 'Mengambil data dari Google Sheets...'
+    });
+
     if (!silent) {
       setIsSyncing(true);
     }
     try {
-      const rawSheets = await fetchFullDatabaseFromGoogleSheets(scriptUrl);
+      const rawSheets = await fetchFullDatabaseFromGoogleSheets(scriptUrl, forceRefresh);
       const parsed = parseParsedSheetsToState(rawSheets);
 
       let hasLoadedAny = false;
@@ -1172,8 +1282,14 @@ export default function App() {
       if (!silent) {
         setIsSyncing(false);
       }
+      setLoadingOverlay(prev => ({ ...prev, isOpen: false }));
     }
   };
+
+  // Keep handlePullDatabaseRef synchronized
+  useEffect(() => {
+    handlePullDatabaseRef.current = handlePullDatabase;
+  });
 
   // Cross-device server bootstrap & auto-pull on initial mount
   useEffect(() => {
@@ -1253,63 +1369,27 @@ export default function App() {
           }
         }
 
-        // 2. Selalu tarik data terbaru dari Google Sheets secara background saat bootstrap
-        // sehingga seluruh pekerjaan baru, absensi baru, atau perubahan di Google Sheets langsung masuk ke aplikasi
+        // 2. Tarik data terbaru dari Google Sheets saat aplikasi pertama dibuka dengan tanda loading spinner
         if (activeScriptUrl) {
-          handlePullDatabase(activeScriptUrl, true).catch(err => {
-            console.warn('Background pull on bootstrap failed:', err);
-          }).finally(() => {
-            isDataLoadedFromSheetsRef.current = true;
-            setIsBootstrapLoaded(true);
+          await handlePullDatabase(
+            activeScriptUrl,
+            true,
+            'Mengambil data dari Google Sheets...'
+          ).catch(err => {
+            console.warn('Bootstrap pull failed:', err);
           });
-        } else {
-          isDataLoadedFromSheetsRef.current = true;
-          setIsBootstrapLoaded(true);
         }
       } catch (err) {
         console.warn('Bootstrap initialization error:', err);
+      } finally {
         isDataLoadedFromSheetsRef.current = true;
         setIsBootstrapLoaded(true);
+        setLoadingOverlay(prev => ({ ...prev, isOpen: false }));
       }
     };
 
     initCrossDeviceBootstrap();
   }, []);
-
-  // Sinkronisasi otomatis 2 arah dari Google Sheets di latar belakang:
-  // Berkala setiap 120 detik secara efisien tanpa mengganggu atau membekukan interaksi UI
-  useEffect(() => {
-    const scriptUrl = settings.googleAppsScriptUrl?.trim();
-    if (!scriptUrl) return;
-
-    let lastPullTime = Date.now();
-
-    const doBackgroundPull = () => {
-      const now = Date.now();
-      // Throttle: minimal 90 detik antar background auto-pull agar hemat kuota & tidak membekukan form
-      if (now - lastPullTime < 90000) return;
-      lastPullTime = now;
-      handlePullDatabase(scriptUrl, true).catch(() => {});
-    };
-
-    const interval = setInterval(doBackgroundPull, 120000);
-
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        const now = Date.now();
-        if (now - lastPullTime >= 90000) {
-          doBackgroundPull();
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, [settings.googleAppsScriptUrl]);
 
   // Clear local storage and pull clean data from Google Sheets
   const handleClearLocalDataAndSync = async () => {
@@ -1568,7 +1648,11 @@ export default function App() {
     // PENTING: Jangan simpan ke localStorage sebelum Google Sheets mengonfirmasi penerimaan data
     let syncResult: { success: boolean; message?: string } = { success: false };
     try {
-      syncResult = await sendSyncToGoogleSheets({ jobs: next });
+      syncResult = await sendSyncToGoogleSheets({
+        jobs: next,
+        loadingTitle: 'Menyimpan Pekerjaan...',
+        loadingMessage: 'Menyimpan data pekerjaan ke Google Sheets...'
+      });
     } catch (err: any) {
       return {
         success: false,
@@ -1901,8 +1985,11 @@ export default function App() {
     setAttendanceList(consolidated);
     StorageService.saveAttendance(consolidated);
     StorageService.syncServerState({ attendanceList: consolidated });
-    isDataLoadedFromSheetsRef.current = true;
-    return await sendSyncToGoogleSheets({ attendanceList: consolidated });
+    return await sendSyncToGoogleSheets({
+      attendanceList: consolidated,
+      loadingTitle: 'Menyimpan Absensi...',
+      loadingMessage: `Menyimpan data absen manual ke database Google Sheets...`
+    });
   };
 
   const handleRequestLeave = (leave: Partial<LeaveRequest>) => {
@@ -2930,6 +3017,16 @@ export default function App() {
           )}
         </>
       )}
+
+      {/* Maroon Theme Loading Overlay for Initial Boot & Menu Navigations */}
+      <MaroonLoadingOverlay
+        isOpen={loadingOverlay.isOpen}
+        title={loadingOverlay.title}
+        message={loadingOverlay.message}
+        logoUrl={settings.logoUrl}
+        companyName={settings.namaPerusahaan}
+        onDismiss={() => setLoadingOverlay(prev => ({ ...prev, isOpen: false }))}
+      />
 
       {/* Global Modern App Dialog */}
       <AppDialog />

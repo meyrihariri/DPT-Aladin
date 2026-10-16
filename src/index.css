@@ -173,3 +173,22 @@
     transform: translateZ(0);
   }
 }
+
+/* =========================================================
+   Maroon Loading Spinner Wave Animation
+   ========================================================= */
+@keyframes waveBar {
+  0%, 100% {
+    transform: scaleY(0.35);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.animate-wave-bar {
+  animation: waveBar 1.1s ease-in-out infinite;
+  transform-origin: bottom center;
+}

@@ -23,9 +23,7 @@ const BottomNavComponent: React.FC<BottomNavProps> = ({
     : activeView === 'dashboard' || activeView === 'teknisi_dashboard';
 
   const handleNavClick = (target: NavView) => {
-    if (activeView !== target) {
-      onSelectView(target);
-    }
+    onSelectView(target);
   };
 
   return (
