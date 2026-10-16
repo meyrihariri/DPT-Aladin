@@ -463,7 +463,7 @@ const MasterPekerjaanViewComponent: React.FC<MasterPekerjaanViewProps> = ({
         if (!matchesSearch) return false;
       }
       return true;
-    });
+    }).sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
   }, [jobs, filterStartDate, filterEndDate, filterServerId, filterTeknisiId, filterLemburStatus, searchQuery, servers, isPjServer, userServer, isTeknisi, currentUser]);
 
   // Summary statistics for the currently filtered jobs

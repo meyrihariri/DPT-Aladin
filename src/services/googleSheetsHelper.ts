@@ -916,6 +916,46 @@ export function buildGoogleSheetsSyncPayload(data: {
     ? '[Logo Image (Base64)]'
     : logoStr;
 
+  // Google Sheets Requirement: Data baru yang ditulis dari aplikasi diletakkan pada baris paling bawah.
+  // Maka seluruh riwayat transaksi diurutkan ASCENDING (tanggal terlama di atas, tanggal terbaru di baris paling bawah).
+  const sortedJobsForSheets = [...(data.jobs || [])].sort((a, b) => {
+    const dA = sanitizeDateString(a.tanggal) || '';
+    const dB = sanitizeDateString(b.tanggal) || '';
+    if (dA !== dB) return dA.localeCompare(dB);
+    return (a.id || '').localeCompare(b.id || '');
+  });
+
+  const sortedAttendanceForSheets = [...(data.attendanceList || [])].sort((a, b) => {
+    const dA = sanitizeDateString(a.tanggal) || '';
+    const dB = sanitizeDateString(b.tanggal) || '';
+    if (dA !== dB) return dA.localeCompare(dB);
+    const tA = sanitizeTimeString(a.jamMasuk, '');
+    const tB = sanitizeTimeString(b.jamMasuk, '');
+    if (tA !== tB) return tA.localeCompare(tB);
+    return (a.id || '').localeCompare(b.id || '');
+  });
+
+  const sortedPlanningForSheets = [...(data.planningTasks || [])].sort((a, b) => {
+    const dA = sanitizeDateString(a.tanggal) || '';
+    const dB = sanitizeDateString(b.tanggal) || '';
+    if (dA !== dB) return dA.localeCompare(dB);
+    return (a.id || '').localeCompare(b.id || '');
+  });
+
+  const sortedPotonganForSheets = [...(data.potonganManualList || [])].sort((a, b) => {
+    const dA = sanitizeDateString(a.tanggal) || '';
+    const dB = sanitizeDateString(b.tanggal) || '';
+    if (dA !== dB) return dA.localeCompare(dB);
+    return (a.id || '').localeCompare(b.id || '');
+  });
+
+  const sortedHonorLunasForSheets = [...(data.honorLunasList || [])].sort((a, b) => {
+    const dA = sanitizeDateString(a.tanggalLunas) || '';
+    const dB = sanitizeDateString(b.tanggalLunas) || '';
+    if (dA !== dB) return dA.localeCompare(dB);
+    return (a.id || '').localeCompare(b.id || '');
+  });
+
   const rawTables = {
     DataServer: [
       ['ID', 'Nama Server', 'Penanggung Jawab ID', 'Nama Penanggung Jawab', 'Alamat', 'Latitude', 'Longitude', 'Toleransi Radius (m)', 'Honor Tetap Teknisi', 'Target Pekerjaan Bulanan', 'Bonus Target Bulanan', 'Kontak PJ'],
@@ -969,7 +1009,7 @@ export function buildGoogleSheetsSyncPayload(data: {
     ],
     DaftarPekerjaan: [
       ['ID', 'Tanggal', 'Teknisi Utama', 'Teknisi Pendukung', 'Kendaraan Teknisi', 'Jenis ID', 'Jenis Nama', 'Sub Pekerjaan', 'Server ID', 'Nama Server', 'Wilayah Pengerjaan', 'Transport Wilayah', 'Jumlah Titik', 'Panjang Kabel (m)', 'Ada Lembur', 'Menit Lembur', 'Status Lembur', 'Lembur Disetujui Oleh', 'Waktu ACC Lembur', 'Estimasi Total Honor', 'Honor Per Teknisi', 'Bukti Foto URLs', 'Catatan'],
-      ...data.jobs.map(j => {
+      ...sortedJobsForSheets.map(j => {
         const mainTechNama = j.teknisiNamas?.[0] || '';
         const supportTechNamas = (j.teknisiNamas || []).slice(1).join(', ') || '-';
         const vehiclesDetail = j.teknisiVehicles
@@ -1038,13 +1078,13 @@ export function buildGoogleSheetsSyncPayload(data: {
     ],
     PlanningPekerjaan: [
       ['ID', 'Tanggal', 'Target Teknisi IDs', 'Target Teknisi Namas', 'Server ID', 'Nama Server', 'Jenis ID', 'Sub Pekerjaan', 'Detail Pekerjaan', 'Foto Lokasi URL', 'Status'],
-      ...data.planningTasks.map(p => [
+      ...sortedPlanningForSheets.map(p => [
         p.id, sanitizeDateString(p.tanggal), (p.targetTeknisiIds || []).join(','), (p.targetTeknisiNamas || []).join(','), p.serverId, p.namaServer, p.jenisPekerjaanId, p.subPekerjaanNama, p.detailPekerjaan, p.fotoLokasiUrl, p.status
       ])
     ],
     AbsensiHarian: [
       ['ID', 'Tanggal', 'Teknisi ID', 'Nama Teknisi', 'Jam Masuk', 'Foto Masuk Kamera', 'Jam Pulang', 'Foto Pulang Kamera', 'Server ID', 'Nama Server', 'Jarak ke Server (m)', 'Dalam Radius', 'Status', 'Keterangan', 'Potongan Otomatis'],
-      ...data.attendanceList.map(a => {
+      ...sortedAttendanceForSheets.map(a => {
         const isPending = Boolean(a.needsApproval || a.status === 'Pending Approval');
         const rawMasuk = sanitizePhotoUrl(a.fotoProofUrl);
         const rawPulang = sanitizePhotoUrl(a.fotoPulangUrl);
@@ -1086,7 +1126,7 @@ export function buildGoogleSheetsSyncPayload(data: {
     ],
     ApprovalAbsensi: [
       ['ID', 'Tanggal', 'Teknisi ID', 'Teknisi Nama', 'Jam Masuk', 'Jam Pulang', 'Latitude', 'Longitude', 'Jarak (m)', 'Dalam Radius', 'Foto Proof URL', 'Status', 'Needs Approval', 'Approval Type', 'Potongan Otomatis'],
-      ...data.attendanceList.map(a => {
+      ...sortedAttendanceForSheets.map(a => {
         const isPending = Boolean(a.needsApproval || a.status === 'Pending Approval');
         const rawMasuk = sanitizePhotoUrl(a.fotoProofUrl);
         const cleanFotoMasuk = rawMasuk && rawMasuk.startsWith('data:image') && rawMasuk.length > 500
@@ -1137,7 +1177,7 @@ export function buildGoogleSheetsSyncPayload(data: {
     ],
     PotonganManual: [
       ['ID', 'Tanggal', 'Karyawan ID', 'Nama Karyawan', 'Server ID', 'Nama Server', 'Jenis Potongan', 'Nominal', 'Keterangan', 'Dibuat Oleh'],
-      ...(data.potonganManualList || []).map(p => [
+      ...sortedPotonganForSheets.map(p => [
         p.id,
         sanitizeDateString(p.tanggal),
         p.karyawanId,
@@ -1152,7 +1192,7 @@ export function buildGoogleSheetsSyncPayload(data: {
     ],
     HonorLunas: [
       ['ID', 'Tanggal Lunas', 'Periode Awal', 'Periode Akhir', 'Teknisi ID', 'Nama Teknisi', 'Status', 'Server ID', 'Nama Server', 'Total Pekerjaan', 'Honor Tetap', 'Honor PJ Wilayah', 'Honor Dasar', 'Honor Titik', 'Honor Kabel', 'Honor Lembur', 'Transport Kendaraan', 'Bonus Target', 'Potongan Absen', 'Potongan Kasbon', 'Total Honor Nett', 'Job IDs', 'Dilunaskan Oleh', 'Waktu Pelunasan', 'Catatan'],
-      ...(data.honorLunasList || []).map(hl => [
+      ...sortedHonorLunasForSheets.map(hl => [
         hl.id,
         sanitizeDateString(hl.tanggalLunas),
         sanitizeDateString(hl.periodeAwal),
