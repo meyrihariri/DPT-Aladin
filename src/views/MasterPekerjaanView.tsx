@@ -463,7 +463,15 @@ const MasterPekerjaanViewComponent: React.FC<MasterPekerjaanViewProps> = ({
         if (!matchesSearch) return false;
       }
       return true;
-    }).sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+    }).sort((a, b) => {
+      const cmp = (b.tanggal || '').localeCompare(a.tanggal || '');
+      if (cmp !== 0) return cmp;
+      const mA = String(a.id || '').match(/(\d+)/g);
+      const mB = String(b.id || '').match(/(\d+)/g);
+      const nA = mA && mA.length > 0 ? Number(mA[mA.length - 1]) || 0 : 0;
+      const nB = mB && mB.length > 0 ? Number(mB[mB.length - 1]) || 0 : 0;
+      return nB - nA;
+    });
   }, [jobs, filterStartDate, filterEndDate, filterServerId, filterTeknisiId, filterLemburStatus, searchQuery, servers, isPjServer, userServer, isTeknisi, currentUser]);
 
   // Summary statistics for the currently filtered jobs
@@ -3407,4 +3415,19 @@ const MasterPekerjaanViewComponent: React.FC<MasterPekerjaanViewProps> = ({
   );
 };
 
-export const MasterPekerjaanView: React.FC<MasterPekerjaanViewProps> = React.memo(MasterPekerjaanViewComponent);
+export const MasterPekerjaanView: React.FC<MasterPekerjaanViewProps> = React.memo(
+  MasterPekerjaanViewComponent,
+  (prev, next) =>
+    prev.initialTab === next.initialTab &&
+    prev.jobs === next.jobs &&
+    prev.planningTasks === next.planningTasks &&
+    prev.employees === next.employees &&
+    prev.servers === next.servers &&
+    prev.jenisList === next.jenisList &&
+    prev.wilayahList === next.wilayahList &&
+    prev.currentUser === next.currentUser &&
+    prev.googleAppsScriptUrl === next.googleAppsScriptUrl &&
+    prev.attendanceList === next.attendanceList &&
+    prev.settings === next.settings &&
+    prev.honorLunasList === next.honorLunasList
+);

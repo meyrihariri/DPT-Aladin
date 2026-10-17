@@ -192,7 +192,7 @@ const MultiPhotoUploaderComponent: React.FC<MultiPhotoUploaderProps> = ({
                       slotInfo.required
                         ? isUploaded
                           ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                          : 'bg-rose-100 text-rose-800 border border-rose-300 animate-pulse'
+                          : 'bg-rose-100 text-rose-800 border border-rose-300'
                         : 'bg-slate-200 text-slate-600'
                     }`}
                   >

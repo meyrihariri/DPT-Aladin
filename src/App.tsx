@@ -932,13 +932,14 @@ export default function App() {
       }
     }
 
-    // Ambil data terbaru formulir pekerjaan dari Google Sheets dengan tanda loading spinner
+    // Buka form input pekerjaan secara instan agar tidak lambat di perangkat smartphone.
+    // Hanya tarik data dari Google Sheets jika master data (server/jenis pekerjaan) masih kosong.
     const activeUrl = settings.googleAppsScriptUrl?.trim();
-    if (activeUrl && handlePullDatabaseRef.current) {
+    if (activeUrl && handlePullDatabaseRef.current && (servers.length === 0 || jenisList.length === 0)) {
       try {
         await handlePullDatabaseRef.current(
           activeUrl,
-          true,
+          false,
           'Mengambil data formulir pekerjaan dari Google Sheets...'
         );
       } catch (err) {
@@ -947,7 +948,7 @@ export default function App() {
     }
 
     setIsQuickJobModalOpen(true);
-  }, [currentUser, attendanceList, settings.googleAppsScriptUrl]);
+  }, [currentUser, attendanceList, settings.googleAppsScriptUrl, servers.length, jenisList.length]);
 
   // Memoized navigation callbacks for TeknisiDashboardView
   const handleTeknisiMainTabChange = useCallback((tab: string) => {
@@ -2371,7 +2372,7 @@ export default function App() {
               const updated = prev.map(item => item.id === recordId ? { ...item, fotoProofUrl: res.url } : item);
               StorageService.saveAttendance(updated);
               StorageService.syncServerState({ attendanceList: updated });
-              sendSyncToGoogleSheets({ attendanceList: updated });
+              sendSyncToGoogleSheets({ attendanceList: updated, showLoading: false });
               return updated;
             });
           }
@@ -2388,7 +2389,7 @@ export default function App() {
               const updated = prev.map(item => item.id === recordId ? { ...item, fotoPulangUrl: res.url } : item);
               StorageService.saveAttendance(updated);
               StorageService.syncServerState({ attendanceList: updated });
-              sendSyncToGoogleSheets({ attendanceList: updated });
+              sendSyncToGoogleSheets({ attendanceList: updated, showLoading: false });
               return updated;
             });
           }

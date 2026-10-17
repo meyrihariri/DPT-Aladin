@@ -88,7 +88,7 @@ const JobModalContent: React.FC<JobModalProps> = ({
   settings
 }) => {
   const [isSavingJob, setIsSavingJob] = useState(false);
-  const [lemburApprovedState, setLemburApprovedState] = useState<boolean>(true);
+  const [lemburApprovedState, setLemburApprovedState] = useState<boolean>(() => currentUser?.role === 'Admin');
   const [isOnline, setIsOnline] = useState<boolean>(() => isDeviceOnline());
   const isInitializedRef = useRef(false);
   const activeJobIdRef = useRef<string | undefined>(undefined);
@@ -111,9 +111,9 @@ const JobModalContent: React.FC<JobModalProps> = ({
     catatan: string;
     buktiFotoUrls: string[];
   }>({
-    tanggal: getEffectiveTodayISO(),
+    tanggal: '',
     teknisiUtamaId: '',
-    teknisiUtamaVehicle: 'Inventaris',
+    teknisiUtamaVehicle: '' as VehicleType,
     teknisiPendukungIds: [],
     teknisiPendukungVehicles: {},
     jenisPekerjaanId: '',
@@ -269,7 +269,7 @@ const JobModalContent: React.FC<JobModalProps> = ({
     if (hasUnsavedContent && !isSavingJob) {
       const confirmClose = await showAppConfirm({
         title: 'Tutup Form Pekerjaan?',
-        message: 'Isian data pekerjaan yang sedang Anda ketik otomatis disimpan sebagai draf dan dapat dilanjutkan kembali kapan saja.\n\nApakah Anda yakin ingin menutup form sekarang?',
+        message: 'Apakah Anda yakin ingin menutup form sekarang? Data yang belum disimpan akan dibatalkan.',
         type: 'warning',
         confirmText: 'Ya, Tutup',
         cancelText: 'Lanjutkan Input'
@@ -279,32 +279,6 @@ const JobModalContent: React.FC<JobModalProps> = ({
     onClose();
   };
 
-  // Auto-save draft whenever jobForm changes (for new job creation or editing)
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const hasData = Boolean(
-      jobForm.serverId ||
-      jobForm.jenisPekerjaanId ||
-      jobForm.catatan ||
-      jobForm.jumlahTitik > 0 ||
-      jobForm.panjangKabelMeter > 0 ||
-      (jobForm.buktiFotoUrls && jobForm.buktiFotoUrls.some(u => Boolean(u && u.trim().length > 0))) ||
-      (jobForm.wilayahIds && jobForm.wilayahIds.length > 0) ||
-      jobForm.teknisiUtamaId ||
-      (jobForm.teknisiPendukungIds && jobForm.teknisiPendukungIds.length > 0) ||
-      jobForm.adaLembur
-    );
-
-    if (hasData) {
-      if (editingJob?.id) {
-        StorageService.saveJobDraft({ ...jobForm, _editingJobId: editingJob.id });
-      } else {
-        StorageService.saveJobDraft(jobForm);
-      }
-    }
-  }, [isOpen, editingJob, jobForm]);
-
   // Populate form when modal opens or editingJob changes
   useEffect(() => {
     if (!isOpen) {
@@ -313,7 +287,6 @@ const JobModalContent: React.FC<JobModalProps> = ({
     }
 
     const currentJobId = editingJob?.id || '__new__';
-    // CRITICAL BUG FIX: If modal is already open and initialized for this job, NEVER reset state on re-render!
     if (isInitializedRef.current && activeJobIdRef.current === currentJobId) {
       return;
     }
@@ -340,68 +313,65 @@ const JobModalContent: React.FC<JobModalProps> = ({
           : currentUser?.role === 'Admin'
       );
 
-      // Check if there was an active editing draft saved for this specific job
-      const savedDraft = StorageService.getJobDraft();
-      if (savedDraft && typeof savedDraft === 'object' && savedDraft._editingJobId === editingJob.id) {
-        setJobForm({
-          tanggal: savedDraft.tanggal || editingJob.tanggal || getEffectiveTodayISO(),
-          teknisiUtamaId: savedDraft.teknisiUtamaId || mainTechId,
-          teknisiUtamaVehicle: savedDraft.teknisiUtamaVehicle || vehiclesMap[mainTechId] || 'Inventaris',
-          teknisiPendukungIds: Array.isArray(savedDraft.teknisiPendukungIds) ? savedDraft.teknisiPendukungIds : supportTechIds,
-          teknisiPendukungVehicles: savedDraft.teknisiPendukungVehicles || (isMulti ? vehiclesMap : {}),
-          jenisPekerjaanId: savedDraft.jenisPekerjaanId || editingJob.jenisPekerjaanId || '',
-          serverId: savedDraft.serverId || editingJob.serverId || '',
-          wilayahIds: Array.isArray(savedDraft.wilayahIds) ? savedDraft.wilayahIds : initialWilayahIds,
-          jumlahTitik: Number(savedDraft.jumlahTitik) || (needTitik ? (editingJob.jumlahTitik || 0) : 0),
-          panjangKabelMeter: Number(savedDraft.panjangKabelMeter) || (needKabel ? (editingJob.panjangKabelMeter || 0) : 0),
-          adaLembur: savedDraft.adaLembur !== undefined ? Boolean(savedDraft.adaLembur) : (editingJob.adaLembur || false),
-          menitLembur: Number(savedDraft.menitLembur) || (editingJob.menitLembur || 0),
-          catatan: savedDraft.catatan || editingJob.catatan || '',
-          buktiFotoUrls: Array.isArray(savedDraft.buktiFotoUrls) ? savedDraft.buktiFotoUrls : (editingJob.buktiFotoUrls || [])
-        });
-        setHasDraftRestored(true);
-      } else {
-        setJobForm({
-          tanggal: editingJob.tanggal || getEffectiveTodayISO(),
-          teknisiUtamaId: mainTechId,
-          teknisiUtamaVehicle: vehiclesMap[mainTechId] || 'Inventaris',
-          teknisiPendukungIds: supportTechIds,
-          teknisiPendukungVehicles: isMulti ? vehiclesMap : {},
-          jenisPekerjaanId: editingJob.jenisPekerjaanId || '',
-          serverId: editingJob.serverId || '',
-          wilayahIds: initialWilayahIds,
-          jumlahTitik: needTitik ? (editingJob.jumlahTitik || 0) : 0,
-          panjangKabelMeter: needKabel ? (editingJob.panjangKabelMeter || 0) : 0,
-          adaLembur: editingJob.adaLembur || false,
-          menitLembur: editingJob.menitLembur || 0,
-          catatan: editingJob.catatan || '',
-          buktiFotoUrls:
-            editingJob.buktiFotoUrls && editingJob.buktiFotoUrls.length > 0
-              ? editingJob.buktiFotoUrls
-              : editingJob.buktiFotoUrl
-              ? [editingJob.buktiFotoUrl]
-              : []
-        });
-      }
+      setJobForm({
+        tanggal: editingJob.tanggal || getEffectiveTodayISO(),
+        teknisiUtamaId: mainTechId,
+        teknisiUtamaVehicle: vehiclesMap[mainTechId] || 'Inventaris',
+        teknisiPendukungIds: supportTechIds,
+        teknisiPendukungVehicles: isMulti ? vehiclesMap : {},
+        jenisPekerjaanId: editingJob.jenisPekerjaanId || '',
+        serverId: editingJob.serverId || '',
+        wilayahIds: initialWilayahIds,
+        jumlahTitik: needTitik ? (editingJob.jumlahTitik || 0) : 0,
+        panjangKabelMeter: needKabel ? (editingJob.panjangKabelMeter || 0) : 0,
+        adaLembur: editingJob.adaLembur || false,
+        menitLembur: editingJob.menitLembur || 0,
+        catatan: editingJob.catatan || '',
+        buktiFotoUrls:
+          editingJob.buktiFotoUrls && editingJob.buktiFotoUrls.length > 0
+            ? editingJob.buktiFotoUrls
+            : editingJob.buktiFotoUrl
+            ? [editingJob.buktiFotoUrl]
+            : []
+      });
     } else {
-      StorageService.saveJobDraft(null);
+      StorageService.clearJobDraft();
       setHasDraftRestored(false);
       setLemburApprovedState(currentUser?.role === 'Admin');
-      setJobForm({
-        tanggal: getEffectiveTodayISO(),
-        teknisiUtamaId: '',
-        teknisiUtamaVehicle: 'Inventaris',
-        teknisiPendukungIds: [],
-        teknisiPendukungVehicles: {},
-        jenisPekerjaanId: '',
-        serverId: '',
-        wilayahIds: [],
-        jumlahTitik: 0,
-        panjangKabelMeter: 0,
-        adaLembur: false,
-        menitLembur: 0,
-        catatan: '',
-        buktiFotoUrls: []
+      setJobForm(prev => {
+        if (
+          !prev.tanggal &&
+          !prev.teknisiUtamaId &&
+          !prev.teknisiUtamaVehicle &&
+          prev.teknisiPendukungIds.length === 0 &&
+          !prev.jenisPekerjaanId &&
+          !prev.serverId &&
+          prev.wilayahIds.length === 0 &&
+          prev.jumlahTitik === 0 &&
+          prev.panjangKabelMeter === 0 &&
+          !prev.adaLembur &&
+          prev.menitLembur === 0 &&
+          !prev.catatan &&
+          prev.buktiFotoUrls.length === 0
+        ) {
+          return prev;
+        }
+        return {
+          tanggal: '',
+          teknisiUtamaId: '',
+          teknisiUtamaVehicle: '' as VehicleType,
+          teknisiPendukungIds: [],
+          teknisiPendukungVehicles: {},
+          jenisPekerjaanId: '',
+          serverId: '',
+          wilayahIds: [],
+          jumlahTitik: 0,
+          panjangKabelMeter: 0,
+          adaLembur: false,
+          menitLembur: 0,
+          catatan: '',
+          buktiFotoUrls: []
+        };
       });
     }
   }, [isOpen, editingJob?.id]);
@@ -590,6 +560,15 @@ const JobModalContent: React.FC<JobModalProps> = ({
       showAppAlert({
         title: 'Teknisi Utama Diperlukan',
         message: 'Silakan pilih Teknisi Utama terlebih dahulu.',
+        type: 'warning'
+      });
+      return;
+    }
+
+    if (!jobForm.teknisiUtamaVehicle) {
+      showAppAlert({
+        title: 'Kendaraan Diperlukan',
+        message: 'Silakan pilih Kendaraan Teknisi Utama terlebih dahulu.',
         type: 'warning'
       });
       return;
@@ -935,8 +914,8 @@ const JobModalContent: React.FC<JobModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-slate-900/75 flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 max-h-[92vh] overflow-y-auto overscroll-contain">
         <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
           <div>
             <h3 className="font-extrabold text-slate-900 text-base">
@@ -1196,6 +1175,7 @@ const JobModalContent: React.FC<JobModalProps> = ({
                   onChange={e => setJobForm(prev => ({ ...prev, teknisiUtamaVehicle: e.target.value as VehicleType }))}
                   className="w-full p-2 bg-white border border-maroon-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-maroon-800"
                 >
+                  <option value="">-- Pilih Kendaraan --</option>
                   <option value="Inventaris">🛵 Inventaris (Rp 0)</option>
                   <option value="Pribadi">🚗 Pribadi (+Transport Wilayah)</option>
                   <option value="Jalan Kaki">🚶 Jalan Kaki (Rp 0)</option>

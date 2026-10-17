@@ -501,6 +501,8 @@ export function pickBestPhotoUrl(url1?: string, url2?: string): string | undefin
 // Helper to cleanly consolidate and merge Attendance records per technician and date without collisions
 export function consolidateAttendanceRecords(records: AttendanceRecord[]): AttendanceRecord[] {
   const map = new Map<string, AttendanceRecord>();
+  const byDateKeys = new Map<string, string[]>();
+  const todayISO = getEffectiveTodayISO();
   const deletedIds = new Set(StorageService.getDeletedAttendanceIds());
   const resolvedKeys = new Set(StorageService.getResolvedAttendanceKeys());
   // Explicitly ensure the persistent bugged 2026-09-07 record is forever suppressed
@@ -528,7 +530,7 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
     if (!r || !r.id) continue;
     if (deletedIds.has(r.id)) continue;
 
-    const cleanDate = sanitizeDateString(r.tanggal);
+    const cleanDate = sanitizeDateString(r.tanggal, todayISO);
     const techKey = getNormalizedTechKey(r.teknisiId, r.teknisiNama);
     const groupKey = `${cleanDate}_${techKey}`;
 
@@ -574,17 +576,19 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
       r.status === 'Terlambat'
     );
 
-    // Cek apakah ada record yang cocok: baik melalui groupKey langsung, atau pencocokan nama/ID teknisi pada tanggal yang sama
+    // Cek apakah ada record yang cocok hanya pada tanggal yang sama (O(1) per tanggal)
     let matchedGroupKey = groupKey;
     if (!map.has(matchedGroupKey)) {
-      for (const [k, existingItem] of map.entries()) {
-        const existingCleanDate = sanitizeDateString(existingItem.tanggal);
-        if (existingCleanDate === cleanDate) {
+      const sameDateKeys = byDateKeys.get(cleanDate);
+      if (sameDateKeys) {
+        const rName = (r.teknisiNama || '').toLowerCase().trim();
+        const rId = (r.teknisiId || '').toLowerCase().trim();
+        for (const k of sameDateKeys) {
+          const existingItem = map.get(k);
+          if (!existingItem) continue;
           const existingTechKey = getNormalizedTechKey(existingItem.teknisiId, existingItem.teknisiNama);
           const exName = (existingItem.teknisiNama || '').toLowerCase().trim();
-          const rName = (r.teknisiNama || '').toLowerCase().trim();
           const exId = (existingItem.teknisiId || '').toLowerCase().trim();
-          const rId = (r.teknisiId || '').toLowerCase().trim();
 
           const sameTech = 
             (existingTechKey && techKey && existingTechKey === techKey) ||
@@ -599,7 +603,7 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
       }
     }
 
-    const isPastDate = cleanDate < getEffectiveTodayISO();
+    const isPastDate = cleanDate < todayISO;
     const isInvalidServer = (s?: string) => {
       if (!s) return true;
       const l = s.toLowerCase().trim();
@@ -652,6 +656,12 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
           potonganOtomatis: rIsLate ? (r.potonganOtomatis || 25000) : (r.potonganOtomatis || 0)
         } : {}))
       });
+      const listForDate = byDateKeys.get(cleanDate);
+      if (listForDate) {
+        listForDate.push(groupKey);
+      } else {
+        byDateKeys.set(cleanDate, [groupKey]);
+      }
     } else {
       const existing = map.get(matchedGroupKey)!;
       // Smart non-destructive merge: retain both Jam Masuk & Jam Pulang along with photos and GPS
@@ -808,16 +818,26 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
           };
         })()
       };
-      map.set(groupKey, merged);
+      map.set(matchedGroupKey, merged);
     }
   }
+
+  const extractNumId = (idVal: any): number => {
+    const m = String(idVal || '').match(/(\d+)/g);
+    if (!m || m.length === 0) return 0;
+    return Number(m[m.length - 1]) || 0;
+  };
 
   return Array.from(map.values()).map(att => ({
     ...att,
     jamMasuk: sanitizeTimeString(att.jamMasuk, '08:00'),
     jamPulang: att.jamPulang ? sanitizeTimeString(att.jamPulang, '') : undefined
   })).sort((a, b) => {
-    return (b.tanggal || '').localeCompare(a.tanggal || '');
+    const cmp = (b.tanggal || '').localeCompare(a.tanggal || '');
+    if (cmp !== 0) return cmp;
+    const tCmp = (b.jamMasuk || '').localeCompare(a.jamMasuk || '');
+    if (tCmp !== 0) return tCmp;
+    return extractNumId(b.id) - extractNumId(a.id);
   });
 }
 

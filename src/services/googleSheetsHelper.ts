@@ -408,7 +408,7 @@ function doPost(e) {
         function normalizeDateForMatch(dStr) {
           if (!dStr) return '';
           var s = String(dStr).trim().split('T')[0];
-          var dmy = s.match(/^([0-9]{1,2})[/.\\-]([0-9]{1,2})[/.\\-]([0-9]{2,4})$/);
+          var dmy = s.match(/^([0-9]{1,2})(?:\/|-|\.)([0-9]{1,2})(?:\/|-|\.)([0-9]{2,4})$/);
           if (dmy) {
             var y = dmy[3].length === 2 ? ('20' + dmy[3]) : dmy[3];
             return y + '-' + ('0' + dmy[2]).slice(-2) + '-' + ('0' + dmy[1]).slice(-2);
@@ -633,24 +633,52 @@ export function sanitizeTimeString(val: any, defaultTime = '08:00'): string {
   return defaultTime;
 }
 
-/**
- * Helper to get local date string YYYY-MM-DD reliably in Asia/Jakarta timezone
- */
-export function getEffectiveTodayISO(d: Date = new Date()): string {
+// Shared singleton formatter & short-lived today cache to avoid expensive Intl.DateTimeFormat instantiations in loops
+const JAKARTA_DATE_FORMATTER = (() => {
   try {
-    const formatter = new Intl.DateTimeFormat('en-CA', {
+    return new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Jakarta',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
     });
-    return formatter.format(d);
   } catch {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return null;
   }
+})();
+
+let cachedTodayISO = '';
+let cachedTodayTimestamp = 0;
+
+/**
+ * Helper to get local date string YYYY-MM-DD reliably in Asia/Jakarta timezone
+ */
+export function getEffectiveTodayISO(d?: Date): string {
+  if (!d) {
+    const now = Date.now();
+    if (cachedTodayISO && now - cachedTodayTimestamp < 5000) {
+      return cachedTodayISO;
+    }
+    const nowDate = new Date(now);
+    try {
+      cachedTodayISO = JAKARTA_DATE_FORMATTER
+        ? JAKARTA_DATE_FORMATTER.format(nowDate)
+        : `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}-${String(nowDate.getDate()).padStart(2, '0')}`;
+    } catch {
+      cachedTodayISO = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}-${String(nowDate.getDate()).padStart(2, '0')}`;
+    }
+    cachedTodayTimestamp = now;
+    return cachedTodayISO;
+  }
+  try {
+    if (JAKARTA_DATE_FORMATTER) {
+      return JAKARTA_DATE_FORMATTER.format(d);
+    }
+  } catch {}
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -659,10 +687,18 @@ export function getEffectiveTodayISO(d: Date = new Date()): string {
  * day-only numbers ("10"), and Google Sheets / Excel serial numbers.
  */
 export function sanitizeDateString(val: any, defaultDate?: string): string {
-  const fallback = defaultDate || getEffectiveTodayISO();
-  if (val === undefined || val === null) return fallback;
+  // Fast path for already clean YYYY-MM-DD strings (avoids regexes & fallback date formatting)
+  if (typeof val === 'string' && val.length === 10 && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+    return val;
+  }
+  if (val === undefined || val === null) return defaultDate || getEffectiveTodayISO();
   let str = String(val).trim();
-  if (!str || str === '-' || str === 'null' || str === 'undefined' || str === '--') return fallback;
+  if (!str || str === '-' || str === 'null' || str === 'undefined' || str === '--') {
+    return defaultDate || getEffectiveTodayISO();
+  }
+  if (str.length === 10 && /^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return str;
+  }
 
   // 1. Google Sheets / Excel numeric serial date (e.g. 45575, 46305)
   const numVal = typeof val === 'number' ? val : Number(str);
@@ -917,11 +953,19 @@ export function buildGoogleSheetsSyncPayload(data: {
     : logoStr;
 
   // Google Sheets Requirement: Data baru yang ditulis dari aplikasi diletakkan pada baris paling bawah.
-  // Maka seluruh riwayat transaksi diurutkan ASCENDING (tanggal terlama di atas, tanggal terbaru di baris paling bawah).
+  // Maka seluruh riwayat transaksi diurutkan ASCENDING (tanggal terlama di atas, tanggal & waktu input terbaru di baris paling bawah).
+  const extractNumId = (idVal: any): number => {
+    const m = String(idVal || '').match(/(\d+)/g);
+    if (!m || m.length === 0) return 0;
+    return Number(m[m.length - 1]) || 0;
+  };
+
   const sortedJobsForSheets = [...(data.jobs || [])].sort((a, b) => {
     const dA = sanitizeDateString(a.tanggal) || '';
     const dB = sanitizeDateString(b.tanggal) || '';
     if (dA !== dB) return dA.localeCompare(dB);
+    const numDiff = extractNumId(a.id) - extractNumId(b.id);
+    if (numDiff !== 0) return numDiff;
     return (a.id || '').localeCompare(b.id || '');
   });
 
@@ -932,6 +976,8 @@ export function buildGoogleSheetsSyncPayload(data: {
     const tA = sanitizeTimeString(a.jamMasuk, '');
     const tB = sanitizeTimeString(b.jamMasuk, '');
     if (tA !== tB) return tA.localeCompare(tB);
+    const numDiff = extractNumId(a.id) - extractNumId(b.id);
+    if (numDiff !== 0) return numDiff;
     return (a.id || '').localeCompare(b.id || '');
   });
 
@@ -939,6 +985,8 @@ export function buildGoogleSheetsSyncPayload(data: {
     const dA = sanitizeDateString(a.tanggal) || '';
     const dB = sanitizeDateString(b.tanggal) || '';
     if (dA !== dB) return dA.localeCompare(dB);
+    const numDiff = extractNumId(a.id) - extractNumId(b.id);
+    if (numDiff !== 0) return numDiff;
     return (a.id || '').localeCompare(b.id || '');
   });
 
@@ -946,6 +994,8 @@ export function buildGoogleSheetsSyncPayload(data: {
     const dA = sanitizeDateString(a.tanggal) || '';
     const dB = sanitizeDateString(b.tanggal) || '';
     if (dA !== dB) return dA.localeCompare(dB);
+    const numDiff = extractNumId(a.id) - extractNumId(b.id);
+    if (numDiff !== 0) return numDiff;
     return (a.id || '').localeCompare(b.id || '');
   });
 
@@ -953,6 +1003,8 @@ export function buildGoogleSheetsSyncPayload(data: {
     const dA = sanitizeDateString(a.tanggalLunas) || '';
     const dB = sanitizeDateString(b.tanggalLunas) || '';
     if (dA !== dB) return dA.localeCompare(dB);
+    const numDiff = extractNumId(a.id) - extractNumId(b.id);
+    if (numDiff !== 0) return numDiff;
     return (a.id || '').localeCompare(b.id || '');
   });
 

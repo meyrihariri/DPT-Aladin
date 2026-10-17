@@ -610,7 +610,15 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
         }
         return false;
       })
-      .sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+      .sort((a, b) => {
+        const cmp = (b.tanggal || '').localeCompare(a.tanggal || '');
+        if (cmp !== 0) return cmp;
+        const mA = String(a.id || '').match(/(\d+)/g);
+        const mB = String(b.id || '').match(/(\d+)/g);
+        const nA = mA && mA.length > 0 ? Number(mA[mA.length - 1]) || 0 : 0;
+        const nB = mB && mB.length > 0 ? Number(mB[mB.length - 1]) || 0 : 0;
+        return nB - nA;
+      });
   }, [jobs, currentUser]);
 
   // Current month period and localized month name
@@ -974,7 +982,17 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
           (currentUser.username && a.teknisiId?.toLowerCase().trim() === currentUser.username.toLowerCase().trim())
         );
       })
-      .sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+      .sort((a, b) => {
+        const cmp = (b.tanggal || '').localeCompare(a.tanggal || '');
+        if (cmp !== 0) return cmp;
+        const tCmp = (b.jamMasuk || '').localeCompare(a.jamMasuk || '');
+        if (tCmp !== 0) return tCmp;
+        const mA = String(a.id || '').match(/(\d+)/g);
+        const mB = String(b.id || '').match(/(\d+)/g);
+        const nA = mA && mA.length > 0 ? Number(mA[mA.length - 1]) || 0 : 0;
+        const nB = mB && mB.length > 0 ? Number(mB[mB.length - 1]) || 0 : 0;
+        return nB - nA;
+      });
   }, [attendanceList, currentUser]);
 
   // Leave requests for this technician
@@ -3662,5 +3680,21 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
   );
 };
 
-export const TeknisiDashboardView: React.FC<TeknisiDashboardViewProps> = React.memo(TeknisiDashboardViewComponent);
+export const TeknisiDashboardView: React.FC<TeknisiDashboardViewProps> = React.memo(
+  TeknisiDashboardViewComponent,
+  (prev, next) =>
+    prev.currentUser === next.currentUser &&
+    prev.employees === next.employees &&
+    prev.attendanceList === next.attendanceList &&
+    prev.jobs === next.jobs &&
+    prev.planningTasks === next.planningTasks &&
+    prev.servers === next.servers &&
+    prev.jenisList === next.jenisList &&
+    prev.wilayahList === next.wilayahList &&
+    prev.settings === next.settings &&
+    prev.activeMainTab === next.activeMainTab &&
+    prev.leaveRequests === next.leaveRequests &&
+    prev.potonganManualList === next.potonganManualList &&
+    prev.onlineTechniciansFromHeartbeat === next.onlineTechniciansFromHeartbeat
+);
 

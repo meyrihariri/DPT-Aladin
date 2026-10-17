@@ -174,7 +174,17 @@ const ApprovalAbsensiViewComponent: React.FC<ApprovalAbsensiViewProps> = ({
   const cleanAttendanceList = attendanceList
     .filter(a => !deletedIds.has(a.id))
     .filter(a => isAttendanceForUserServer(a))
-    .sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+    .sort((a, b) => {
+      const cmp = (b.tanggal || '').localeCompare(a.tanggal || '');
+      if (cmp !== 0) return cmp;
+      const tCmp = (b.jamMasuk || '').localeCompare(a.jamMasuk || '');
+      if (tCmp !== 0) return tCmp;
+      const mA = String(a.id || '').match(/(\d+)/g);
+      const mB = String(b.id || '').match(/(\d+)/g);
+      const nA = mA && mA.length > 0 ? Number(mA[mA.length - 1]) || 0 : 0;
+      const nB = mB && mB.length > 0 ? Number(mB[mB.length - 1]) || 0 : 0;
+      return nB - nA;
+    });
 
   const pendingAttendanceList = cleanAttendanceList.filter(a => {
     const cleanDate = sanitizeDateString(a.tanggal);
