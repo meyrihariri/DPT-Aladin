@@ -1,4 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   HardHat,
   MapPin,
@@ -105,6 +106,18 @@ const DirectCameraModal: React.FC<{
     };
   }, [isOpen, facingMode]);
 
+  React.useEffect(() => {
+    if (!isOpen || typeof document === 'undefined') return;
+    const prevOverflow = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.touchAction = prevTouchAction;
+    };
+  }, [isOpen]);
+
   const startCamera = async (mode: 'user' | 'environment') => {
     setCameraError(null);
     try {
@@ -170,10 +183,10 @@ const DirectCameraModal: React.FC<{
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-[#1a040b] border border-maroon-900/60 text-white rounded-2xl max-w-sm w-full p-4 shadow-2xl relative space-y-3">
-        <div className="flex items-center justify-between pb-2 border-b border-maroon-900/40">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden touch-none">
+      <div className="bg-[#1a040b] border border-maroon-900/60 text-white rounded-2xl max-w-sm w-full p-3.5 sm:p-4 shadow-2xl relative flex flex-col gap-2.5 max-h-[88dvh] my-auto">
+        <div className="flex items-center justify-between pb-2 border-b border-maroon-900/40 shrink-0">
           <h4 className="font-extrabold text-sm text-rose-100 flex items-center space-x-2">
             <Camera className="w-4 h-4 text-rose-400" />
             <span>{title}</span>
@@ -212,7 +225,7 @@ const DirectCameraModal: React.FC<{
             />
           </div>
         ) : (
-          <div className="relative rounded-xl overflow-hidden bg-black aspect-3/4 border border-maroon-800/40 shadow-inner">
+          <div className="relative rounded-xl overflow-hidden bg-black aspect-3/4 max-h-[60dvh] sm:max-h-[68dvh] w-full mx-auto border border-maroon-800/40 shadow-inner flex items-center justify-center">
             <video
               ref={videoRef}
               autoPlay
@@ -220,11 +233,11 @@ const DirectCameraModal: React.FC<{
               muted
               className="w-full h-full object-cover"
             />
-            <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2 px-3">
+            <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2 px-3 z-10">
               <button
                 type="button"
                 onClick={() => setFacingMode(prev => prev === 'user' ? 'environment' : 'user')}
-                className="p-2.5 bg-slate-900/80 text-white rounded-full border border-white/20 hover:bg-slate-800 cursor-pointer"
+                className="p-2.5 bg-slate-900/80 text-white rounded-full border border-white/20 hover:bg-slate-800 cursor-pointer shadow-md"
                 title="Ganti Kamera"
               >
                 <RefreshCw className="w-4 h-4" />
@@ -242,12 +255,16 @@ const DirectCameraModal: React.FC<{
           </div>
         )}
 
-        <p className="text-[10px] text-center text-rose-300/70">
+        <p className="text-[10px] text-center text-rose-300/70 shrink-0">
           Arahkan kamera ke wajah dan tekan tombol <strong>AMBIL FOTO</strong>
         </p>
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(modalContent, document.body)
+    : modalContent;
 };
 
 export type TeknisiMainTab = 'beranda' | 'planning' | 'absensi' | 'gaji';
@@ -2378,12 +2395,12 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
       {/* ========================================================================= */}
       {activeTab === 'absensi' && (
         <div className="space-y-4">
-          {/* Sub-menu Tabs for Absensi (4 Menu: Menu Absensi, Izin/Cuti, Status Harian, Riwayat Absensi) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-2xl text-xs font-extrabold">
+          {/* Sub-menu Tabs for Absensi (4 Menu in 1 Baris: Menu Absensi, Izin/Cuti, Status Harian, Riwayat Absensi) */}
+          <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 rounded-xl sm:rounded-2xl text-[10px] min-[390px]:text-[11px] sm:text-xs font-extrabold">
             <button
               type="button"
               onClick={() => setAbsensiSubTab('absen')}
-              className={`py-2 px-1 rounded-xl text-center transition-all cursor-pointer truncate ${
+              className={`py-2 px-0.5 sm:px-1 rounded-lg sm:rounded-xl text-center transition-all cursor-pointer truncate ${
                 absensiSubTab === 'absen' ? 'bg-maroon-800 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -2392,7 +2409,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
             <button
               type="button"
               onClick={() => setAbsensiSubTab('izin')}
-              className={`py-2 px-1 rounded-xl text-center transition-all cursor-pointer truncate ${
+              className={`py-2 px-0.5 sm:px-1 rounded-lg sm:rounded-xl text-center transition-all cursor-pointer truncate ${
                 absensiSubTab === 'izin' ? 'bg-maroon-800 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -2401,7 +2418,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
             <button
               type="button"
               onClick={() => setAbsensiSubTab('status')}
-              className={`py-2 px-1 rounded-xl text-center transition-all cursor-pointer truncate ${
+              className={`py-2 px-0.5 sm:px-1 rounded-lg sm:rounded-xl text-center transition-all cursor-pointer truncate ${
                 absensiSubTab === 'status' ? 'bg-maroon-800 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -2410,7 +2427,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
             <button
               type="button"
               onClick={() => setAbsensiSubTab('riwayat')}
-              className={`py-2 px-1 rounded-xl text-center transition-all cursor-pointer truncate ${
+              className={`py-2 px-0.5 sm:px-1 rounded-lg sm:rounded-xl text-center transition-all cursor-pointer truncate ${
                 absensiSubTab === 'riwayat' ? 'bg-maroon-800 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -2427,7 +2444,6 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
                   <span className="text-base">📋</span>
                   <div>
                     <p className="font-bold text-amber-950">Berhalangan Hadir?</p>
-                    <p className="text-amber-800/90 text-[11px]">Ajukan absen ketidakhadiran</p>
                   </div>
                 </div>
                 <button
@@ -3637,9 +3653,9 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
       />
 
       {/* Fullscreen Photo Preview Modal */}
-      {selectedPhotoModal && (
+      {selectedPhotoModal && (typeof document !== 'undefined' ? createPortal(
         <div
-          className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4"
           onClick={() => setSelectedPhotoModal(null)}
         >
           <div
@@ -3674,8 +3690,9 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null)}
     </div>
   );
 };

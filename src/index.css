@@ -167,10 +167,9 @@
     touch-action: manipulation;
   }
 
-  /* GPU layer promote for smooth scrolling without jank */
+  /* Smooth touch scrolling on mobile without breaking position: fixed descendants */
   main {
     -webkit-overflow-scrolling: touch;
-    transform: translateZ(0);
   }
 }
 
