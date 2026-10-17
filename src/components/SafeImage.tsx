@@ -103,19 +103,19 @@ export const SafeImage: React.FC<SafeImageProps> = ({
       if (attemptStage === 0) {
         // Stage 1: Try high-res Google Drive Thumbnail CDN
         setAttemptStage(1);
-        setCurrentSrc(getDriveThumbnailUrl(fileId, isSmallThumb ? 320 : 1200));
+        setCurrentSrc(getDriveThumbnailUrl(fileId, isSmallThumb ? 400 : 1200));
       } else if (attemptStage === 1) {
         // Stage 2: Try Google usercontent lh3 endpoint
         setAttemptStage(2);
         setCurrentSrc(getDriveLh3Url(fileId));
       } else if (attemptStage === 2) {
-        // Stage 3: Try server proxy with disk & memory cache
+        // Stage 3: Try direct usercontent download endpoint
         setAttemptStage(3);
-        setCurrentSrc(getProxyImageUrl(src, { refresh: true }));
-      } else if (attemptStage === 3) {
-        // Stage 4: Try direct usercontent download endpoint
-        setAttemptStage(4);
         setCurrentSrc(getDriveDirectDownloadUrl(fileId));
+      } else if (attemptStage === 3) {
+        // Stage 4: Try server proxy with forced Google Apps Script Drive fetch
+        setAttemptStage(4);
+        setCurrentSrc(getProxyImageUrl(src, { refresh: true, forceGas: true }));
       } else {
         // Exhausted all 5 layers
         setHasError(true);

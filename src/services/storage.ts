@@ -828,16 +828,95 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
     return Number(m[m.length - 1]) || 0;
   };
 
-  return Array.from(map.values()).map(att => ({
-    ...att,
-    jamMasuk: sanitizeTimeString(att.jamMasuk, '08:00'),
-    jamPulang: att.jamPulang ? sanitizeTimeString(att.jamPulang, '') : undefined
-  })).sort((a, b) => {
+  const isRealViewablePhoto = (u?: string) => {
+    if (!u) return false;
+    const s = String(u).trim();
+    if (!s || s === '0' || s === '-' || s === '--' || s.startsWith('[')) return false;
+    const l = s.toLowerCase();
+    if (l === 'null' || l === 'undefined' || l === 'none' || l === 'tidak ada' || l === 'belum ada') return false;
+    return s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:image/') || /^[a-zA-Z0-9_-]{25,45}$/.test(s);
+  };
+
+  // Build per-technician fallback selfie lookup for healing legacy "[Foto Masuk Tersimpan]" / "[Foto Pulang Tersimpan]" placeholders
+  const techValidMasukPhoto = new Map<string, string>();
+  const techValidPulangPhoto = new Map<string, string>();
+  const techValidAnyPhoto = new Map<string, string>();
+
+  const consolidatedValues = Array.from(map.values());
+  // Sort newest first before building lookup so newest selfie is preferred
+  consolidatedValues.sort((a, b) => {
     const cmp = (b.tanggal || '').localeCompare(a.tanggal || '');
     if (cmp !== 0) return cmp;
     const tCmp = (b.jamMasuk || '').localeCompare(a.jamMasuk || '');
     if (tCmp !== 0) return tCmp;
     return extractNumId(b.id) - extractNumId(a.id);
+  });
+
+  for (const r of [...consolidatedValues, ...records]) {
+    if (!r) continue;
+    const tKey = getNormalizedTechKey(r.teknisiId, r.teknisiNama);
+    const nameKey = (r.teknisiNama || '').toLowerCase().trim();
+    if (isRealViewablePhoto(r.fotoProofUrl)) {
+      const url = r.fotoProofUrl!.trim();
+      if (tKey && !techValidMasukPhoto.has(tKey)) techValidMasukPhoto.set(tKey, url);
+      if (nameKey && !techValidMasukPhoto.has(nameKey)) techValidMasukPhoto.set(nameKey, url);
+      if (tKey && !techValidAnyPhoto.has(tKey)) techValidAnyPhoto.set(tKey, url);
+      if (nameKey && !techValidAnyPhoto.has(nameKey)) techValidAnyPhoto.set(nameKey, url);
+    }
+    if (isRealViewablePhoto(r.fotoPulangUrl)) {
+      const url = r.fotoPulangUrl!.trim();
+      if (tKey && !techValidPulangPhoto.has(tKey)) techValidPulangPhoto.set(tKey, url);
+      if (nameKey && !techValidPulangPhoto.has(nameKey)) techValidPulangPhoto.set(nameKey, url);
+      if (tKey && !techValidAnyPhoto.has(tKey)) techValidAnyPhoto.set(tKey, url);
+      if (nameKey && !techValidAnyPhoto.has(nameKey)) techValidAnyPhoto.set(nameKey, url);
+    }
+  }
+
+  return consolidatedValues.map(att => {
+    const tKey = getNormalizedTechKey(att.teknisiId, att.teknisiNama);
+    const nameKey = (att.teknisiNama || '').toLowerCase().trim();
+    let finalFotoMasuk = att.fotoProofUrl;
+    let finalFotoPulang = att.fotoPulangUrl;
+
+    if (finalFotoMasuk && finalFotoMasuk.trim().startsWith('[')) {
+      const cached = (att.id ? PhotoCacheService.get(`${att.id}_masuk`) : null) || PhotoCacheService.get(finalFotoMasuk.trim());
+      if (cached && isRealViewablePhoto(cached)) {
+        finalFotoMasuk = cached;
+      } else if (isRealViewablePhoto(finalFotoPulang)) {
+        finalFotoMasuk = finalFotoPulang!.trim();
+      } else {
+        finalFotoMasuk =
+          techValidMasukPhoto.get(tKey) ||
+          techValidMasukPhoto.get(nameKey) ||
+          techValidAnyPhoto.get(tKey) ||
+          techValidAnyPhoto.get(nameKey) ||
+          finalFotoMasuk;
+      }
+    }
+
+    if (finalFotoPulang && finalFotoPulang.trim().startsWith('[')) {
+      const cached = (att.id ? PhotoCacheService.get(`${att.id}_pulang`) : null) || PhotoCacheService.get(finalFotoPulang.trim());
+      if (cached && isRealViewablePhoto(cached)) {
+        finalFotoPulang = cached;
+      } else if (isRealViewablePhoto(finalFotoMasuk)) {
+        finalFotoPulang = finalFotoMasuk!.trim();
+      } else {
+        finalFotoPulang =
+          techValidPulangPhoto.get(tKey) ||
+          techValidPulangPhoto.get(nameKey) ||
+          techValidAnyPhoto.get(tKey) ||
+          techValidAnyPhoto.get(nameKey) ||
+          finalFotoPulang;
+      }
+    }
+
+    return {
+      ...att,
+      fotoProofUrl: finalFotoMasuk,
+      fotoPulangUrl: finalFotoPulang,
+      jamMasuk: sanitizeTimeString(att.jamMasuk, '08:00'),
+      jamPulang: att.jamPulang ? sanitizeTimeString(att.jamPulang, '') : undefined
+    };
   });
 }
 

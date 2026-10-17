@@ -337,15 +337,27 @@ function mergeServerAttendanceLists(existingList: any[] = [], incomingList: any[
         ? incoming.jamPulang
         : (hasExistingPulang ? existing.jamPulang : undefined);
 
-      const finalFotoPulang = (incoming.fotoPulangUrl && incoming.fotoPulangUrl !== '-')
-        ? incoming.fotoPulangUrl
-        : (hasExistingPulang ? existing.fotoPulangUrl : '');
+      const pickBestPhoto = (u1?: string, u2?: string): string => {
+        const isValidReal = (u?: string) => {
+          if (!u) return false;
+          const s = String(u).trim();
+          if (!s || s === '-' || s === '0' || s.startsWith('[')) return false;
+          return s.startsWith('http://') || s.startsWith('https://') || s.startsWith('data:image/') || /^[a-zA-Z0-9_-]{25,45}$/.test(s);
+        };
+        if (isValidReal(u1)) return String(u1).trim();
+        if (isValidReal(u2)) return String(u2).trim();
+        if (u1 && u1 !== '-' && u1 !== '0') return String(u1).trim();
+        if (u2 && u2 !== '-' && u2 !== '0') return String(u2).trim();
+        return '';
+      };
+
+      const finalFotoPulang = pickBestPhoto(incoming.fotoPulangUrl, hasExistingPulang ? existing.fotoPulangUrl : '');
       const finalKetPulang = incoming.keteranganPulang || (hasExistingPulang ? existing.keteranganPulang : '');
 
       const hasExistingMasuk = Boolean(existing.jamMasuk && existing.jamMasuk !== '-' && String(existing.jamMasuk).trim().length > 0);
       const hasIncomingMasuk = Boolean(incoming.jamMasuk && incoming.jamMasuk !== '-' && String(incoming.jamMasuk).trim().length > 0);
       const finalJamMasuk = hasIncomingMasuk ? incoming.jamMasuk : (hasExistingMasuk ? existing.jamMasuk : '08:00');
-      const finalFotoMasuk = incoming.fotoProofUrl || existing.fotoProofUrl || '';
+      const finalFotoMasuk = pickBestPhoto(incoming.fotoProofUrl, existing.fotoProofUrl);
 
       // An attendance record is considered approved if either existing or incoming was approved, is manual, or has Hadir status without pending flag
       const isExplicitlyApproved = 

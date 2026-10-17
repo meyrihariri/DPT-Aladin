@@ -27,7 +27,8 @@ import {
   Building,
   Bell,
   Database,
-  Code
+  Code,
+  Info
 } from 'lucide-react';
 import { Employee } from '../types';
 
@@ -56,7 +57,8 @@ export type NavView =
   | 'pengaturan_jam_kerja'
   | 'pengaturan_notifikasi'
   | 'pengaturan_google_sheets'
-  | 'pengaturan_panduan_sheets';
+  | 'pengaturan_panduan_sheets'
+  | 'tentang';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -81,8 +83,6 @@ const SidebarComponent: React.FC<SidebarProps> = ({
   companyName,
   pendingApprovalsCount
 }) => {
-  if (!isOpen) return null;
-
   const role = currentUser?.role || 'Teknisi';
 
   const isApprovalActive = activeView.startsWith('approval_');
@@ -720,6 +720,24 @@ const SidebarComponent: React.FC<SidebarProps> = ({
               </div>
             </div>
           )}
+
+          {/* Section: Menu Tentang (Paling Bawah Bagian Sidebar) */}
+          <div className="pt-2 border-t border-maroon-900/60 mt-auto">
+            <button
+              onClick={() => handleNavClick('tentang')}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-medium transition-colors cursor-pointer text-left ${
+                activeView === 'tentang'
+                  ? 'bg-maroon-800 text-white font-bold shadow-xs'
+                  : 'text-slate-300 hover:bg-maroon-900/40 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center space-x-3 min-w-0 text-left">
+                <Info className="w-4 h-4 text-rose-300 shrink-0" />
+                <span className="text-left whitespace-nowrap">Tentang</span>
+              </div>
+              <ChevronRight className="w-4 h-4 opacity-70 shrink-0" />
+            </button>
+          </div>
         </nav>
     </div>
   );

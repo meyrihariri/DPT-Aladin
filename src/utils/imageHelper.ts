@@ -105,12 +105,7 @@ export function getDirectImageUrl(url: string | undefined | null, isThumbnail: b
     const cachedById = PhotoCacheService.get(fileId);
     if (cachedById) return cachedById;
 
-    // For thumbnails, Google Drive CDN thumbnail endpoint is lightning-fast (100ms) and never rate-limited
-    if (isThumbnail) {
-      return getDriveThumbnailUrl(fileId, 320);
-    }
-
-    // Default to server-side proxy endpoint with disk & RAM cache
+    // Default to server-side proxy endpoint with disk & RAM cache (same-origin, zero CORS/cookie blocks)
     return `/api/proxy/image?id=${encodeURIComponent(fileId)}`;
   }
 

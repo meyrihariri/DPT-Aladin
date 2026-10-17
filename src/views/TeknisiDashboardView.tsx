@@ -430,6 +430,8 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
   // Direct Live Camera Modal State
   const [isDirectCameraOpen, setIsDirectCameraOpen] = useState(false);
   const [directCameraType, setDirectCameraType] = useState<'masuk' | 'pulang'>('masuk');
+  const masukUploadPromiseRef = useRef<Promise<string | null> | null>(null);
+  const pulangUploadPromiseRef = useRef<Promise<string | null> | null>(null);
 
   const [absenNote, setAbsenNote] = useState(() => initialAttDraft?.absenNote || '');
   const [absenPulangNote, setAbsenPulangNote] = useState(() => initialPulangDraft?.absenPulangNote || '');
@@ -1052,7 +1054,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
   };
 
   // Submit Absen Masuk
-  const handlePerformMasuk = (e: React.FormEvent) => {
+  const handlePerformMasuk = async (e: React.FormEvent) => {
     e.preventDefault();
     setRadiusError(null);
 
@@ -1093,6 +1095,32 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
       return;
     }
 
+    let resolvedMasukPhoto = selfieMasukPhoto;
+    if (resolvedMasukPhoto.startsWith('data:image') && masukUploadPromiseRef.current) {
+      try {
+        const uploadedUrl = await Promise.race([
+          masukUploadPromiseRef.current,
+          new Promise<string | null>(resolve => setTimeout(() => resolve(null), 15000))
+        ]);
+        if (uploadedUrl) {
+          resolvedMasukPhoto = uploadedUrl;
+          setSelfieMasukPhoto(uploadedUrl);
+        }
+      } catch {}
+    }
+    if (resolvedMasukPhoto.startsWith('data:image')) {
+      try {
+        const safeName = currentUser?.namaLengkap?.replace(/[^a-zA-Z0-9]/g, '_') || 'teknisi';
+        const filename = `selfie_masuk_${safeName}_${Date.now()}.jpg`;
+        const scriptUrl = settings?.googleAppsScriptUrl || StorageService.getSettings()?.googleAppsScriptUrl || '';
+        const upRes = await uploadPhotoToGoogleDrive(scriptUrl, resolvedMasukPhoto, filename);
+        if (upRes.success && upRes.url) {
+          resolvedMasukPhoto = upRes.url;
+          setSelfieMasukPhoto(upRes.url);
+        }
+      } catch {}
+    }
+
     const now = new Date();
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
@@ -1108,6 +1136,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
     });
 
     const newRecord: Partial<AttendanceRecord> = {
+      id: todayAttendance?.id || `att-${Date.now()}`,
       tanggal: todayStr,
       teknisiId: currentUser.id,
       teknisiNama: currentUser.namaLengkap,
@@ -1118,7 +1147,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
       lng: currentGps.lng,
       distanceMeter: dist,
       isWithinRadius: dist <= maxRadius,
-      fotoProofUrl: selfieMasukPhoto,
+      fotoProofUrl: resolvedMasukPhoto,
       status: evalRes.status,
       needsApproval: evalRes.needsApproval,
       approvalType: evalRes.approvalType,
@@ -1126,7 +1155,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
       potonganOtomatis: evalRes.potonganOtomatis
     };
 
-    onCheckIn(newRecord);
+    await onCheckIn(newRecord);
     StorageService.clearAttendanceDraft(currentUser.id);
     if (evalRes.needsApproval) {
       showAppAlert({
@@ -1144,7 +1173,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
   };
 
   // Submit Absen Pulang
-  const handlePerformPulang = (e: React.FormEvent) => {
+  const handlePerformPulang = async (e: React.FormEvent) => {
     e.preventDefault();
     setRadiusError(null);
 
@@ -1179,6 +1208,32 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
       return;
     }
 
+    let resolvedPulangPhoto = selfiePulangPhoto;
+    if (resolvedPulangPhoto.startsWith('data:image') && pulangUploadPromiseRef.current) {
+      try {
+        const uploadedUrl = await Promise.race([
+          pulangUploadPromiseRef.current,
+          new Promise<string | null>(resolve => setTimeout(() => resolve(null), 15000))
+        ]);
+        if (uploadedUrl) {
+          resolvedPulangPhoto = uploadedUrl;
+          setSelfiePulangPhoto(uploadedUrl);
+        }
+      } catch {}
+    }
+    if (resolvedPulangPhoto.startsWith('data:image')) {
+      try {
+        const safeName = currentUser?.namaLengkap?.replace(/[^a-zA-Z0-9]/g, '_') || 'teknisi';
+        const filename = `selfie_pulang_${safeName}_${Date.now()}.jpg`;
+        const scriptUrl = settings?.googleAppsScriptUrl || StorageService.getSettings()?.googleAppsScriptUrl || '';
+        const upRes = await uploadPhotoToGoogleDrive(scriptUrl, resolvedPulangPhoto, filename);
+        if (upRes.success && upRes.url) {
+          resolvedPulangPhoto = upRes.url;
+          setSelfiePulangPhoto(upRes.url);
+        }
+      } catch {}
+    }
+
     const now = new Date();
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
@@ -1206,7 +1261,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
       serverNama: currentUser.namaServer || todayAttendance?.serverNama,
       jamMasuk: todayAttendance?.jamMasuk || '08:00',
       jamPulang: nowTime,
-      fotoPulangUrl: selfiePulangPhoto,
+      fotoPulangUrl: resolvedPulangPhoto,
       keteranganPulang: absenPulangNote || evalRes.reason || (!isWithinRad ? `Luar radius (${dist}m)` : ''),
       status: isPending ? 'Pending Approval' : (todayAttendance?.status || 'Hadir'),
       needsApproval: isPending,
@@ -1214,7 +1269,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
       potonganOtomatis: evalRes.potonganOtomatis || todayAttendance?.potonganOtomatis || 0
     };
 
-    onCheckIn(updateRecord);
+    await onCheckIn(updateRecord);
     StorageService.clearAttendanceDraft(`${currentUser.id}_pulang`);
 
     if (isPending) {
@@ -3622,24 +3677,34 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
             PhotoCacheService.set(compressed, compressed);
 
             // 2. Upload in background to Google Drive via proxy so attendance record gets Drive URL
-            if (settings?.googleAppsScriptUrl) {
-              const safeName = currentUser?.namaLengkap?.replace(/[^a-zA-Z0-9]/g, '_') || 'teknisi';
-              const filename = `selfie_${isMasuk ? 'masuk' : 'pulang'}_${safeName}_${Date.now()}.jpg`;
-              uploadPhotoToGoogleDrive(settings.googleAppsScriptUrl, compressed, filename)
-                .then(res => {
-                  if (res.success && res.url) {
-                    if (isMasuk) {
-                      setSelfieMasukPhoto(res.url);
-                    } else {
-                      setSelfiePulangPhoto(res.url);
-                    }
-                    if (res.fileId) {
-                      PhotoCacheService.set(res.fileId, compressed);
-                    }
-                    PhotoCacheService.set(res.url, compressed);
+            const activeScriptUrl = settings?.googleAppsScriptUrl || StorageService.getSettings()?.googleAppsScriptUrl || '';
+            const safeName = currentUser?.namaLengkap?.replace(/[^a-zA-Z0-9]/g, '_') || 'teknisi';
+            const filename = `selfie_${isMasuk ? 'masuk' : 'pulang'}_${safeName}_${Date.now()}.jpg`;
+            const uploadPromise = uploadPhotoToGoogleDrive(activeScriptUrl, compressed, filename)
+              .then(res => {
+                if (res.success && res.url) {
+                  if (isMasuk) {
+                    setSelfieMasukPhoto(res.url);
+                  } else {
+                    setSelfiePulangPhoto(res.url);
                   }
-                })
-                .catch(err => console.warn('Background selfie upload to Drive failed:', err));
+                  if (res.fileId) {
+                    PhotoCacheService.set(res.fileId, compressed);
+                  }
+                  PhotoCacheService.set(res.url, compressed);
+                  return res.url;
+                }
+                return null;
+              })
+              .catch(err => {
+                console.warn('Background selfie upload to Drive failed:', err);
+                return null;
+              });
+
+            if (isMasuk) {
+              masukUploadPromiseRef.current = uploadPromise;
+            } else {
+              pulangUploadPromiseRef.current = uploadPromise;
             }
           } catch (err) {
             console.error('Error compressing selfie:', err);

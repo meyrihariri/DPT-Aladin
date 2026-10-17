@@ -33,6 +33,7 @@ import { HitungRekapHonorView } from './views/HitungRekapHonorView';
 import { PotonganManualView } from './views/PotonganManualView';
 import { PengaturanView } from './views/PengaturanView';
 import { TeknisiDashboardView } from './views/TeknisiDashboardView';
+import { TentangView } from './views/TentangView';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { NumericInput } from './components/NumericInput';
 import { calculatePayrollForEmployee } from './services/payroll';
@@ -97,6 +98,8 @@ const getViewMenuLabel = (view: NavView): string => {
     case 'pengaturan_google_sheets':
     case 'pengaturan_panduan_sheets':
       return 'Pengaturan';
+    case 'tentang':
+      return 'Tentang Aplikasi';
     case 'teknisi_dashboard':
       return 'Dashboard Teknisi';
     case 'dashboard':
@@ -127,7 +130,7 @@ export default function App() {
         const saved = localStorage.getItem('dpt_aladin_active_view') as NavView | null;
         if (saved && currentUser) {
           if (currentUser.role === 'Teknisi') {
-            const allowed: NavView[] = ['teknisi_dashboard', 'dashboard', 'pekerjaan_planning', 'approval_absensi', 'rekap_honor', 'pekerjaan_daftar'];
+            const allowed: NavView[] = ['teknisi_dashboard', 'dashboard', 'pekerjaan_planning', 'approval_absensi', 'rekap_honor', 'pekerjaan_daftar', 'tentang'];
             if (allowed.includes(saved)) return saved;
             return 'teknisi_dashboard';
           }
@@ -1862,7 +1865,7 @@ export default function App() {
   };
 
   // Check-in & Check-out handler from Teknisi (Smart Merge - No Overwriting/Collisions)
-  const handleCheckIn = (att: Partial<AttendanceRecord>) => {
+  const handleCheckIn = async (att: Partial<AttendanceRecord>) => {
     const targetTanggal = att.tanggal || getEffectiveTodayISO();
     const targetTeknisiId = att.teknisiId || currentUser?.id || 'emp-3';
     const targetTeknisiNama = att.teknisiNama || currentUser?.namaLengkap || 'Teknisi';
@@ -1882,15 +1885,70 @@ export default function App() {
       return matchId || (isSameDate && isSameTech);
     });
 
+    const existingRecord = existingIndex >= 0 ? attendanceList[existingIndex] : null;
+    const resolvedRecordId = existingRecord?.id || att.id || `att-${Date.now()}`;
+
+    // Cache any base64 photos immediately by recordId
+    if (att.fotoProofUrl) {
+      PhotoCacheService.set(att.fotoProofUrl, att.fotoProofUrl);
+      PhotoCacheService.set(`${resolvedRecordId}_masuk`, att.fotoProofUrl);
+    }
+    if (att.fotoPulangUrl) {
+      PhotoCacheService.set(att.fotoPulangUrl, att.fotoPulangUrl);
+      PhotoCacheService.set(`${resolvedRecordId}_pulang`, att.fotoPulangUrl);
+    }
+
+    // Ensure any base64 selfie is uploaded to Google Drive FIRST while loading spinner is active
+    let uploadedFotoMasuk = att.fotoProofUrl;
+    let uploadedFotoPulang = att.fotoPulangUrl;
+    const scriptUrl = (settings?.googleAppsScriptUrl || '').trim();
+
+    if (scriptUrl && ((uploadedFotoMasuk && uploadedFotoMasuk.startsWith('data:image')) || (uploadedFotoPulang && uploadedFotoPulang.startsWith('data:image')))) {
+      setLoadingOverlay({
+        isOpen: true,
+        title: 'Menyimpan...',
+        message: 'Mengunggah foto selfie & menyimpan absensi...'
+      });
+
+      const safeName = targetTeknisiNama.replace(/[^a-zA-Z0-9]/g, '_') || 'teknisi';
+      if (uploadedFotoMasuk && uploadedFotoMasuk.startsWith('data:image')) {
+        const b64 = uploadedFotoMasuk;
+        const filename = `selfie_masuk_${safeName}_${Date.now()}.jpg`;
+        try {
+          const res = await uploadPhotoToGoogleDrive(scriptUrl, b64, filename);
+          if (res.success && res.url) {
+            uploadedFotoMasuk = res.url;
+            PhotoCacheService.set(res.url, b64);
+            if (res.fileId) PhotoCacheService.set(res.fileId, b64);
+          }
+        } catch (err) {
+          console.warn('Selfie masuk upload fallback:', err);
+        }
+      }
+
+      if (uploadedFotoPulang && uploadedFotoPulang.startsWith('data:image')) {
+        const b64 = uploadedFotoPulang;
+        const filename = `selfie_pulang_${safeName}_${Date.now()}.jpg`;
+        try {
+          const res = await uploadPhotoToGoogleDrive(scriptUrl, b64, filename);
+          if (res.success && res.url) {
+            uploadedFotoPulang = res.url;
+            PhotoCacheService.set(res.url, b64);
+            if (res.fileId) PhotoCacheService.set(res.fileId, b64);
+          }
+        } catch (err) {
+          console.warn('Selfie pulang upload fallback:', err);
+        }
+      }
+    }
+
     const finalJamMasuk = (att.jamMasuk && att.jamMasuk !== '-' && att.jamMasuk.trim())
       ? att.jamMasuk
-      : (existingIndex >= 0 && attendanceList[existingIndex].jamMasuk ? attendanceList[existingIndex].jamMasuk : '08:00');
+      : (existingRecord?.jamMasuk ? existingRecord.jamMasuk : '08:00');
 
     const finalJamPulang = (att.jamPulang && att.jamPulang !== '-' && att.jamPulang.trim())
       ? att.jamPulang
-      : (existingIndex >= 0 && attendanceList[existingIndex].jamPulang && attendanceList[existingIndex].jamPulang !== '-' ? attendanceList[existingIndex].jamPulang : undefined);
-
-    const existingRecord = existingIndex >= 0 ? attendanceList[existingIndex] : null;
+      : (existingRecord?.jamPulang && existingRecord.jamPulang !== '-' ? existingRecord.jamPulang : undefined);
 
     // Check if late check-in occurs based on dynamic settings
     const stdMasuk = sanitizeTimeString(settings?.jamMasukDefinisikan, '08:00');
@@ -1969,32 +2027,31 @@ export default function App() {
 
     let updatedList: AttendanceRecord[];
 
-    if (existingIndex >= 0) {
-      const existing = attendanceList[existingIndex];
+    if (existingIndex >= 0 && existingRecord) {
       const merged: AttendanceRecord = {
-        ...existing,
+        ...existingRecord,
         ...att,
-        id: existing.id || att.id || `att-${Date.now()}`,
+        id: resolvedRecordId,
         tanggal: cleanTargetTanggal,
-        teknisiId: existing.teknisiId || targetTeknisiId,
-        teknisiNama: existing.teknisiNama || targetTeknisiNama,
+        teknisiId: existingRecord.teknisiId || targetTeknisiId,
+        teknisiNama: existingRecord.teknisiNama || targetTeknisiNama,
         serverId: resolvedServerId,
         serverNama: resolvedServerNama,
         jamMasuk: finalJamMasuk,
-        fotoProofUrl: pickBestPhotoUrl(att.fotoProofUrl, existing.fotoProofUrl),
+        fotoProofUrl: pickBestPhotoUrl(uploadedFotoMasuk, existingRecord.fotoProofUrl),
         jamPulang: (att.jamPulang && att.jamPulang !== '-' && att.jamPulang.trim())
           ? att.jamPulang
-          : (existing.jamPulang && existing.jamPulang !== '-' ? existing.jamPulang : undefined),
-        fotoPulangUrl: pickBestPhotoUrl(att.fotoPulangUrl, existing.fotoPulangUrl),
-        keterangan: att.keterangan || existing.keterangan || evalRes.reason,
-        keteranganPulang: att.keteranganPulang || existing.keteranganPulang,
-        lat: att.lat ?? existing.lat,
-        lng: att.lng ?? existing.lng,
-        distanceMeter: att.distanceMeter ?? existing.distanceMeter,
-        isWithinRadius: att.isWithinRadius ?? existing.isWithinRadius,
+          : (existingRecord.jamPulang && existingRecord.jamPulang !== '-' ? existingRecord.jamPulang : undefined),
+        fotoPulangUrl: pickBestPhotoUrl(uploadedFotoPulang, existingRecord.fotoPulangUrl),
+        keterangan: att.keterangan || existingRecord.keterangan || evalRes.reason,
+        keteranganPulang: att.keteranganPulang || existingRecord.keteranganPulang,
+        lat: att.lat ?? existingRecord.lat,
+        lng: att.lng ?? existingRecord.lng,
+        distanceMeter: att.distanceMeter ?? existingRecord.distanceMeter,
+        isWithinRadius: att.isWithinRadius ?? existingRecord.isWithinRadius,
         status: finalStatus,
         needsApproval: isPendingApproval,
-        isApproved: isPendingApproval ? false : (existing.isApproved ?? (finalStatus === 'Hadir' && !isPendingApproval ? true : false)),
+        isApproved: isPendingApproval ? false : (existingRecord.isApproved ?? (finalStatus === 'Hadir' && !isPendingApproval ? true : false)),
         approvalType: finalApprovalType,
         potonganOtomatis: finalPotongan
       };
@@ -2003,7 +2060,7 @@ export default function App() {
       updatedList[existingIndex] = merged;
     } else {
       const newRecord: AttendanceRecord = {
-        id: att.id || `att-${Date.now()}`,
+        id: resolvedRecordId,
         tanggal: cleanTargetTanggal,
         teknisiId: targetTeknisiId,
         teknisiNama: targetTeknisiNama,
@@ -2015,8 +2072,8 @@ export default function App() {
         lng: att.lng,
         distanceMeter: att.distanceMeter || 20,
         isWithinRadius: att.isWithinRadius ?? true,
-        fotoProofUrl: pickBestPhotoUrl(att.fotoProofUrl),
-        fotoPulangUrl: pickBestPhotoUrl(att.fotoPulangUrl),
+        fotoProofUrl: pickBestPhotoUrl(uploadedFotoMasuk),
+        fotoPulangUrl: pickBestPhotoUrl(uploadedFotoPulang),
         status: finalStatus,
         needsApproval: isPendingApproval,
         isApproved: isPendingApproval ? false : (finalStatus === 'Hadir' && !isPendingApproval ? true : false),
@@ -2028,20 +2085,11 @@ export default function App() {
       updatedList = [newRecord, ...attendanceList];
     }
 
-    if (att.fotoProofUrl) {
-      PhotoCacheService.set(att.fotoProofUrl, att.fotoProofUrl);
-      if (att.id) PhotoCacheService.set(`${att.id}_masuk`, att.fotoProofUrl);
-    }
-    if (att.fotoPulangUrl) {
-      PhotoCacheService.set(att.fotoPulangUrl, att.fotoPulangUrl);
-      if (att.id) PhotoCacheService.set(`${att.id}_pulang`, att.fotoPulangUrl);
-    }
-
     const next = consolidateAttendanceRecords(updatedList);
     setAttendanceList(next);
     StorageService.saveAttendance(next);
     StorageService.syncServerState({ attendanceList: next });
-    sendSyncToGoogleSheets({ attendanceList: next });
+    await sendSyncToGoogleSheets({ attendanceList: next });
 
     // Kirim notifikasi admin untuk absensi teknisi
     const isAbsenPulang = Boolean(att.jamPulang && att.jamPulang !== '-' && att.jamPulang.trim().length > 0);
@@ -2067,45 +2115,6 @@ export default function App() {
         isManualByAdmin: currentUser?.role === 'Admin'
       }
     });
-
-    // Background upload to Google Drive if photo was submitted as base64
-    if (settings?.googleAppsScriptUrl) {
-      const recordId = att.id || (existingIndex >= 0 ? attendanceList[existingIndex]?.id : undefined);
-      if (att.fotoProofUrl && att.fotoProofUrl.startsWith('data:image')) {
-        const b64 = att.fotoProofUrl;
-        const filename = `selfie_masuk_${targetTeknisiNama.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.jpg`;
-        uploadPhotoToGoogleDrive(settings.googleAppsScriptUrl, b64, filename).then(res => {
-          if (res.success && res.url && recordId) {
-            PhotoCacheService.set(res.url, b64);
-            if (res.fileId) PhotoCacheService.set(res.fileId, b64);
-            setAttendanceList(prev => {
-              const updated = prev.map(item => item.id === recordId ? { ...item, fotoProofUrl: res.url } : item);
-              StorageService.saveAttendance(updated);
-              StorageService.syncServerState({ attendanceList: updated });
-              sendSyncToGoogleSheets({ attendanceList: updated, showLoading: false });
-              return updated;
-            });
-          }
-        }).catch(() => {});
-      }
-      if (att.fotoPulangUrl && att.fotoPulangUrl.startsWith('data:image')) {
-        const b64 = att.fotoPulangUrl;
-        const filename = `selfie_pulang_${targetTeknisiNama.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.jpg`;
-        uploadPhotoToGoogleDrive(settings.googleAppsScriptUrl, b64, filename).then(res => {
-          if (res.success && res.url && recordId) {
-            PhotoCacheService.set(res.url, b64);
-            if (res.fileId) PhotoCacheService.set(res.fileId, b64);
-            setAttendanceList(prev => {
-              const updated = prev.map(item => item.id === recordId ? { ...item, fotoPulangUrl: res.url } : item);
-              StorageService.saveAttendance(updated);
-              StorageService.syncServerState({ attendanceList: updated });
-              sendSyncToGoogleSheets({ attendanceList: updated, showLoading: false });
-              return updated;
-            });
-          }
-        }).catch(() => {});
-      }
-    }
   };
 
   // Test Sheets Connection
@@ -2713,6 +2722,14 @@ export default function App() {
                 onSyncDatabase={handleSyncDatabase}
                 isSyncing={isSyncing}
                 onClearLocalCacheAndReload={handleClearLocalDataAndSync}
+              />
+            )}
+
+            {/* Menu Tentang: Halaman Tentang Aplikasi & Pembuat Aplikasi (Developer by: OEBEK) */}
+            {activeView === 'tentang' && (
+              <TentangView
+                settings={settings}
+                currentUser={currentUser}
               />
             )}
           </main>

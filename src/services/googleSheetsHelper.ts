@@ -1150,10 +1150,10 @@ export function buildGoogleSheetsSyncPayload(data: {
           PhotoCacheService.set('[Foto Pulang Tersimpan]', rawPulang);
         }
 
-        const cleanFotoMasuk = rawMasuk && rawMasuk.startsWith('data:image') && rawMasuk.length > 500
+        const cleanFotoMasuk = rawMasuk && rawMasuk.startsWith('data:image') && rawMasuk.length > 48000
           ? '[Foto Masuk Tersimpan]'
           : rawMasuk;
-        const cleanFotoPulang = rawPulang && rawPulang.startsWith('data:image') && rawPulang.length > 500
+        const cleanFotoPulang = rawPulang && rawPulang.startsWith('data:image') && rawPulang.length > 48000
           ? '[Foto Pulang Tersimpan]'
           : rawPulang;
 
@@ -1181,7 +1181,7 @@ export function buildGoogleSheetsSyncPayload(data: {
       ...sortedAttendanceForSheets.map(a => {
         const isPending = Boolean(a.needsApproval || a.status === 'Pending Approval');
         const rawMasuk = sanitizePhotoUrl(a.fotoProofUrl);
-        const cleanFotoMasuk = rawMasuk && rawMasuk.startsWith('data:image') && rawMasuk.length > 500
+        const cleanFotoMasuk = rawMasuk && rawMasuk.startsWith('data:image') && rawMasuk.length > 48000
           ? '[Foto Masuk Tersimpan]'
           : rawMasuk;
 
@@ -2128,7 +2128,7 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
       const techIdCol = getColIndex(/teknisi id|id teknisi/i, 2);
       const techNamaCol = getColIndex(/nama teknisi|teknisi nama|nama/i, 3);
       const jamMasukCol = getColIndex(/^(?=.*(masuk|in|hadir|checkin))(?!.*(?:foto|bukti|kamera|image)).*$|^(?:jam|waktu|clock)[\s_-]?(?:masuk|in)$/i, 4);
-      const fotoMasukCol = getColIndex(/(?:foto|bukti|kamera|selfie|image).*(?:masuk|proof|hadir|in)|(?:masuk|proof|hadir|in).*(?:foto|bukti|kamera|selfie|image)/i, 5);
+      const fotoMasukCol = getColIndex(/(?:foto|bukti|kamera|selfie|image).*(?:masuk|proof|hadir|in)|(?:masuk|proof|hadir|in).*(?:foto|bukti|kamera|selfie|image)/i, isApprovalSource ? 10 : 5);
       
       // Jam pulang regex: match pulang, keluar, out, checkout, selesai, etc. (excluding photo columns)
       const jamPulangCol = getColIndex(

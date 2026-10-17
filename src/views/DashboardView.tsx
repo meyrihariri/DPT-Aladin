@@ -675,7 +675,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
     // Filter to current month (bulan berjalan)
     const now = new Date();
     const currentMonthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    list = list.filter(j => (j.tanggal || '').startsWith(currentMonthPrefix));
+    list = list.filter(j => sanitizeDateString(j.tanggal || '').startsWith(currentMonthPrefix));
 
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase().trim();
@@ -689,7 +689,25 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
           (j.tanggal || '').includes(term)
       );
     }
-    return list.slice(0, 20);
+
+    // Sort by newest date first (Terbaru ke Terlama), and within the same date, latest input first
+    const indexed = list.map((job, idx) => ({ job, idx }));
+    indexed.sort((itemA, itemB) => {
+      const a = itemA.job;
+      const b = itemB.job;
+      const dateA = sanitizeDateString(a.tanggal || '');
+      const dateB = sanitizeDateString(b.tanggal || '');
+      const cmp = dateB.localeCompare(dateA);
+      if (cmp !== 0) return cmp;
+      const mA = String(a.id || '').match(/(\d+)/g);
+      const mB = String(b.id || '').match(/(\d+)/g);
+      const nA = mA && mA.length > 0 ? Number(mA[mA.length - 1]) || 0 : 0;
+      const nB = mB && mB.length > 0 ? Number(mB[mB.length - 1]) || 0 : 0;
+      if (nB !== nA) return nB - nA;
+      return itemB.idx - itemA.idx;
+    });
+
+    return indexed.slice(0, 20).map(item => item.job);
   }, [jobs, isPjServer, userServer, searchTerm]);
 
   return (
@@ -1422,8 +1440,27 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
                 ? (sanitizeTimeString(a.jamPulang, '') || a.jamPulang)
                 : (attendance.find(att => isSameTechRecord(att) && att.jamPulang && att.jamPulang !== '-' && !/^(belum|pending)/i.test(att.jamPulang.trim()))?.jamPulang || (hasPulang || isPastRecordDate ? '17:00' : undefined));
 
+              const isSameTechAnyDate = (att: AttendanceRecord) => {
+                if ((att.teknisiId && a.teknisiId && att.teknisiId === a.teknisiId) ||
+                    (att.teknisiNama && a.teknisiNama && att.teknisiNama.toLowerCase().trim() === a.teknisiNama.toLowerCase().trim())) {
+                  return true;
+                }
+                const k1 = getNormalizedTechKey(att.teknisiId, att.teknisiNama);
+                const k2 = getNormalizedTechKey(a.teknisiId, a.teknisiNama);
+                return Boolean(k1 && k2 && k1 === k2);
+              };
+
               const resolvedFotoPulang = (isValidPhotoUrl(a.fotoPulangUrl) ? a.fotoPulangUrl : undefined) ||
-                attendance.find(att => isSameTechRecord(att) && isValidPhotoUrl(att.fotoPulangUrl) && !att.fotoPulangUrl?.startsWith('[Foto Masuk'))?.fotoPulangUrl;
+                attendance.find(att => isSameTechRecord(att) && isValidPhotoUrl(att.fotoPulangUrl) && !att.fotoPulangUrl?.startsWith('[Foto Masuk'))?.fotoPulangUrl ||
+                (a.fotoPulangUrl?.startsWith('[') ? attendance.find(att => isSameTechAnyDate(att) && isValidPhotoUrl(att.fotoPulangUrl))?.fotoPulangUrl : undefined);
+
+              const resolvedFotoMasuk = (isValidPhotoUrl(a.fotoProofUrl) ? a.fotoProofUrl : undefined) ||
+                attendance.find(att => isSameTechRecord(att) && isValidPhotoUrl(att.fotoProofUrl))?.fotoProofUrl ||
+                (a.fotoProofUrl?.startsWith('[')
+                  ? (resolvedFotoPulang ||
+                     attendance.find(att => isSameTechAnyDate(att) && isValidPhotoUrl(att.fotoProofUrl))?.fotoProofUrl ||
+                     attendance.find(att => isSameTechAnyDate(att) && isValidPhotoUrl(att.fotoPulangUrl))?.fotoPulangUrl)
+                  : undefined);
 
               const isManualAbsen = Boolean(
                 a.isManual ||
@@ -1433,7 +1470,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
                 a.keterangan?.toLowerCase().includes('manual oleh admin') ||
                 a.keteranganPulang?.toLowerCase().includes('manual') ||
                 a.keteranganPulang?.toLowerCase().includes('admin') ||
-                (!a.fotoProofUrl && !resolvedFotoPulang && (a.isApproved || a.status === 'Hadir'))
+                (!resolvedFotoMasuk && !resolvedFotoPulang && (a.isApproved || a.status === 'Hadir'))
               );
 
               // Deteksi keterlambatan berdasarkan jam masuk & batas toleransi sistem
@@ -1563,17 +1600,17 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
                           </span>
                         </div>
 
-                        {isValidPhotoUrl(a.fotoProofUrl) ? (
+                        {isValidPhotoUrl(resolvedFotoMasuk) ? (
                           <div className="relative w-full h-32 bg-slate-900 rounded-lg overflow-hidden group">
                             <SafeImage
-                              src={a.fotoProofUrl}
+                              src={resolvedFotoMasuk}
                               alt={`Foto Masuk ${a.teknisiNama}`}
                               className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-200"
                               fallbackText="Selfie Masuk"
                               isThumbnail={true}
                               onClick={() =>
                                 setPhotoModalData({
-                                  url: a.fotoProofUrl || '',
+                                  url: resolvedFotoMasuk || '',
                                   title: `Foto Selfie Absen Masuk - ${a.teknisiNama}`,
                                   subtitle: `Pukul ${a.jamMasuk || '-'} WIB • ${a.tanggal || ''} • Server ${getDisplayServerName(a.serverNama, a.serverId, a.teknisiId, a.teknisiNama)}`
                                 })
@@ -1582,7 +1619,7 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
                             <div
                               onClick={() =>
                                 setPhotoModalData({
-                                  url: a.fotoProofUrl || '',
+                                  url: resolvedFotoMasuk || '',
                                   title: `Foto Selfie Absen Masuk - ${a.teknisiNama}`,
                                   subtitle: `Pukul ${a.jamMasuk || '-'} WIB • ${a.tanggal || ''} • Server ${getDisplayServerName(a.serverNama, a.serverId, a.teknisiId, a.teknisiNama)}`
                                 })
