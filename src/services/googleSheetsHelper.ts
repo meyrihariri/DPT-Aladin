@@ -1560,31 +1560,24 @@ export function parsePengaturanFromSheetRows(rows: any[][]): Partial<AppSettings
   return settingsObj;
 }
 
-// In-memory client cache to make menu switching and repeat calls fast & lightweight
-let cachedFullDatabase: { data: Record<string, any[][]>; timestamp: number } | null = null;
-const CLIENT_CACHE_TTL_MS = 30000; // 30 seconds fast client cache
-
 export function invalidateClientDatabaseCache() {
-  cachedFullDatabase = null;
+  // No-op kept for backward compatibility (all syncs are now strictly on-demand)
 }
 
-// Helper to fetch live database from Google Sheets
-export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, forceRefresh = false) {
+// Helper to fetch live database from Google Sheets on-demand
+export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, _forceRefresh = false) {
   const cleanUrl = scriptUrl.trim();
   if (!cleanUrl) return {};
 
-  const now = Date.now();
-  if (!forceRefresh && cachedFullDatabase && (now - cachedFullDatabase.timestamp < CLIENT_CACHE_TTL_MS)) {
-    return cachedFullDatabase.data;
-  }
-
   const result: Record<string, any[][]> = {};
+  const cacheBuster = Date.now();
 
   // 1. Try via server proxy first with 15s timeout (avoids browser iframe CORS or redirect restrictions)
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
-    const proxyRes = await fetch(`/api/proxy/sheets?url=${encodeURIComponent(cleanUrl)}&action=getAllData${forceRefresh ? '&force=true' : ''}`, {
+    const proxyRes = await fetch(`/api/proxy/sheets?url=${encodeURIComponent(cleanUrl)}&action=getAllData&force=true&_t=${cacheBuster}`, {
+      cache: 'no-store',
       signal: controller.signal
     });
     clearTimeout(timer);
@@ -1594,7 +1587,6 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, force
       try {
         const json = JSON.parse(text);
         if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
-          cachedFullDatabase = { data: json.data, timestamp: Date.now() };
           return json.data as Record<string, any[][]>;
         }
       } catch {}
@@ -1607,9 +1599,10 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, force
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(`${cleanUrl}?action=getAllData`, {
+    const res = await fetch(`${cleanUrl}?action=getAllData&_t=${cacheBuster}`, {
       method: 'GET',
       redirect: 'follow',
+      cache: 'no-store',
       signal: controller.signal
     });
     clearTimeout(timer);
@@ -1619,7 +1612,6 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, force
       try {
         const json = JSON.parse(text);
         if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
-          cachedFullDatabase = { data: json.data, timestamp: Date.now() };
           return json.data as Record<string, any[][]>;
         }
       } catch {}
@@ -1647,9 +1639,10 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, force
       try {
         const subCtrl = new AbortController();
         const subTimer = setTimeout(() => subCtrl.abort(), 3500);
-        const res = await fetch(`${cleanUrl}?action=getData&sheet=${encodeURIComponent(sheetName)}`, {
+        const res = await fetch(`${cleanUrl}?action=getData&sheet=${encodeURIComponent(sheetName)}&_t=${cacheBuster}`, {
           method: 'GET',
           redirect: 'follow',
+          cache: 'no-store',
           signal: subCtrl.signal
         });
         clearTimeout(subTimer);
@@ -1668,10 +1661,6 @@ export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, force
       }
     })
   );
-
-  if (Object.keys(result).length > 0) {
-    cachedFullDatabase = { data: result, timestamp: Date.now() };
-  }
 
   return result;
 }
@@ -2400,6 +2389,8 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
           createdByNama: String(row[9] || 'Admin')
         };
       }).filter((p: any) => p.karyawanId && p.nominal > 0);
+    } else {
+      result.potonganManualList = [];
     }
   }
 
@@ -2474,6 +2465,8 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
           catatan: String(row[catCol] || '')
         };
       }).filter((hl: any) => hl.id && (hl.teknisiId || hl.teknisiNama));
+    } else {
+      result.honorLunasList = [];
     }
   }
 

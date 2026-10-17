@@ -1786,16 +1786,16 @@ const DashboardViewComponent: React.FC<DashboardViewProps> = ({
         )}
       </div>
 
-      {/* Main Grid: Realtime Jobs + Calculator */}
+      {/* Main Grid: Latest Jobs + Calculator */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
-        {/* Left Column: Realtime 20 Latest Pekerjaan */}
+        {/* Left Column: 20 Latest Pekerjaan */}
         <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
             <div>
               <h3 className="font-bold text-slate-900 text-sm flex items-center space-x-2">
                 <Layers className="w-4 h-4 text-maroon-800" />
                 <span>
-                  20 Pekerjaan Terakhir (Real-time)
+                  20 Pekerjaan Terakhir
                   {isPjServer && userServer ? ` - Server ${userServer.namaServer}` : ''}
                 </span>
               </h3>

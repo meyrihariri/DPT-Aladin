@@ -42,7 +42,6 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   onNavigateFromNotification,
   onLogout
 }) => {
-  const [timeString, setTimeString] = useState('');
   const [isNotifPanelOpen, setIsNotifPanelOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [userPhoto, setUserPhoto] = useState<string>('');
@@ -106,19 +105,6 @@ const HeaderComponent: React.FC<HeaderProps> = ({
     };
   }, [isUserMenuOpen]);
 
-  useEffect(() => {
-    const updateClock = () => {
-      if (typeof document !== 'undefined' && document.hidden) return;
-      const now = new Date();
-      setTimeString(
-        now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB'
-      );
-    };
-    updateClock();
-    const timer = setInterval(updateClock, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   const getRoleIcon = () => {
     if (!currentUser) return null;
     switch (currentUser.role) {
@@ -159,31 +145,10 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             </h1>
           </div>
         </div>
-
-        {/* Status Dashboard Live Data Badge */}
-        <div className="hidden lg:flex items-center space-x-2 border-l border-slate-200 pl-4 ml-2">
-          <span className="text-slate-400 text-[11px] font-semibold uppercase tracking-widest">
-            Status
-          </span>
-          <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 text-[11px] font-bold">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-            LIVE
-          </div>
-        </div>
       </div>
 
-      {/* Right: Quick Controls, Server Time & Action Button */}
+      {/* Right: Quick Controls & Action Button */}
       <div className="flex items-center space-x-2 sm:space-x-3">
-        {/* Live Server Time */}
-        {timeString && (
-          <div className="hidden md:flex flex-col items-end text-right">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Waktu Server</span>
-            <span className="text-xs font-mono font-bold text-slate-800 leading-tight">{timeString}</span>
-          </div>
-        )}
-
-        {/* Divider */}
-        <div className="hidden md:block h-6 w-[1px] bg-slate-200"></div>
 
         {/* Unified Real-time Notification Bell for all roles */}
         <button

@@ -73,6 +73,7 @@ interface HitungRekapHonorViewProps {
   initialTab?: 'rekap' | 'pekerjaan' | 'potongan' | 'riwayat_lunas';
   onUpdateAttendance?: (record: AttendanceRecord) => Promise<any> | void;
   onNavigateAbsenManual?: () => void;
+  onPullDatabase?: () => void;
 }
 
 type DatePreset = 'this_month' | 'last_month' | 'last_7_days' | 'last_30_days' | 'all' | 'custom';
@@ -95,7 +96,8 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
   currentUser,
   initialTab = 'rekap',
   onUpdateAttendance,
-  onNavigateAbsenManual
+  onNavigateAbsenManual,
+  onPullDatabase
 }) => {
   const [editingPresensiRecord, setEditingPresensiRecord] = useState<AttendanceRecord | null>(null);
 
@@ -1296,7 +1298,10 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
       {/* 4. Sub-Navigation Tabs: Rekap per Teknisi vs Data Pekerjaan vs Potongan Manual vs Riwayat Honor Lunas */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-1">
         <button
-          onClick={() => setActiveTab('rekap')}
+          onClick={() => {
+            setActiveTab('rekap');
+            onPullDatabase?.();
+          }}
           className={`px-4 py-2 text-xs font-bold rounded-xl flex items-center space-x-2 transition-all cursor-pointer ${
             activeTab === 'rekap'
               ? 'bg-maroon-800 text-white shadow-xs'
@@ -1308,7 +1313,10 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('pekerjaan')}
+          onClick={() => {
+            setActiveTab('pekerjaan');
+            onPullDatabase?.();
+          }}
           className={`px-4 py-2 text-xs font-bold rounded-xl flex items-center space-x-2 transition-all cursor-pointer ${
             activeTab === 'pekerjaan'
               ? 'bg-maroon-800 text-white shadow-xs'
@@ -1320,7 +1328,10 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('potongan')}
+          onClick={() => {
+            setActiveTab('potongan');
+            onPullDatabase?.();
+          }}
           className={`px-4 py-2 text-xs font-bold rounded-xl flex items-center space-x-2 transition-all cursor-pointer ${
             activeTab === 'potongan'
               ? 'bg-rose-700 text-white shadow-xs'
@@ -1337,7 +1348,10 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveTab('riwayat_lunas')}
+          onClick={() => {
+            setActiveTab('riwayat_lunas');
+            onPullDatabase?.();
+          }}
           className={`px-4 py-2 text-xs font-bold rounded-xl flex items-center space-x-2 transition-all cursor-pointer ${
             activeTab === 'riwayat_lunas'
               ? 'bg-emerald-700 text-white shadow-xs'

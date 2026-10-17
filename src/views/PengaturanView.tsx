@@ -1221,21 +1221,21 @@ const PengaturanViewComponent: React.FC<PengaturanViewProps> = ({
                 </p>
               </div>
 
-              {/* 2-Way Auto-Sync Status Info Box */}
+              {/* On-Demand Sync Status Info Box */}
               <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3.5 flex items-start space-x-3 text-xs text-emerald-900 shadow-2xs">
                 <div className="p-1 bg-emerald-600 text-white rounded-lg shrink-0 mt-0.5 flex items-center justify-center">
                   <Check className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-emerald-950">Sinkronisasi Otomatis 2 Arah Aktif</h4>
+                    <h4 className="font-bold text-emerald-950">Sinkronisasi Database On-Demand Aktif</h4>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                       Siap & Terhubung
                     </span>
                   </div>
                   <p className="text-emerald-800 text-[11px] mt-1 leading-relaxed">
-                    Aplikasi otomatis menyinkronkan data secara 2 arah: setiap penambahan / perubahan data langsung dikirim ke Google Sheets, dan data terbaru dari Google Sheets otomatis diperbarui di latar belakang tanpa mengganggu kinerja.
+                    Aplikasi menyinkronkan data dengan mekanisme On-Demand: setiap membuka menu, aplikasi langsung melakukan sinkronisasi data terbaru dari Google Sheets, dan setiap input atau perubahan data langsung disimpan ke Google Sheets.
                   </p>
                 </div>
               </div>

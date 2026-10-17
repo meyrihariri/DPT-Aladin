@@ -560,9 +560,6 @@ app.post('/api/sync/sheets', async (req, res) => {
       data = { raw: text };
     }
 
-    // Invalidate proxy cache so next read immediately sees the updated data
-    GAS_PROXY_CACHE.clear();
-
     res.json({ success: true, data });
   } catch (err: any) {
     console.error('Proxy to Google Apps Script failed:', err);
@@ -570,38 +567,18 @@ app.post('/api/sync/sheets', async (req, res) => {
   }
 });
 
-// In-memory proxy cache for fast responses from Google Apps Script
-interface GasProxyCache {
-  data: any;
-  timestamp: number;
-}
-const GAS_PROXY_CACHE = new Map<string, GasProxyCache>();
-const GAS_CACHE_DURATION_MS = 25000; // 25 seconds fast cache
-
-// GET /api/proxy/sheets - Server-side proxy to fetch data from Google Apps Script reliably & swiftly
+// GET /api/proxy/sheets - Server-side on-demand proxy to fetch live data from Google Apps Script
 app.get('/api/proxy/sheets', async (req, res) => {
   try {
     const scriptUrl = (req.query.url as string) || readServerState()?.settings?.googleAppsScriptUrl;
     const action = (req.query.action as string) || 'getAllData';
     const sheet = req.query.sheet as string;
-    const isForced = req.query.force === 'true' || req.query.nocache === 'true';
 
     if (!scriptUrl || !scriptUrl.trim()) {
       return res.status(400).json({ success: false, message: 'URL is required' });
     }
 
-    const cacheKey = `${scriptUrl.trim()}?action=${action}&sheet=${sheet || ''}`;
-    const now = Date.now();
-
-    // Return instant cached response if valid (< 25s old) and not forced
-    if (!isForced && GAS_PROXY_CACHE.has(cacheKey)) {
-      const cached = GAS_PROXY_CACHE.get(cacheKey)!;
-      if (now - cached.timestamp < GAS_CACHE_DURATION_MS) {
-        return res.json(cached.data);
-      }
-    }
-
-    let targetUrl = `${scriptUrl.trim()}?action=${encodeURIComponent(action)}`;
+    let targetUrl = `${scriptUrl.trim()}?action=${encodeURIComponent(action)}&_t=${Date.now()}`;
     if (sheet) {
       targetUrl += `&sheet=${encodeURIComponent(sheet)}`;
     }
@@ -619,10 +596,7 @@ app.get('/api/proxy/sheets', async (req, res) => {
       return res.status(502).json({ success: false, error: 'Respons dari Google Apps Script bukan JSON valid' });
     }
 
-    if (data && data.status === 'success') {
-      GAS_PROXY_CACHE.set(cacheKey, { data, timestamp: now });
-    }
-
+    res.setHeader('Cache-Control', 'no-store');
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -1708,12 +1682,8 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    // Sync latest data from Google Sheets into server cache on startup
+    // Sync latest data from Google Sheets into server cache once on startup
     syncServerStateFromGoogleSheets();
-    // Keep server state up to date with Google Sheets every 2 minutes
-    setInterval(() => {
-      syncServerStateFromGoogleSheets();
-    }, 120000);
   });
 }
 

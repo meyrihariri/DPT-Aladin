@@ -122,17 +122,15 @@ export async function checkNetworkHealth(timeoutMs = 4000): Promise<{ ok: boolea
 }
 
 /**
- * Global React Hook to monitor Internet status in real-time
+ * Global React Hook to monitor Internet status on-demand
  */
 export function useNetworkStatus(options: { enableAlertPopup?: boolean; probeIntervalMs?: number } = {}) {
   const enableAlertPopup = options.enableAlertPopup ?? false;
-  const probeIntervalMs = options.probeIntervalMs ?? 45000;
   const [quality, setQuality] = useState<NetworkQuality>(currentNetworkQuality);
   const [rtt, setRtt] = useState<number | null>(null);
   const prevQualityRef = useRef<NetworkQuality>(currentNetworkQuality);
 
   const performCheck = useCallback(async () => {
-    // If browser is actively in background, skip unnecessary polling
     if (typeof document !== 'undefined' && document.hidden) {
       return currentNetworkQuality;
     }
@@ -145,7 +143,6 @@ export function useNetworkStatus(options: { enableAlertPopup?: boolean; probeInt
       return res.rtt;
     });
 
-    // Trigger popup only when truly offline
     if (enableAlertPopup && res.quality === 'offline') {
       if (prevQualityRef.current === 'online' || res.quality !== prevQualityRef.current) {
         notifyUnstableOrOffline(res.quality, res.rtt);
@@ -174,29 +171,14 @@ export function useNetworkStatus(options: { enableAlertPopup?: boolean; probeInt
       listeners.forEach(l => l('offline', 0));
     };
 
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        performCheck();
-      }
-    };
-
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    const interval = setInterval(() => {
-      if (!document.hidden) {
-        performCheck();
-      }
-    }, probeIntervalMs);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      document.removeEventListener('visibilitychange', handleVisibility);
-      clearInterval(interval);
     };
-  }, [performCheck, enableAlertPopup, probeIntervalMs]);
+  }, [performCheck, enableAlertPopup]);
 
   return {
     status: quality,

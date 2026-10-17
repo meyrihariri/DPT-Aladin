@@ -130,12 +130,11 @@ const SidebarComponent: React.FC<SidebarProps> = ({
         absenManual: section === 'absenManual',
         pengaturan: section === 'pengaturan'
       });
-      // Jika defaultView ditentukan dan halaman saat ini belum aktif di sub-menu tersebut, buka halamannya
+      // Jika defaultView ditentukan, buka halamannya dan lakukan sinkronisasi database on-demand
       if (defaultView) {
         const prefix = section === 'absenManual' ? 'absen_manual' : section;
-        if (!activeView.startsWith(prefix)) {
-          handleNavClick(defaultView);
-        }
+        const targetView = activeView.startsWith(prefix) ? activeView : defaultView;
+        onSelectView(targetView);
       }
     }
   };

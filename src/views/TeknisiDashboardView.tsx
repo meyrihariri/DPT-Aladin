@@ -2095,13 +2095,13 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
             )}
           </div>
 
-          {/* 20 Pekerjaan Terakhir (Real-time) Bulan Berjalan */}
+          {/* 20 Pekerjaan Terakhir Bulan Berjalan */}
           <div className="bg-white border border-slate-200/90 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-col">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
               <div>
                 <h3 className="font-bold text-slate-900 text-sm flex items-center space-x-2">
                   <Layers className="w-4 h-4 text-maroon-800" />
-                  <span>20 Pekerjaan Terakhir (Real-time)</span>
+                  <span>20 Pekerjaan Terakhir</span>
                 </h3>
               </div>
 

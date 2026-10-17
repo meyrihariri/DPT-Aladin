@@ -152,9 +152,8 @@ export default function App() {
   });
 
   const handlePullDatabaseRef = useRef<((urlOverride?: string, silent?: boolean, customMessage?: string, forceRefresh?: boolean) => Promise<boolean>) | null>(null);
-  const lastPulledViewRef = useRef<{ [view: string]: number }>({});
 
-  // Optimized view switching with on-demand Google Sheets fetch and maroon loading spinner
+  // On-demand view switching: immediately synchronize with Google Sheets database when opening any menu
   const handleSelectView = useCallback((view: NavView) => {
     if (typeof window !== 'undefined') {
       try {
@@ -163,23 +162,18 @@ export default function App() {
     }
     setActiveView(view);
 
-    // Ambil data terbaru Google Sheets saat membuka menu dengan tanda loading spinner maroon
+    // Sinkronisasi on-demand dengan database di Google Sheets saat membuka menu
     const activeUrl = settings.googleAppsScriptUrl?.trim();
     if (activeUrl && handlePullDatabaseRef.current) {
-      const now = Date.now();
-      const lastPull = lastPulledViewRef.current[view] || 0;
-      // Beri batas minimal 2.5 detik jika mengklik menu yang sama agar tidak spam network
-      if (now - lastPull > 2500) {
-        lastPulledViewRef.current[view] = now;
-        const menuLabel = getViewMenuLabel(view);
-        handlePullDatabaseRef.current(
-          activeUrl,
-          false,
-          `Mengambil data ${menuLabel} dari Google Sheets...`
-        ).catch(err => {
-          console.warn(`Gagal menarik data untuk menu ${view}:`, err);
-        });
-      }
+      const menuLabel = getViewMenuLabel(view);
+      handlePullDatabaseRef.current(
+        activeUrl,
+        false,
+        `Mengambil data ${menuLabel} dari Google Sheets...`,
+        true
+      ).catch(err => {
+        console.warn(`Gagal menarik data untuk menu ${view}:`, err);
+      });
     }
   }, [settings.googleAppsScriptUrl]);
 
@@ -345,209 +339,10 @@ export default function App() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Fast equality helper to avoid expensive JSON.stringify on low-end mobile devices
-  const isDataDifferent = (incoming: any, current: any): boolean => {
-    if (incoming === current) return false;
-    if (!incoming && !current) return false;
-    if (!incoming || !current) return true;
-    if (Array.isArray(incoming) && Array.isArray(current)) {
-      if (incoming.length !== current.length) return true;
-      if (incoming.length === 0) return false;
-
-      const currentMap = new Map<string, any>();
-      for (let i = 0; i < current.length; i++) {
-        const item = current[i];
-        if (item && item.id) {
-          currentMap.set(item.id, item);
-        }
-      }
-
-      // If items don't have unique ids, fall back to index comparison
-      if (currentMap.size !== current.length) {
-        for (let i = 0; i < incoming.length; i++) {
-          const a = incoming[i];
-          const b = current[i];
-          if (!a || !b) return true;
-          if (a.id !== b.id || a.updatedAt !== b.updatedAt || a.status !== b.status || a.lemburApproved !== b.lemburApproved) return true;
-        }
-        return false;
-      }
-
-      // Fast order-independent ID-based equality check
-      for (let i = 0; i < incoming.length; i++) {
-        const a = incoming[i];
-        if (!a || !a.id) return true;
-        const b = currentMap.get(a.id);
-        if (!b) return true;
-        if (a.updatedAt !== b.updatedAt) return true;
-        if (a.status !== b.status) return true;
-        if (a.lemburApproved !== b.lemburApproved) return true;
-        if (a.jamMasuk !== b.jamMasuk) return true;
-        if (a.jamPulang !== b.jamPulang) return true;
-        if (a.isApproved !== b.isApproved) return true;
-        if (a.needsApproval !== b.needsApproval) return true;
-      }
-      return false;
-    }
-    return false;
-  };
-
-  // Periodic background check against server state to sync changes made on other devices (PC Admin, HP Teknisi, Tablet)
-  useEffect(() => {
-    let isMounted = true;
-
-    const syncCrossDeviceState = async () => {
-      // Skip background sync if page is hidden to save battery & CPU
-      if (typeof document !== 'undefined' && document.hidden) return;
-
-      try {
-        const bootstrap = await StorageService.fetchServerBootstrap();
-        if (!bootstrap || !isMounted) return;
-
-        // 1. Sync resolved keys & deleted IDs from server so all devices share approvals
-        if (bootstrap.resolvedAttendanceKeys && Array.isArray(bootstrap.resolvedAttendanceKeys)) {
-          StorageService.addResolvedAttendanceKeys(bootstrap.resolvedAttendanceKeys);
-        }
-        if (bootstrap.deletedAttendanceIds && Array.isArray(bootstrap.deletedAttendanceIds)) {
-          StorageService.setDeletedAttendanceIds(bootstrap.deletedAttendanceIds);
-        }
-        if (bootstrap.approvedLemburMap && typeof bootstrap.approvedLemburMap === 'object') {
-          StorageService.setApprovedLemburMap(bootstrap.approvedLemburMap);
-        }
-
-        // 2. Sync employees only if changed
-        if (bootstrap.employees && Array.isArray(bootstrap.employees) && bootstrap.employees.length > 0) {
-          setEmployees(prev => {
-            if (isDataDifferent(bootstrap.employees, prev)) {
-              return bootstrap.employees;
-            }
-            return prev;
-          });
-        }
-
-        // 3. Sync servers, wilayah, jenis pekerjaan only if changed
-        if (bootstrap.servers && Array.isArray(bootstrap.servers) && bootstrap.servers.length > 0) {
-          setServers(prev => {
-            if (isDataDifferent(bootstrap.servers, prev)) {
-              return bootstrap.servers;
-            }
-            return prev;
-          });
-        }
-        if (bootstrap.wilayah && Array.isArray(bootstrap.wilayah) && bootstrap.wilayah.length > 0) {
-          setWilayahList(prev => {
-            if (isDataDifferent(bootstrap.wilayah, prev)) {
-              return bootstrap.wilayah;
-            }
-            return prev;
-          });
-        }
-        if (bootstrap.jenisList && Array.isArray(bootstrap.jenisList) && bootstrap.jenisList.length > 0) {
-          setJenisList(prev => {
-            if (isDataDifferent(bootstrap.jenisList, prev)) {
-              return sortJenisPekerjaan(bootstrap.jenisList);
-            }
-            return prev;
-          });
-        }
-
-        // 4. Sync attendance list & approvals in real-time only if changed
-        if (bootstrap.attendanceList && Array.isArray(bootstrap.attendanceList) && bootstrap.attendanceList.length > 0) {
-          setAttendanceList(prev => {
-            const merged = consolidateAttendanceRecords([...prev, ...bootstrap.attendanceList]);
-            if (isDataDifferent(merged, prev)) {
-              return merged;
-            }
-            return prev;
-          });
-        }
-
-        // 5. Sync jobs list in real-time only if changed
-        if (bootstrap.jobs && Array.isArray(bootstrap.jobs) && bootstrap.jobs.length > 0) {
-          const cleanJobs = bootstrap.jobs.filter((j: any) =>
-            !['job-1', 'job-2', 'job-3', 'job-demo-1', 'job-demo-2'].includes(j.id)
-          );
-          setJobs(prev => {
-            // Protection: Jangan pernah menimpa data Google Sheet dengan cache server yang lebih sedikit atau kadaluarsa
-            if (settings.isGoogleSheetConnected || settings.googleAppsScriptUrl?.trim() || isDataLoadedFromSheetsRef.current) {
-              if (cleanJobs.length < prev.length) {
-                return prev;
-              }
-            }
-            if (isDataDifferent(cleanJobs, prev)) {
-              return cleanJobs;
-            }
-            return prev;
-          });
-        }
-
-        // 6. Sync planning tasks only if changed
-        if (bootstrap.planningTasks && Array.isArray(bootstrap.planningTasks) && bootstrap.planningTasks.length > 0) {
-          const cleanPlans = bootstrap.planningTasks.filter((p: any) =>
-            !['plan-1', 'plan-2', 'plan-3', 'plan-demo-1', 'plan-demo-2'].includes(p.id) &&
-            !p.detailPekerjaan?.includes('Hendra') &&
-            !p.detailPekerjaan?.includes('Klender')
-          );
-          setPlanningTasks(prev => {
-            if (settings.isGoogleSheetConnected || settings.googleAppsScriptUrl?.trim() || isDataLoadedFromSheetsRef.current) {
-              if (cleanPlans.length < prev.length) {
-                return prev;
-              }
-            }
-            if (isDataDifferent(cleanPlans, prev)) {
-              return cleanPlans;
-            }
-            return prev;
-          });
-        }
-
-        // 7. Sync potongan manual (kasbon) only if changed
-        if (bootstrap.potonganManualList && Array.isArray(bootstrap.potonganManualList)) {
-          setPotonganManualList(prev => {
-            if (isDataDifferent(bootstrap.potonganManualList, prev)) {
-              return bootstrap.potonganManualList;
-            }
-            return prev;
-          });
-        }
-
-        // 7.5. Sync honor lunas only if changed
-        if (bootstrap.honorLunasList && Array.isArray(bootstrap.honorLunasList)) {
-          setHonorLunasList(prev => {
-            if (isDataDifferent(bootstrap.honorLunasList, prev)) {
-              return bootstrap.honorLunasList;
-            }
-            return prev;
-          });
-        }
-
-        // 8. Sync leave requests only if changed
-        if (bootstrap.leaveRequests && Array.isArray(bootstrap.leaveRequests)) {
-          setLeaveRequests(prev => {
-            if (isDataDifferent(bootstrap.leaveRequests, prev)) {
-              return bootstrap.leaveRequests;
-            }
-            return prev;
-          });
-        }
-      } catch (err) {
-        // Silently ignore background polling failure
-      }
-    };
-
-    // Execute once on mount/user change
-    syncCrossDeviceState();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentUser]);
-
-  // Periodic presence heartbeat: sends current user activity and retrieves active online users
+  // On-demand presence update: sends current user activity when user logs in or opens a menu
   useEffect(() => {
     let isMounted = true;
     const sendHeartbeat = async () => {
-      if (typeof document !== 'undefined' && document.hidden) return;
       try {
         if (currentUser) {
           const res = await StorageService.sendPresenceHeartbeat({
@@ -570,7 +365,7 @@ export default function App() {
                 if (prev.length === next.length) {
                   const prevIds = prev.map(u => u.id).sort().join(',');
                   const nextIds = next.map(u => u.id).sort().join(',');
-                  if (prevIds === nextIds) return prev; // Referentially stable, avoids re-render!
+                  if (prevIds === nextIds) return prev;
                 }
                 return next;
               });
@@ -620,17 +415,8 @@ export default function App() {
     };
 
     sendHeartbeat();
-    const interval = setInterval(sendHeartbeat, 15000); // 15s interval is lightweight and well within 10min server timeout
 
-    // Immediate heartbeat when user switches back to this tab/window
-    const handleVisibilityOrFocus = () => {
-      if (document.visibilityState === 'visible') {
-        sendHeartbeat();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
-
-    // Instant cross-tab sync via BroadcastChannel
+    // Cross-tab sync via BroadcastChannel
     let bc: BroadcastChannel | null = null;
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       try {
@@ -662,12 +448,9 @@ export default function App() {
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
-      window.removeEventListener('focus', handleVisibilityOrFocus);
       if (bc) bc.close();
     };
-  }, [currentUser]);
+  }, [currentUser, activeView]);
 
   // Real-time Admin Notifications (Technician Online, Attendance, Planning, Job Submission)
   const [adminNotificationEvents, setAdminNotificationEvents] = useState<AdminNotificationEvent[]>([]);
@@ -836,7 +619,6 @@ export default function App() {
     }
 
     const pollEvents = async () => {
-      if (typeof document !== 'undefined' && document.hidden) return;
       if (currentUser?.role === 'Teknisi') return; // Technicians do not receive admin notifications
       try {
         const events = await StorageService.pollAdminNotifications(lastEventTimestampRef.current);
@@ -846,19 +628,16 @@ export default function App() {
       }
     };
 
-    let pollTimer: any = null;
     if (currentUser?.role !== 'Teknisi') {
       pollEvents();
-      pollTimer = setInterval(pollEvents, 8000);
     }
     return () => {
       isMounted = false;
-      if (pollTimer) clearInterval(pollTimer);
       if (bc) {
         try { bc.close(); } catch {}
       }
     };
-  }, [currentUser]);
+  }, [currentUser, activeView]);
 
   const handleNavigateFromNotification = (type: AdminNotificationEvent['type'], _data?: any) => {
     if (currentUser?.role === 'Teknisi') {
@@ -984,26 +763,20 @@ export default function App() {
     }
   }, [currentUser, activeView]);
 
-  // 8-Hour User Session Timeout Monitor: Auto-logout after 8 hours
+  // 8-Hour User Session Timeout Check on menu navigation / user state change
   useEffect(() => {
     if (!currentUser) return;
 
-    const checkSession = () => {
-      if (StorageService.isSessionExpired()) {
-        StorageService.saveCurrentUser(null);
-        setCurrentUser(null);
-        showAppAlert({
-          title: 'Sesi Berakhir',
-          message: 'Sesi login Anda telah berakhir (batas waktu 8 jam). Silakan login kembali.',
-          type: 'info'
-        });
-      }
-    };
-
-    checkSession();
-    const interval = setInterval(checkSession, 30000);
-    return () => clearInterval(interval);
-  }, [currentUser]);
+    if (StorageService.isSessionExpired()) {
+      StorageService.saveCurrentUser(null);
+      setCurrentUser(null);
+      showAppAlert({
+        title: 'Sesi Berakhir',
+        message: 'Sesi login Anda telah berakhir (batas waktu 8 jam). Silakan login kembali.',
+        type: 'info'
+      });
+    }
+  }, [currentUser, activeView]);
 
   // Ref tracking if initial data pull from Google Sheets has completed
   const isDataLoadedFromSheetsRef = React.useRef(false);
@@ -1124,48 +897,22 @@ export default function App() {
       const rawSheets = await fetchFullDatabaseFromGoogleSheets(scriptUrl, forceRefresh);
       const parsed = parseParsedSheetsToState(rawSheets);
 
-      let hasLoadedAny = false;
-
       if (parsed.servers !== undefined) {
-        setServers(prev => {
-          if (isDataDifferent(parsed.servers, prev)) {
-            StorageService.saveServers(parsed.servers);
-            hasLoadedAny = true;
-            return parsed.servers;
-          }
-          return prev;
-        });
+        setServers(parsed.servers);
+        StorageService.saveServers(parsed.servers);
       }
       if (parsed.wilayah !== undefined) {
-        setWilayahList(prev => {
-          if (isDataDifferent(parsed.wilayah, prev)) {
-            StorageService.saveWilayah(parsed.wilayah);
-            hasLoadedAny = true;
-            return parsed.wilayah;
-          }
-          return prev;
-        });
+        setWilayahList(parsed.wilayah);
+        StorageService.saveWilayah(parsed.wilayah);
       }
       if (parsed.jenisList !== undefined) {
         const sortedJp = sortJenisPekerjaan(parsed.jenisList);
-        setJenisList(prev => {
-          if (isDataDifferent(sortedJp, prev)) {
-            StorageService.saveJenisPekerjaan(sortedJp);
-            hasLoadedAny = true;
-            return sortedJp;
-          }
-          return prev;
-        });
+        setJenisList(sortedJp);
+        StorageService.saveJenisPekerjaan(sortedJp);
       }
       if (parsed.employees !== undefined && parsed.employees.length > 0) {
-        setEmployees(prev => {
-          if (isDataDifferent(parsed.employees, prev)) {
-            StorageService.saveEmployees(parsed.employees);
-            hasLoadedAny = true;
-            return parsed.employees;
-          }
-          return prev;
-        });
+        setEmployees(parsed.employees);
+        StorageService.saveEmployees(parsed.employees);
       }
       let latestJobsToSync = jobs;
       if (parsed.jobs !== undefined) {
@@ -1196,58 +943,28 @@ export default function App() {
             lemburApprovedAt: isApproved ? (approvedTime || new Date().toISOString()) : undefined
           };
         });
-        setJobs(prev => {
-          if (isDataDifferent(mergedJobs, prev)) {
-            StorageService.saveJobs(mergedJobs);
-            latestJobsToSync = mergedJobs;
-            hasLoadedAny = true;
-            return mergedJobs;
-          }
-          return prev;
-        });
+        setJobs(mergedJobs);
+        StorageService.saveJobs(mergedJobs);
+        latestJobsToSync = mergedJobs;
       }
       if (parsed.planningTasks !== undefined) {
-        setPlanningTasks(prev => {
-          if (isDataDifferent(parsed.planningTasks, prev)) {
-            StorageService.savePlanning(parsed.planningTasks);
-            hasLoadedAny = true;
-            return parsed.planningTasks;
-          }
-          return prev;
-        });
+        setPlanningTasks(parsed.planningTasks);
+        StorageService.savePlanning(parsed.planningTasks);
       }
       let latestAttendanceToSync = attendanceList;
       if (parsed.attendanceList !== undefined) {
-        setAttendanceList(prev => {
-          const mergedAttendance = consolidateAttendanceRecords([...prev, ...parsed.attendanceList]);
-          if (isDataDifferent(mergedAttendance, prev)) {
-            StorageService.saveAttendance(mergedAttendance);
-            latestAttendanceToSync = mergedAttendance;
-            hasLoadedAny = true;
-            return mergedAttendance;
-          }
-          return prev;
-        });
+        const mergedAttendance = consolidateAttendanceRecords(parsed.attendanceList);
+        setAttendanceList(mergedAttendance);
+        StorageService.saveAttendance(mergedAttendance);
+        latestAttendanceToSync = mergedAttendance;
       }
       if (parsed.potonganManualList !== undefined) {
-        setPotonganManualList(prev => {
-          if (isDataDifferent(parsed.potonganManualList, prev)) {
-            StorageService.savePotonganManual(parsed.potonganManualList);
-            hasLoadedAny = true;
-            return parsed.potonganManualList;
-          }
-          return prev;
-        });
+        setPotonganManualList(parsed.potonganManualList);
+        StorageService.savePotonganManual(parsed.potonganManualList);
       }
       if (parsed.honorLunasList !== undefined) {
-        setHonorLunasList(prev => {
-          if (isDataDifferent(parsed.honorLunasList, prev)) {
-            StorageService.saveHonorLunas(parsed.honorLunasList);
-            hasLoadedAny = true;
-            return parsed.honorLunasList;
-          }
-          return prev;
-        });
+        setHonorLunasList(parsed.honorLunasList);
+        StorageService.saveHonorLunas(parsed.honorLunasList);
       }
       if (parsed.settings && Object.keys(parsed.settings).length > 0) {
         const mergedSettings = {
@@ -1259,7 +976,6 @@ export default function App() {
         setSettings(mergedSettings);
         StorageService.saveSettings(mergedSettings);
         StorageService.syncServerSettings(mergedSettings);
-        hasLoadedAny = true;
       } else {
         const mergedSettings = { ...settings, googleAppsScriptUrl: scriptUrl, isGoogleSheetConnected: true };
         setSettings(mergedSettings);
@@ -1388,21 +1104,15 @@ export default function App() {
           }
         }
 
-        // Tampilkan antarmuka aplikasi seketika (< 300ms) dari cache lokal & server bootstrap tanpa membekukan user
-        isDataLoadedFromSheetsRef.current = true;
-        setIsBootstrapLoaded(true);
-        setLoadingOverlay(prev => ({ ...prev, isOpen: false }));
-
-        // 2. Sinkronkan data terbaru dari Google Sheets di latar belakang
+        // 2. Sinkronkan data terbaru dari Google Sheets secara on-demand saat membuka aplikasi
         if (activeScriptUrl) {
-          handlePullDatabase(
+          const menuLabel = getViewMenuLabel(activeView);
+          await handlePullDatabase(
             activeScriptUrl,
-            true,
-            'Memperbarui data dari Google Sheets...',
-            false
-          ).catch(err => {
-            console.warn('Bootstrap background pull failed:', err);
-          });
+            false,
+            `Mengambil data ${menuLabel} dari Google Sheets...`,
+            true
+          );
         }
       } catch (err) {
         console.warn('Bootstrap initialization error:', err);
@@ -2946,6 +2656,7 @@ export default function App() {
                 initialTab="rekap"
                 onUpdateAttendance={handleUpdateAttendance}
                 onNavigateAbsenManual={() => handleSelectView('absen_manual_form')}
+                onPullDatabase={() => handlePullDatabase(undefined, false, 'Mengambil data Rekap Honor dari Google Sheets...', true)}
               />
             )}
 

@@ -100,12 +100,6 @@ export const OnlineTechnicianTrendChart: React.FC<OnlineTechnicianTrendChartProp
 
   useEffect(() => {
     loadTrendData();
-    // Auto refresh every 60 seconds to keep live trends updated when tab is visible
-    const interval = setInterval(() => {
-      if (typeof document !== 'undefined' && document.hidden) return;
-      loadTrendData(true);
-    }, 60000);
-    return () => clearInterval(interval);
   }, [loadTrendData]);
 
   const activeServerName = useMemo(() => {
@@ -183,10 +177,6 @@ export const OnlineTechnicianTrendChart: React.FC<OnlineTechnicianTrendChartProp
               <h3 className="font-extrabold text-slate-900 text-sm leading-snug">
                 Tren Teknisi Online (24 Jam Terakhir)
               </h3>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Real-time
-              </span>
             </div>
           </div>
         </div>
