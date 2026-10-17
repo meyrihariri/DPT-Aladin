@@ -983,22 +983,6 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
             </button>
           )}
 
-          {/* Button Potongan Manual / Kasbon */}
-          <button
-            id="btn-tambah-potongan-manual"
-            onClick={() => handleOpenAddPotonganModal()}
-            className="py-2.5 px-3.5 bg-rose-50 border border-rose-200 hover:bg-rose-100 active:bg-rose-200 text-rose-700 font-bold text-xs rounded-xl shadow-xs flex items-center space-x-1.5 transition-all cursor-pointer"
-            title="Catat pemotongan manual atau kasbon karyawan pada server tertentu (otomatis memotong honor tetap)"
-          >
-            <MinusCircle className="w-4 h-4 text-rose-600" />
-            <span>Potongan Manual / Kasbon</span>
-            {filteredPotongan.length > 0 && (
-              <span className="text-[10px] bg-rose-600 text-white font-extrabold px-1.5 py-0.2 rounded-full">
-                {filteredPotongan.length}
-              </span>
-            )}
-          </button>
-
           {/* Download Official PDF Report */}
           <button
             id="btn-download-pdf-laporan"
@@ -1033,18 +1017,6 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
             <Download className="w-4 h-4" />
             <span>Export CSV</span>
           </button>
-
-          {/* Absen Manual Admin Button */}
-          {currentUser?.role === 'Admin' && onNavigateAbsenManual && (
-            <button
-              onClick={onNavigateAbsenManual}
-              className="py-2.5 px-3.5 bg-maroon-800 text-white font-bold text-xs rounded-xl hover:bg-maroon-900 shadow-xs flex items-center space-x-1.5 transition-all cursor-pointer"
-              title="Buka menu Absen Manual untuk menyelesaikan teknisi yang kendala absen"
-            >
-              <UserCheck className="w-4 h-4 text-emerald-400" />
-              <span>Absen Manual</span>
-            </button>
-          )}
         </div>
       </div>
 

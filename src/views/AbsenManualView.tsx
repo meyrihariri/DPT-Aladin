@@ -467,19 +467,6 @@ const AbsenManualViewComponent: React.FC<AbsenManualViewProps> = ({
             <span>Absen Manual Teknisi</span>
           </h2>
         </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {onSyncDatabase && (
-            <button
-              onClick={onSyncDatabase}
-              disabled={isSyncing}
-              className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-xs transition-all active:scale-95 disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Menyinkronkan...' : 'Sync Database'}</span>
-            </button>
-          )}
-        </div>
       </div>
 
       {/* Navigation Tabs */}

@@ -11,7 +11,7 @@ interface MaroonLoadingOverlayProps {
 
 export const MaroonLoadingOverlay: React.FC<MaroonLoadingOverlayProps> = ({
   isOpen,
-  title = 'Please Wait...',
+  title = 'Silahkan Tunggu...',
   message = 'Mengambil data dari Google Sheets...',
   logoUrl,
   companyName,
@@ -50,16 +50,9 @@ export const MaroonLoadingOverlay: React.FC<MaroonLoadingOverlayProps> = ({
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-maroon-800/25 rounded-full blur-3xl pointer-events-none" />
 
         {/* 1. Title */}
-        <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-sm mb-1.5">
+        <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-sm mb-5">
           {title}
         </h3>
-
-        {/* Optional Subtitle / Message */}
-        {message && (
-          <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xs line-clamp-2 mb-6">
-            {message}
-          </p>
-        )}
 
         {/* 2. Circular Spinner with Company Logo in the Center */}
         <div className="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center my-1">
@@ -144,6 +137,13 @@ export const MaroonLoadingOverlay: React.FC<MaroonLoadingOverlayProps> = ({
             style={{ height: '16px', animationDelay: '600ms' }}
           />
         </div>
+
+        {/* Optional Subtitle / Message below loading animation */}
+        {message && (
+          <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xs line-clamp-2 mt-3">
+            {message}
+          </p>
+        )}
 
         {/* 4. Safety Fallback: Dismiss button if internet is extremely slow */}
         {showTimeoutFallback && onDismiss && (

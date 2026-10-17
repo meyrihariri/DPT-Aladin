@@ -147,7 +147,7 @@ export default function App() {
     message: string;
   }>({
     isOpen: true,
-    title: 'Please Wait...',
+    title: 'Silahkan Tunggu...',
     message: 'Mengambil data dari Google Sheets...'
   });
 
@@ -885,7 +885,7 @@ export default function App() {
     if (shouldShowOverlay) {
       setLoadingOverlay({
         isOpen: true,
-        title: 'Please Wait...',
+        title: 'Silahkan Tunggu...',
         message: customMessage || 'Mengambil data dari Google Sheets...'
       });
     }
