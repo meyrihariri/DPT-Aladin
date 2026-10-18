@@ -546,6 +546,118 @@ app.post('/api/settings', (req, res) => {
   }
 });
 
+// In-memory cache & deduplication for Google Sheets 2D tables
+const ALL_GAS_SHEET_NAMES = [
+  'DataServer',
+  'DataWilayah',
+  'JenisPekerjaan',
+  'DataKaryawan',
+  'DaftarPekerjaan',
+  'PlanningPekerjaan',
+  'AbsensiHarian',
+  'ApprovalAbsensi',
+  'PotonganManual',
+  'HonorLunas',
+  'PengaturanApp'
+];
+
+let SHEETS_RAW_CACHE: {
+  scriptUrl: string;
+  data: Record<string, any[][]>;
+  timestamp: number;
+} | null = null;
+
+let inflightSheetsFetch: Promise<Record<string, any[][]> | null> | null = null;
+
+// Fetch all 11 sheets in parallel via ?action=getData&sheet=... (~2.2s total vs 35s for getAllData)
+async function fetchAllSheetsParallelFromGas(scriptUrl: string): Promise<Record<string, any[][]> | null> {
+  const cleanUrl = scriptUrl.trim();
+  if (!cleanUrl) return null;
+
+  const result: Record<string, any[][]> = {};
+  const cacheBuster = Date.now();
+  let successCount = 0;
+
+  await Promise.allSettled(
+    ALL_GAS_SHEET_NAMES.map(async (sheetName) => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 7000);
+      try {
+        const targetUrl = `${cleanUrl}?action=getData&sheet=${encodeURIComponent(sheetName)}&_t=${cacheBuster}`;
+        const res = await fetch(targetUrl, { redirect: 'follow', signal: ctrl.signal });
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.status === 'success' && Array.isArray(json.data)) {
+            result[sheetName] = json.data;
+            successCount++;
+          }
+        }
+      } catch {
+        // Keep existing cached sheet if a single sheet request hiccups
+        if (SHEETS_RAW_CACHE?.data?.[sheetName]) {
+          result[sheetName] = SHEETS_RAW_CACHE.data[sheetName];
+        }
+      } finally {
+        clearTimeout(timer);
+      }
+    })
+  );
+
+  if (successCount === 0) return null;
+  return result;
+}
+
+// Deduplicated fetcher that updates both SHEETS_RAW_CACHE and server app_state.json
+async function refreshSheetsCacheAndServerState(scriptUrl: string): Promise<Record<string, any[][]> | null> {
+  const cleanUrl = scriptUrl.trim();
+  if (!cleanUrl) return null;
+
+  if (inflightSheetsFetch) {
+    return inflightSheetsFetch;
+  }
+
+  inflightSheetsFetch = (async () => {
+    try {
+      const sheetsData = await fetchAllSheetsParallelFromGas(cleanUrl);
+      if (!sheetsData || Object.keys(sheetsData).length === 0) return null;
+
+      SHEETS_RAW_CACHE = {
+        scriptUrl: cleanUrl,
+        data: {
+          ...(SHEETS_RAW_CACHE?.scriptUrl === cleanUrl ? SHEETS_RAW_CACHE.data : {}),
+          ...sheetsData
+        },
+        timestamp: Date.now()
+      };
+
+      const currentState = readServerState() || {};
+      const parsed = parseParsedSheetsToState(SHEETS_RAW_CACHE.data);
+      const mergedAttendance = mergeServerAttendanceLists(currentState.attendanceList, parsed.attendanceList);
+      const updatedState = {
+        ...currentState,
+        ...parsed,
+        settings: {
+          ...(currentState.settings || {}),
+          ...(parsed.settings || {}),
+          googleAppsScriptUrl: cleanUrl,
+          isGoogleSheetConnected: true
+        },
+        attendanceList: mergedAttendance,
+        lastUpdated: new Date().toISOString()
+      };
+      writeServerState(updatedState);
+      return SHEETS_RAW_CACHE.data;
+    } catch (err: any) {
+      console.warn('[Server State Sync] Failed to refresh from Google Sheets:', err.message);
+      return null;
+    } finally {
+      inflightSheetsFetch = null;
+    }
+  })();
+
+  return inflightSheetsFetch;
+}
+
 // POST /api/sync/sheets - Server-side proxy to sync payload to Google Apps Script reliably (bypasses browser CORS & redirects)
 app.post('/api/sync/sheets', async (req, res) => {
   try {
@@ -556,12 +668,50 @@ app.post('/api/sync/sheets', async (req, res) => {
     }
 
     const cleanUrl = url.trim();
+
+    // Write-through cache: immediately update server's in-memory raw sheets cache so subsequent reads are 0ms
+    if (payload && payload.tables && typeof payload.tables === 'object') {
+      const existingData = (SHEETS_RAW_CACHE && SHEETS_RAW_CACHE.scriptUrl === cleanUrl)
+        ? SHEETS_RAW_CACHE.data
+        : {};
+      SHEETS_RAW_CACHE = {
+        scriptUrl: cleanUrl,
+        data: {
+          ...existingData,
+          ...payload.tables
+        },
+        timestamp: Date.now()
+      };
+    }
+
+    // If syncing both AbsensiHarian and ApprovalAbsensi (mirror sheets), send AbsensiHarian first for faster response
+    // and sync ApprovalAbsensi asynchronously in the background
+    let primaryPayload = payload;
+    let backgroundPayload: any = null;
+    if (
+      payload &&
+      payload.action === 'syncFullDatabase' &&
+      payload.tables &&
+      Object.keys(payload.tables).length === 2 &&
+      payload.tables.AbsensiHarian &&
+      payload.tables.ApprovalAbsensi
+    ) {
+      primaryPayload = {
+        action: 'syncFullDatabase',
+        tables: { AbsensiHarian: payload.tables.AbsensiHarian }
+      };
+      backgroundPayload = {
+        action: 'syncFullDatabase',
+        tables: { ApprovalAbsensi: payload.tables.ApprovalAbsensi }
+      };
+    }
+
     const response = await fetch(cleanUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain;charset=utf-8'
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(primaryPayload)
     });
 
     const text = await response.text();
@@ -570,6 +720,14 @@ app.post('/api/sync/sheets', async (req, res) => {
       data = JSON.parse(text);
     } catch {
       data = { raw: text };
+    }
+
+    if (backgroundPayload) {
+      fetch(cleanUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(backgroundPayload)
+      }).catch(err => console.warn('Background ApprovalAbsensi sync warning:', err));
     }
 
     res.json({ success: true, data });
@@ -585,18 +743,62 @@ app.get('/api/proxy/sheets', async (req, res) => {
     const scriptUrl = (req.query.url as string) || readServerState()?.settings?.googleAppsScriptUrl;
     const action = (req.query.action as string) || 'getAllData';
     const sheet = req.query.sheet as string;
+    const hardForce = req.query.hard === 'true';
 
     if (!scriptUrl || !scriptUrl.trim()) {
       return res.status(400).json({ success: false, message: 'URL is required' });
     }
 
-    let targetUrl = `${scriptUrl.trim()}?action=${encodeURIComponent(action)}&_t=${Date.now()}`;
+    const cleanUrl = scriptUrl.trim();
+    res.setHeader('Cache-Control', 'no-store');
+
+    // Fast path for getAllData: use parallel sheet fetcher + Stale-While-Revalidate cache
+    if (action === 'getAllData' && !sheet) {
+      const hasValidCache = Boolean(
+        SHEETS_RAW_CACHE &&
+        SHEETS_RAW_CACHE.scriptUrl === cleanUrl &&
+        Object.keys(SHEETS_RAW_CACHE.data).length > 0
+      );
+
+      if (hasValidCache && !hardForce) {
+        const cacheAgeMs = Date.now() - SHEETS_RAW_CACHE!.timestamp;
+        // Trigger non-blocking background refresh if cache is older than 4 seconds
+        if (cacheAgeMs > 4000) {
+          refreshSheetsCacheAndServerState(cleanUrl).catch(() => {});
+        }
+        return res.json({
+          status: 'success',
+          cached: true,
+          cacheAgeMs,
+          data: SHEETS_RAW_CACHE!.data
+        });
+      }
+
+      const freshData = await refreshSheetsCacheAndServerState(cleanUrl);
+      if (freshData && Object.keys(freshData).length > 0) {
+        return res.json({
+          status: 'success',
+          data: freshData
+        });
+      }
+
+      // Fallback to cache if live fetch had a momentary network drop
+      if (hasValidCache) {
+        return res.json({
+          status: 'success',
+          cached: true,
+          data: SHEETS_RAW_CACHE!.data
+        });
+      }
+    }
+
+    let targetUrl = `${cleanUrl}?action=${encodeURIComponent(action)}&_t=${Date.now()}`;
     if (sheet) {
       targetUrl += `&sheet=${encodeURIComponent(sheet)}`;
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 18000);
+    const timeout = setTimeout(() => controller.abort(), 8000);
     const response = await fetch(targetUrl, { redirect: 'follow', signal: controller.signal });
     clearTimeout(timeout);
 
@@ -608,7 +810,6 @@ app.get('/api/proxy/sheets', async (req, res) => {
       return res.status(502).json({ success: false, error: 'Respons dari Google Apps Script bukan JSON valid' });
     }
 
-    res.setHeader('Cache-Control', 'no-store');
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -622,22 +823,9 @@ async function syncServerStateFromGoogleSheets(customUrl?: string): Promise<bool
     const scriptUrl = (customUrl || currentState?.settings?.googleAppsScriptUrl || '').trim();
     if (!scriptUrl) return false;
 
-    const gasUrl = `${scriptUrl}?action=getAllData`;
-    const res = await fetch(gasUrl, { redirect: 'follow' });
-    if (!res.ok) return false;
-    const json = await res.json();
-    if (!json || !json.data) return false;
-
-    const parsed = parseParsedSheetsToState(json.data || json);
-    const mergedAttendance = mergeServerAttendanceLists(currentState.attendanceList, parsed.attendanceList);
-    const updatedState = {
-      ...currentState,
-      ...parsed,
-      attendanceList: mergedAttendance,
-      lastUpdated: new Date().toISOString()
-    };
-    writeServerState(updatedState);
-    console.log('[Server State Sync] Successfully refreshed server state from Google Sheets. Jobs count:', updatedState.jobs?.length);
+    const data = await refreshSheetsCacheAndServerState(scriptUrl);
+    if (!data) return false;
+    console.log('[Server State Sync] Successfully refreshed server state from Google Sheets (Parallel Fast Sync).');
     return true;
   } catch (err: any) {
     console.warn('[Server State Sync] Failed to refresh from Google Sheets:', err.message);

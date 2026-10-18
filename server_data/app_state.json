@@ -24,11 +24,10 @@
     "autoNotifyTechnicianOnPlanning": true,
     "notifyViaBrowserPush": true,
     "notifyViaWhatsApp": true,
-    "googleSheetUrl": "",
     "googleAppsScriptUrl": "https://script.google.com/macros/s/AKfycbyVyW9TxnWgCAQLS-sehGPay574Vnne2Fhn8t-mKqTX3PlvBwpS8kEbLzFF31dSaUj5/exec",
     "isGoogleSheetConnected": true
   },
-  "lastUpdated": "2026-10-17T11:18:06.209Z",
+  "lastUpdated": "2026-10-18T05:30:08.977Z",
   "servers": [
     {
       "id": "srv-1788698535178",
@@ -4344,7 +4343,7 @@
       "menitLembur": 120,
       "lemburApproved": true,
       "lemburApprovedBy": "Admin",
-      "lemburApprovedAt": "2026-10-13T08:12:53.719Z",
+      "lemburApprovedAt": "2026-10-14T05:34:46.976Z",
       "estimasiTotalHonor": 191000,
       "honorPerTeknisi": 95500,
       "buktiFotoUrls": [
@@ -4427,7 +4426,7 @@
       "menitLembur": 120,
       "lemburApproved": true,
       "lemburApprovedBy": "Admin",
-      "lemburApprovedAt": "2026-10-13T08:12:53.719Z",
+      "lemburApprovedAt": "2026-10-14T05:34:46.976Z",
       "estimasiTotalHonor": 63200,
       "honorPerTeknisi": 63200,
       "buktiFotoUrls": [
@@ -4763,7 +4762,7 @@
       "menitLembur": 60,
       "lemburApproved": true,
       "lemburApprovedBy": "Admin",
-      "lemburApprovedAt": "2026-10-17T10:38:57.887Z",
+      "lemburApprovedAt": "2026-10-17T10:29:35.668Z",
       "estimasiTotalHonor": 144960,
       "honorPerTeknisi": 72480,
       "buktiFotoUrls": [
@@ -4801,13 +4800,15 @@
       ],
       "totalTransportWilayah": 3000,
       "transport": 3000,
-      "jumlahTitik": 1,
+      "jumlahTitik": 2,
       "panjangKabelMeter": 0,
-      "adaLembur": false,
-      "menitLembur": 0,
-      "lemburApproved": false,
-      "estimasiTotalHonor": 45000,
-      "honorPerTeknisi": 22500,
+      "adaLembur": true,
+      "menitLembur": 60,
+      "lemburApproved": true,
+      "lemburApprovedBy": "Administrator",
+      "lemburApprovedAt": "2026-10-18T01:35:09.144Z",
+      "estimasiTotalHonor": 118000,
+      "honorPerTeknisi": 59000,
       "buktiFotoUrls": [
         "https://drive.usercontent.google.com/download?id=1AZrU3E8DmyJnkdMgP6YcbTDGF_dLkmGu&export=view",
         "https://drive.usercontent.google.com/download?id=14v6wEM1VdXqULHphx7B0V4ErECgNN2Uk&export=view"
@@ -6842,7 +6843,8 @@
       "keterangan": "",
       "potonganOtomatis": 0,
       "needsApproval": false,
-      "isApproved": true
+      "isApproved": true,
+      "fotoPulangUrl": ""
     },
     {
       "id": "att-manual-1792179717978",
@@ -6860,7 +6862,27 @@
       "keterangan": "[Absen Manual Admin] Kendala Jaringan / Sinyal - Koreksi Admin: Mengatasi kendala absen pada pekerjaan Splicing Kabel/Pathcord agar honor masuk.",
       "potonganOtomatis": 0,
       "needsApproval": false,
-      "isApproved": true
+      "isApproved": true,
+      "fotoPulangUrl": ""
+    },
+    {
+      "id": "att-1792294151523",
+      "tanggal": "2026-10-18",
+      "teknisiId": "emp-1791590828141",
+      "teknisiNama": "Amar",
+      "jamMasuk": "10:29",
+      "fotoProofUrl": "https://drive.usercontent.google.com/download?id=1nP3ZbdtAsYuSXgdTDEJVLa0ekd6ioomG&export=view",
+      "fotoPulangUrl": "",
+      "serverId": "srv-1788695298813",
+      "serverNama": "AlbiNet",
+      "distanceMeter": 21,
+      "isWithinRadius": true,
+      "status": "Hadir",
+      "keterangan": "Terlambat hadir (10:29 WIB, batas toleransi 08:15)",
+      "potonganOtomatis": 0,
+      "needsApproval": false,
+      "isApproved": true,
+      "keteranganPulang": ""
     }
   ],
   "potonganManualList": [],

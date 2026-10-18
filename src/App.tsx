@@ -165,7 +165,8 @@ export default function App() {
     }
     setActiveView(view);
 
-    // Sinkronisasi on-demand dengan database di Google Sheets saat membuka menu
+    // Sinkronisasi on-demand dengan database di Google Sheets saat membuka menu (kecuali halaman statis Tentang)
+    if (view === 'tentang') return;
     const activeUrl = settings.googleAppsScriptUrl?.trim();
     if (activeUrl && handlePullDatabaseRef.current) {
       const menuLabel = getViewMenuLabel(view);
@@ -173,7 +174,7 @@ export default function App() {
         activeUrl,
         false,
         `Mengambil data ${menuLabel} dari Google Sheets...`,
-        true
+        false
       ).catch(err => {
         console.warn(`Gagal menarik data untuk menu ${view}:`, err);
       });
@@ -835,6 +836,22 @@ export default function App() {
 
     try {
       setIsSyncing(true);
+      const targetSheets: string[] = [];
+      if (overrides) {
+        if (overrides.servers !== undefined) targetSheets.push('DataServer');
+        if (overrides.wilayahList !== undefined) targetSheets.push('DataWilayah');
+        if (overrides.jenisList !== undefined) targetSheets.push('JenisPekerjaan');
+        if (overrides.employees !== undefined) targetSheets.push('DataKaryawan');
+        if (overrides.jobs !== undefined) targetSheets.push('DaftarPekerjaan');
+        if (overrides.planningTasks !== undefined) targetSheets.push('PlanningPekerjaan');
+        if (overrides.attendanceList !== undefined) {
+          targetSheets.push('AbsensiHarian', 'ApprovalAbsensi');
+        }
+        if (overrides.potonganManualList !== undefined) targetSheets.push('PotonganManual');
+        if (overrides.honorLunasList !== undefined) targetSheets.push('HonorLunas');
+        if (overrides.settings !== undefined) targetSheets.push('PengaturanApp');
+      }
+
       const payload = buildGoogleSheetsSyncPayload({
         servers: curServers,
         wilayah: overrides?.wilayahList ?? wilayahList,
@@ -844,7 +861,9 @@ export default function App() {
         planningTasks: overrides?.planningTasks ?? planningTasks,
         attendanceList: curAttendance,
         potonganManualList: overrides?.potonganManualList ?? potonganManualList,
-        settings: overrides?.settings ?? settings
+        honorLunasList: overrides?.honorLunasList ?? honorLunasList,
+        settings: overrides?.settings ?? settings,
+        onlySheets: targetSheets.length > 0 ? targetSheets : undefined
       });
 
       const res = await sendToGoogleAppsScript(url, payload);
@@ -1114,7 +1133,7 @@ export default function App() {
             activeScriptUrl,
             false,
             `Mengambil data ${menuLabel} dari Google Sheets...`,
-            true
+            false
           );
         }
       } catch (err) {
@@ -1143,7 +1162,7 @@ export default function App() {
       StorageService.resetToDefault();
       setPlanningTasks([]);
       if (settings.googleAppsScriptUrl) {
-        await handlePullDatabase(settings.googleAppsScriptUrl);
+        await handlePullDatabase(settings.googleAppsScriptUrl, false, undefined, true);
       } else {
         setJobs([]);
         setAttendanceList([]);
@@ -1349,16 +1368,8 @@ export default function App() {
 
   // Job CRUD - Strictly verify network & Google Sheets sync BEFORE persisting to local storage
   const handleSaveJob = async (newJob: JobRecord): Promise<{ success: boolean; message?: string }> => {
-    // 1. Strict internet network verification: Cegah jika offline atau jaringan tidak normal
+    // 1. Strict internet network verification: Cegah jika offline
     if (!isDeviceOnline()) {
-      return {
-        success: false,
-        message: 'Jaringan internet tidak normal, data gagal di upload ke database'
-      };
-    }
-
-    const netHealth = await checkNetworkHealth();
-    if (!netHealth.ok) {
       return {
         success: false,
         message: 'Jaringan internet tidak normal, data gagal di upload ke database'
@@ -1451,15 +1462,6 @@ export default function App() {
       });
     }
 
-    if (settings.googleAppsScriptUrl && newJob.adaLembur) {
-      sendLemburStatusToSheets(settings.googleAppsScriptUrl, {
-        jobId: newJob.id,
-        lemburApproved: Boolean(newJob.lemburApproved),
-        approvedBy: newJob.lemburApprovedBy || currentUser?.namaLengkap || 'Admin',
-        approvedAt: newJob.lemburApprovedAt || new Date().toISOString()
-      }).catch(err => console.warn('sendLemburStatusToSheets warning:', err));
-    }
-
     return { success: true, message: 'Data pekerjaan berhasil disimpan dan disinkronkan ke Google Sheets!' };
   };
 
@@ -1506,8 +1508,8 @@ export default function App() {
       }
     }
 
-    // 4. Sinkronkan juga tabel DaftarPekerjaan penuh ke Google Sheets di latar belakang
-    sendSyncToGoogleSheets({ jobs: next }).catch(err => console.warn('sendSyncToGoogleSheets warning:', err));
+    // 4. Sinkronkan juga tabel DaftarPekerjaan penuh ke Google Sheets di latar belakang tanpa overlay ganda
+    sendSyncToGoogleSheets({ jobs: next, showLoading: false }).catch(err => console.warn('sendSyncToGoogleSheets warning:', err));
 
     return {
       success: true,
@@ -1911,34 +1913,42 @@ export default function App() {
       });
 
       const safeName = targetTeknisiNama.replace(/[^a-zA-Z0-9]/g, '_') || 'teknisi';
+      const uploadTasks: Promise<void>[] = [];
+
       if (uploadedFotoMasuk && uploadedFotoMasuk.startsWith('data:image')) {
         const b64 = uploadedFotoMasuk;
         const filename = `selfie_masuk_${safeName}_${Date.now()}.jpg`;
-        try {
-          const res = await uploadPhotoToGoogleDrive(scriptUrl, b64, filename);
-          if (res.success && res.url) {
-            uploadedFotoMasuk = res.url;
-            PhotoCacheService.set(res.url, b64);
-            if (res.fileId) PhotoCacheService.set(res.fileId, b64);
-          }
-        } catch (err) {
-          console.warn('Selfie masuk upload fallback:', err);
-        }
+        uploadTasks.push(
+          uploadPhotoToGoogleDrive(scriptUrl, b64, filename)
+            .then(res => {
+              if (res.success && res.url) {
+                uploadedFotoMasuk = res.url;
+                PhotoCacheService.set(res.url, b64);
+                if (res.fileId) PhotoCacheService.set(res.fileId, b64);
+              }
+            })
+            .catch(err => console.warn('Selfie masuk upload fallback:', err))
+        );
       }
 
       if (uploadedFotoPulang && uploadedFotoPulang.startsWith('data:image')) {
         const b64 = uploadedFotoPulang;
         const filename = `selfie_pulang_${safeName}_${Date.now()}.jpg`;
-        try {
-          const res = await uploadPhotoToGoogleDrive(scriptUrl, b64, filename);
-          if (res.success && res.url) {
-            uploadedFotoPulang = res.url;
-            PhotoCacheService.set(res.url, b64);
-            if (res.fileId) PhotoCacheService.set(res.fileId, b64);
-          }
-        } catch (err) {
-          console.warn('Selfie pulang upload fallback:', err);
-        }
+        uploadTasks.push(
+          uploadPhotoToGoogleDrive(scriptUrl, b64, filename)
+            .then(res => {
+              if (res.success && res.url) {
+                uploadedFotoPulang = res.url;
+                PhotoCacheService.set(res.url, b64);
+                if (res.fileId) PhotoCacheService.set(res.fileId, b64);
+              }
+            })
+            .catch(err => console.warn('Selfie pulang upload fallback:', err))
+        );
+      }
+
+      if (uploadTasks.length > 0) {
+        await Promise.all(uploadTasks);
       }
     }
 
@@ -2219,7 +2229,7 @@ export default function App() {
       honorLunasList: combinedSettlements
     });
 
-    // Sync to Google Sheets if connected
+    // Sync to Google Sheets if connected (only modified sheets)
     if (settings.googleAppsScriptUrl) {
       try {
         const payload = buildGoogleSheetsSyncPayload({
@@ -2232,7 +2242,8 @@ export default function App() {
           attendanceList,
           potonganManualList: updatedPotongan || potonganManualList,
           honorLunasList: combinedSettlements,
-          settings
+          settings,
+          onlySheets: ['DaftarPekerjaan', 'PotonganManual', 'HonorLunas']
         });
         await sendToGoogleAppsScript(settings.googleAppsScriptUrl, payload);
       } catch (err) {
@@ -2293,7 +2304,8 @@ export default function App() {
           attendanceList,
           potonganManualList: updatedPotongan,
           honorLunasList: remaining,
-          settings
+          settings,
+          onlySheets: ['DaftarPekerjaan', 'PotonganManual', 'HonorLunas']
         });
         await sendToGoogleAppsScript(settings.googleAppsScriptUrl, payload);
       } catch (err) {
@@ -2350,17 +2362,10 @@ export default function App() {
       settings: newSettings
     });
 
-    // Direct immediate POST sync to Google Sheets if Apps Script URL is set
+    // Direct immediate POST sync to Google Sheets if Apps Script URL is set (only PengaturanApp & DataKaryawan)
     if (newSettings.googleAppsScriptUrl && newSettings.googleAppsScriptUrl.trim()) {
       setIsSyncing(true);
       try {
-        // Send dedicated savePengaturan action
-        await sendToGoogleAppsScript(newSettings.googleAppsScriptUrl, {
-          action: 'savePengaturan',
-          settings: newSettings
-        });
-
-        // Send full database payload
         const payload = buildGoogleSheetsSyncPayload({
           servers,
           wilayah: wilayahList,
@@ -2370,7 +2375,8 @@ export default function App() {
           planningTasks,
           attendanceList,
           potonganManualList,
-          settings: newSettings
+          settings: newSettings,
+          onlySheets: ['PengaturanApp', 'DataKaryawan']
         });
 
         const res = await sendToGoogleAppsScript(newSettings.googleAppsScriptUrl, payload);

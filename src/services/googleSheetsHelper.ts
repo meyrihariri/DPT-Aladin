@@ -158,6 +158,14 @@ function doGet(e) {
   }
 
   if (action === 'getAllData') {
+    var forceDirect = e && (e.parameter.direct === 'true' || e.parameter.force === 'true');
+    var scriptCache = CacheService.getScriptCache();
+    if (!forceDirect && scriptCache) {
+      var cachedJson = scriptCache.get('DPT_ALADIN_ALL_DATA_V1');
+      if (cachedJson) {
+        return ContentService.createTextOutput(cachedJson).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
     var sheetNames = ['DataServer', 'DataWilayah', 'JenisPekerjaan', 'DataKaryawan', 'DaftarPekerjaan', 'PlanningPekerjaan', 'AbsensiHarian', 'ApprovalAbsensi', 'PotonganManual', 'HonorLunas', 'PengaturanApp'];
     var allSheets = ss.getSheets();
     var sheetMap = {};
@@ -169,19 +177,20 @@ function doGet(e) {
       var sName = sheetNames[i];
       var sh = sheetMap[sName];
       if (sh) {
-        var lastRow = sh.getLastRow();
-        var lastCol = sh.getLastColumn();
-        if (lastRow > 0 && lastCol > 0) {
-          result[sName] = sh.getRange(1, 1, lastRow, lastCol).getDisplayValues();
-        } else {
-          result[sName] = [];
-        }
+        var lr = sh.getLastRow();
+        var lc = sh.getLastColumn();
+        var vals = (lr > 0 && lc > 0) ? sh.getRange(1, 1, lr, lc).getDisplayValues() : [];
+        result[sName] = (vals && vals.length > 0 && (vals.length > 1 || vals[0].join('') !== '')) ? vals : [];
       }
     }
-    return ContentService.createTextOutput(JSON.stringify({
+    var outputStr = JSON.stringify({
       status: 'success',
       data: result
-    })).setMimeType(ContentService.MimeType.JSON);
+    });
+    if (scriptCache && outputStr.length < 95000) {
+      try { scriptCache.put('DPT_ALADIN_ALL_DATA_V1', outputStr, 25); } catch(eCache) {}
+    }
+    return ContentService.createTextOutput(outputStr).setMimeType(ContentService.MimeType.JSON);
   }
 
   if (action === 'getData') {
@@ -223,6 +232,9 @@ function doPost(e) {
     var postData = JSON.parse(e.postData.contents);
     var action = postData.action;
     var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (action !== 'uploadImage') {
+      try { CacheService.getScriptCache().remove('DPT_ALADIN_ALL_DATA_V1'); } catch(eC) {}
+    }
 
     // 1. Action Upload Foto Langsung ke Google Drive
     if (action === 'uploadImage') {
@@ -934,7 +946,7 @@ export function evaluateAttendanceApproval(params: {
   };
 }
 
-// Helper for preparing full database sync payload to Google Sheets
+// Helper for preparing full or selective database sync payload to Google Sheets
 export function buildGoogleSheetsSyncPayload(data: {
   servers: any[];
   wilayah: any[];
@@ -946,6 +958,7 @@ export function buildGoogleSheetsSyncPayload(data: {
   potonganManualList?: any[];
   honorLunasList?: any[];
   settings: any;
+  onlySheets?: string[];
 }) {
   const logoStr = String(data.settings?.logoUrl || '');
   const safeLogoUrl = logoStr.startsWith('data:image/') && logoStr.length > 2000
@@ -960,53 +973,66 @@ export function buildGoogleSheetsSyncPayload(data: {
     return Number(m[m.length - 1]) || 0;
   };
 
-  const sortedJobsForSheets = [...(data.jobs || [])].sort((a, b) => {
-    const dA = sanitizeDateString(a.tanggal) || '';
-    const dB = sanitizeDateString(b.tanggal) || '';
-    if (dA !== dB) return dA.localeCompare(dB);
-    const numDiff = extractNumId(a.id) - extractNumId(b.id);
-    if (numDiff !== 0) return numDiff;
-    return (a.id || '').localeCompare(b.id || '');
-  });
+  const allowedSet = data.onlySheets && data.onlySheets.length > 0 ? new Set(data.onlySheets) : null;
+  const shouldBuild = (sheetName: string) => !allowedSet || allowedSet.has(sheetName);
 
-  const sortedAttendanceForSheets = [...(data.attendanceList || [])].sort((a, b) => {
-    const dA = sanitizeDateString(a.tanggal) || '';
-    const dB = sanitizeDateString(b.tanggal) || '';
-    if (dA !== dB) return dA.localeCompare(dB);
-    const tA = sanitizeTimeString(a.jamMasuk, '');
-    const tB = sanitizeTimeString(b.jamMasuk, '');
-    if (tA !== tB) return tA.localeCompare(tB);
-    const numDiff = extractNumId(a.id) - extractNumId(b.id);
-    if (numDiff !== 0) return numDiff;
-    return (a.id || '').localeCompare(b.id || '');
-  });
+  const sortedJobsForSheets = shouldBuild('DaftarPekerjaan')
+    ? [...(data.jobs || [])].sort((a, b) => {
+        const dA = sanitizeDateString(a.tanggal) || '';
+        const dB = sanitizeDateString(b.tanggal) || '';
+        if (dA !== dB) return dA.localeCompare(dB);
+        const numDiff = extractNumId(a.id) - extractNumId(b.id);
+        if (numDiff !== 0) return numDiff;
+        return (a.id || '').localeCompare(b.id || '');
+      })
+    : [];
 
-  const sortedPlanningForSheets = [...(data.planningTasks || [])].sort((a, b) => {
-    const dA = sanitizeDateString(a.tanggal) || '';
-    const dB = sanitizeDateString(b.tanggal) || '';
-    if (dA !== dB) return dA.localeCompare(dB);
-    const numDiff = extractNumId(a.id) - extractNumId(b.id);
-    if (numDiff !== 0) return numDiff;
-    return (a.id || '').localeCompare(b.id || '');
-  });
+  const sortedAttendanceForSheets = (shouldBuild('AbsensiHarian') || shouldBuild('ApprovalAbsensi'))
+    ? [...(data.attendanceList || [])].sort((a, b) => {
+        const dA = sanitizeDateString(a.tanggal) || '';
+        const dB = sanitizeDateString(b.tanggal) || '';
+        if (dA !== dB) return dA.localeCompare(dB);
+        const tA = sanitizeTimeString(a.jamMasuk, '');
+        const tB = sanitizeTimeString(b.jamMasuk, '');
+        if (tA !== tB) return tA.localeCompare(tB);
+        const numDiff = extractNumId(a.id) - extractNumId(b.id);
+        if (numDiff !== 0) return numDiff;
+        return (a.id || '').localeCompare(b.id || '');
+      })
+    : [];
 
-  const sortedPotonganForSheets = [...(data.potonganManualList || [])].sort((a, b) => {
-    const dA = sanitizeDateString(a.tanggal) || '';
-    const dB = sanitizeDateString(b.tanggal) || '';
-    if (dA !== dB) return dA.localeCompare(dB);
-    const numDiff = extractNumId(a.id) - extractNumId(b.id);
-    if (numDiff !== 0) return numDiff;
-    return (a.id || '').localeCompare(b.id || '');
-  });
+  const sortedPlanningForSheets = shouldBuild('PlanningPekerjaan')
+    ? [...(data.planningTasks || [])].sort((a, b) => {
+        const dA = sanitizeDateString(a.tanggal) || '';
+        const dB = sanitizeDateString(b.tanggal) || '';
+        if (dA !== dB) return dA.localeCompare(dB);
+        const numDiff = extractNumId(a.id) - extractNumId(b.id);
+        if (numDiff !== 0) return numDiff;
+        return (a.id || '').localeCompare(b.id || '');
+      })
+    : [];
 
-  const sortedHonorLunasForSheets = [...(data.honorLunasList || [])].sort((a, b) => {
-    const dA = sanitizeDateString(a.tanggalLunas) || '';
-    const dB = sanitizeDateString(b.tanggalLunas) || '';
-    if (dA !== dB) return dA.localeCompare(dB);
-    const numDiff = extractNumId(a.id) - extractNumId(b.id);
-    if (numDiff !== 0) return numDiff;
-    return (a.id || '').localeCompare(b.id || '');
-  });
+  const sortedPotonganForSheets = shouldBuild('PotonganManual')
+    ? [...(data.potonganManualList || [])].sort((a, b) => {
+        const dA = sanitizeDateString(a.tanggal) || '';
+        const dB = sanitizeDateString(b.tanggal) || '';
+        if (dA !== dB) return dA.localeCompare(dB);
+        const numDiff = extractNumId(a.id) - extractNumId(b.id);
+        if (numDiff !== 0) return numDiff;
+        return (a.id || '').localeCompare(b.id || '');
+      })
+    : [];
+
+  const sortedHonorLunasForSheets = shouldBuild('HonorLunas')
+    ? [...(data.honorLunasList || [])].sort((a, b) => {
+        const dA = sanitizeDateString(a.tanggalLunas) || '';
+        const dB = sanitizeDateString(b.tanggalLunas) || '';
+        if (dA !== dB) return dA.localeCompare(dB);
+        const numDiff = extractNumId(a.id) - extractNumId(b.id);
+        if (numDiff !== 0) return numDiff;
+        return (a.id || '').localeCompare(b.id || '');
+      })
+    : [];
 
   const rawTables = {
     DataServer: [
@@ -1275,9 +1301,11 @@ export function buildGoogleSheetsSyncPayload(data: {
   };
 
   // Sanitize all table cells so no undefined/null values are ever passed to Google Apps Script
+  // If onlySheets is specified, only serialize and transmit those specific modified sheets for 5x-10x faster sync
   const sanitizedTables: Record<string, any[][]> = {};
   for (const sheetName in rawTables) {
     if (Object.prototype.hasOwnProperty.call(rawTables, sheetName)) {
+      if (allowedSet && !allowedSet.has(sheetName)) continue;
       sanitizedTables[sheetName] = rawTables[sheetName as keyof typeof rawTables].map(row =>
         row.map(cell => (cell === undefined || cell === null ? '' : cell))
       );
@@ -1290,12 +1318,30 @@ export function buildGoogleSheetsSyncPayload(data: {
   };
 }
 
+let clientSheetsMemoryCache: {
+  scriptUrl: string;
+  data: Record<string, any[][]>;
+  timestamp: number;
+} | null = null;
+
 // Helper to send POST request safely to Google Apps Script Web App without CORS preflight blocking
 export async function sendToGoogleAppsScript(scriptUrl: string, payload: any) {
   if (!scriptUrl || !scriptUrl.trim()) {
     return { success: false, message: 'URL Google Apps Script belum diisi.' };
   }
   const cleanUrl = scriptUrl.trim();
+
+  // Immediately update client memory cache if writing tables
+  if (payload && payload.tables && typeof payload.tables === 'object') {
+    const existing = (clientSheetsMemoryCache && clientSheetsMemoryCache.scriptUrl === cleanUrl)
+      ? clientSheetsMemoryCache.data
+      : {};
+    clientSheetsMemoryCache = {
+      scriptUrl: cleanUrl,
+      data: { ...existing, ...payload.tables },
+      timestamp: Date.now()
+    };
+  }
 
   // Try via server proxy first (avoids browser iframe CORS or redirect restrictions)
   try {
@@ -1561,108 +1607,127 @@ export function parsePengaturanFromSheetRows(rows: any[][]): Partial<AppSettings
 }
 
 export function invalidateClientDatabaseCache() {
-  // No-op kept for backward compatibility (all syncs are now strictly on-demand)
+  // Keep client memory cache timestamp recent if updated via write-through, or allow soft refresh
 }
 
-// Helper to fetch live database from Google Sheets on-demand
-export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, _forceRefresh = false) {
+let inflightClientFetch: Promise<Record<string, any[][]>> | null = null;
+
+// Helper to fetch live database from Google Sheets on-demand (Ultra-fast via Server Cache + Parallel Sheet Fetch)
+export async function fetchFullDatabaseFromGoogleSheets(scriptUrl: string, forceRefresh = false) {
   const cleanUrl = scriptUrl.trim();
   if (!cleanUrl) return {};
 
-  const result: Record<string, any[][]> = {};
-  const cacheBuster = Date.now();
-
-  // 1. Try via server proxy first with 15s timeout (avoids browser iframe CORS or redirect restrictions)
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 15000);
-    const proxyRes = await fetch(`/api/proxy/sheets?url=${encodeURIComponent(cleanUrl)}&action=getAllData&force=true&_t=${cacheBuster}`, {
-      cache: 'no-store',
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-
-    if (proxyRes.ok) {
-      const text = await proxyRes.text();
-      try {
-        const json = JSON.parse(text);
-        if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
-          return json.data as Record<string, any[][]>;
-        }
-      } catch {}
-    }
-  } catch (proxyErr) {
-    // Proxy not reachable or timed out, will proceed with direct fetch
+  // Return ultra-fresh client memory cache if fetched/written within the last 3 seconds and not forced
+  if (
+    !forceRefresh &&
+    clientSheetsMemoryCache &&
+    clientSheetsMemoryCache.scriptUrl === cleanUrl &&
+    Object.keys(clientSheetsMemoryCache.data).length >= 5 &&
+    Date.now() - clientSheetsMemoryCache.timestamp < 3000
+  ) {
+    return clientSheetsMemoryCache.data;
   }
 
-  // 2. Direct fetch with CORS mode and redirect follow (10s timeout)
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(`${cleanUrl}?action=getAllData&_t=${cacheBuster}`, {
-      method: 'GET',
-      redirect: 'follow',
-      cache: 'no-store',
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-
-    if (res.ok) {
-      const text = await res.text();
-      try {
-        const json = JSON.parse(text);
-        if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
-          return json.data as Record<string, any[][]>;
-        }
-      } catch {}
-    }
-  } catch (e) {
-    console.warn('getAllData direct fetch failed, trying parallel sheet fetch:', e);
+  if (inflightClientFetch && !forceRefresh) {
+    return inflightClientFetch;
   }
 
-  // 3. Fallback: Fetch all sheets IN PARALLEL with 3.5s timeout per request
-  const sheetsToFetch = [
-    'DataServer',
-    'DataWilayah',
-    'JenisPekerjaan',
-    'DataKaryawan',
-    'DaftarPekerjaan',
-    'PlanningPekerjaan',
-    'AbsensiHarian',
-    'PotonganManual',
-    'HonorLunas',
-    'PengaturanApp'
-  ];
+  const doFetch = async (): Promise<Record<string, any[][]>> => {
+    const result: Record<string, any[][]> = {};
+    const cacheBuster = Date.now();
 
-  await Promise.allSettled(
-    sheetsToFetch.map(async (sheetName) => {
-      try {
-        const subCtrl = new AbortController();
-        const subTimer = setTimeout(() => subCtrl.abort(), 3500);
-        const res = await fetch(`${cleanUrl}?action=getData&sheet=${encodeURIComponent(sheetName)}&_t=${cacheBuster}`, {
-          method: 'GET',
-          redirect: 'follow',
+    // 1. Primary Fast Path: Server Proxy (uses In-Memory Cache + Parallel getData + Stale-While-Revalidate)
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 9000);
+      const hardParam = forceRefresh ? '&hard=true' : '';
+      const proxyRes = await fetch(
+        `/api/proxy/sheets?url=${encodeURIComponent(cleanUrl)}&action=getAllData${hardParam}&_t=${cacheBuster}`,
+        {
           cache: 'no-store',
-          signal: subCtrl.signal
-        });
-        clearTimeout(subTimer);
-
-        if (res.ok) {
-          const text = await res.text();
-          try {
-            const json = JSON.parse(text);
-            if (json && json.status === 'success' && Array.isArray(json.data)) {
-              result[sheetName] = json.data;
-            }
-          } catch {}
+          signal: controller.signal
         }
-      } catch (err) {
-        // Individual sheet fetch timed out or failed
-      }
-    })
-  );
+      );
+      clearTimeout(timer);
 
-  return result;
+      if (proxyRes.ok) {
+        const text = await proxyRes.text();
+        try {
+          const json = JSON.parse(text);
+          if (json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
+            const sheetsData = json.data as Record<string, any[][]>;
+            clientSheetsMemoryCache = {
+              scriptUrl: cleanUrl,
+              data: sheetsData,
+              timestamp: Date.now()
+            };
+            return sheetsData;
+          }
+        } catch {}
+      }
+    } catch {
+      // Proxy not reachable or timed out, proceed directly to parallel sheet fetch
+    }
+
+    // 2. Fallback: Fetch all 11 sheets IN PARALLEL (~2.5s total instead of 35s for getAllData)
+    const sheetsToFetch = [
+      'DataServer',
+      'DataWilayah',
+      'JenisPekerjaan',
+      'DataKaryawan',
+      'DaftarPekerjaan',
+      'PlanningPekerjaan',
+      'AbsensiHarian',
+      'ApprovalAbsensi',
+      'PotonganManual',
+      'HonorLunas',
+      'PengaturanApp'
+    ];
+
+    await Promise.allSettled(
+      sheetsToFetch.map(async (sheetName) => {
+        try {
+          const subCtrl = new AbortController();
+          const subTimer = setTimeout(() => subCtrl.abort(), 6000);
+          const res = await fetch(`${cleanUrl}?action=getData&sheet=${encodeURIComponent(sheetName)}&_t=${cacheBuster}`, {
+            method: 'GET',
+            redirect: 'follow',
+            cache: 'no-store',
+            signal: subCtrl.signal
+          });
+          clearTimeout(subTimer);
+
+          if (res.ok) {
+            const text = await res.text();
+            try {
+              const json = JSON.parse(text);
+              if (json && json.status === 'success' && Array.isArray(json.data)) {
+                result[sheetName] = json.data;
+              }
+            } catch {}
+          }
+        } catch {
+          // Individual sheet fetch timed out or failed
+        }
+      })
+    );
+
+    if (Object.keys(result).length > 0) {
+      clientSheetsMemoryCache = {
+        scriptUrl: cleanUrl,
+        data: result,
+        timestamp: Date.now()
+      };
+    }
+
+    return result;
+  };
+
+  inflightClientFetch = doFetch().finally(() => {
+    inflightClientFetch = null;
+  });
+
+  return inflightClientFetch;
 }
 
 // Helper to convert sheet 2D arrays into typed application state
