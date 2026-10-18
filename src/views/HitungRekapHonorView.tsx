@@ -1058,10 +1058,10 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
         </div>
 
         {/* Filters Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end">
           {/* 1. Filter Rentang Tanggal (Span 6 cols) */}
           <div className="md:col-span-6 space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="h-6 flex items-center justify-between">
               <label className="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
                 <Calendar className="w-3.5 h-3.5 text-maroon-800" />
                 <span>Rentang Tanggal:</span>
@@ -1119,7 +1119,7 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
             {/* Date Inputs: Dari s/d Sampai */}
             <div className="grid grid-cols-2 gap-2">
               <div className="relative">
-                <span className="text-[10px] text-slate-400 absolute left-2.5 top-1 font-semibold">Dari</span>
+                <span className="text-[10px] text-slate-400 absolute left-2.5 top-1 font-semibold pointer-events-none">Dari</span>
                 <input
                   type="date"
                   value={startDate}
@@ -1127,11 +1127,11 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
                     setStartDate(e.target.value);
                     setActivePreset('custom');
                   }}
-                  className="w-full pt-4 pb-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-maroon-800"
+                  className="w-full h-[42px] pt-4 pb-1 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-maroon-800"
                 />
               </div>
               <div className="relative">
-                <span className="text-[10px] text-slate-400 absolute left-2.5 top-1 font-semibold">Sampai</span>
+                <span className="text-[10px] text-slate-400 absolute left-2.5 top-1 font-semibold pointer-events-none">Sampai</span>
                 <input
                   type="date"
                   value={endDate}
@@ -1139,7 +1139,7 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
                     setEndDate(e.target.value);
                     setActivePreset('custom');
                   }}
-                  className="w-full pt-4 pb-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-maroon-800"
+                  className="w-full h-[42px] pt-4 pb-1 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-maroon-800"
                 />
               </div>
             </div>
@@ -1147,16 +1147,18 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
 
           {/* 2. Filter Pilihan Server (Span 3 cols) - Disembunyikan untuk PJ Server karena otomatis merekap server terkait */}
           {!isPjServer && (
-            <div className="md:col-span-3 space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
-                <Server className="w-3.5 h-3.5 text-maroon-800" />
-                <span>Filter Server:</span>
-              </label>
+            <div className="md:col-span-3 space-y-2">
+              <div className="h-6 flex items-center">
+                <label className="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
+                  <Server className="w-3.5 h-3.5 text-maroon-800" />
+                  <span>Filter Server:</span>
+                </label>
+              </div>
               <select
                 id="select-filter-server"
                 value={selectedServerId}
                 onChange={e => setSelectedServerId(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-maroon-800"
+                className="w-full h-[42px] px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-maroon-800"
               >
                 <option value="all">Semua Server ({servers.length} Lokasi)</option>
                 {sortedServers.map(srv => (
@@ -1165,25 +1167,22 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
                   </option>
                 ))}
               </select>
-              <span className="text-[10px] text-slate-400 block truncate">
-                {selectedServerId === 'all'
-                  ? 'Termasuk semua server & BTS'
-                  : `Hanya pekerjaan pada server ${selectedServerName}`}
-              </span>
             </div>
           )}
 
           {/* 3. Filter Pilihan Teknisi (Span 3 cols untuk Admin, Span 6 cols untuk PJ Server) */}
-          <div className={`${isPjServer ? 'md:col-span-6' : 'md:col-span-3'} space-y-1.5`}>
-            <label className="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
-              <UserCheck className="w-3.5 h-3.5 text-maroon-800" />
-              <span>Filter Teknisi:</span>
-            </label>
+          <div className={`${isPjServer ? 'md:col-span-6' : 'md:col-span-3'} space-y-2`}>
+            <div className="h-6 flex items-center">
+              <label className="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
+                <UserCheck className="w-3.5 h-3.5 text-maroon-800" />
+                <span>Filter Teknisi:</span>
+              </label>
+            </div>
             <select
               id="select-filter-teknisi"
               value={selectedTeknisiId}
               onChange={e => setSelectedTeknisiId(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-maroon-800"
+              className="w-full h-[42px] px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:ring-2 focus:ring-maroon-800"
             >
               <option value="all">Semua Teknisi ({employees.length} Orang)</option>
               {sortedEmployees.map(emp => (
@@ -1192,11 +1191,6 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
                 </option>
               ))}
             </select>
-            <span className="text-[10px] text-slate-400 block truncate">
-              {selectedTeknisiId === 'all'
-                ? 'Semua data honor teknisi aktif'
-                : `Fokus pada teknisi ${selectedTeknisiName}`}
-            </span>
           </div>
         </div>
       </div>
