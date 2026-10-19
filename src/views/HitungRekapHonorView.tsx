@@ -773,9 +773,6 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
 
     if (confirmed && onDeleteHonorLunas) {
       await onDeleteHonorLunas(settlement.id);
-      if (onSyncDatabase) {
-        await onSyncDatabase();
-      }
       showAppAlert({
         title: 'Pelunasan Dibatalkan',
         message: 'Status pelunasan honor berhasil dibatalkan. Pekerjaan telah kembali ke daftar hitung rekap honor aktif.',

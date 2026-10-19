@@ -28,6 +28,7 @@ const STORAGE_KEYS = {
   LEAVE: 'dpt_aladin_leave_v1',
   POTONGAN_MANUAL: 'dpt_aladin_potongan_manual_v1',
   HONOR_LUNAS: 'dpt_aladin_honor_lunas_v1',
+  DELETED_HONOR_LUNAS: 'dpt_aladin_deleted_honor_lunas_ids_v1',
   SETTINGS: 'dpt_aladin_settings_v1',
   CURRENT_USER: 'dpt_aladin_current_user_v1',
   APPROVED_LEMBUR: 'dpt_aladin_approved_lembur_v1',
@@ -934,6 +935,46 @@ export const sortJenisPekerjaan = (data: JenisPekerjaan[]): JenisPekerjaan[] => 
   });
 };
 
+export function mergeHonorLunasRecords(
+  existingList: HonorLunasRecord[] = [],
+  incomingList: HonorLunasRecord[] = [],
+  deletedIds?: string[]
+): HonorLunasRecord[] {
+  const deletedSet = new Set(
+    (deletedIds !== undefined ? deletedIds : getStorage<string[]>(STORAGE_KEYS.DELETED_HONOR_LUNAS, []))
+      .filter(Boolean)
+      .map(id => String(id).trim())
+  );
+
+  const map = new Map<string, HonorLunasRecord>();
+  const addItem = (item: HonorLunasRecord) => {
+    if (!item || !item.id) return;
+    const cleanId = String(item.id).trim();
+    if (!cleanId || deletedSet.has(cleanId)) return;
+    const prev = map.get(cleanId);
+    if (!prev) {
+      map.set(cleanId, { ...item, id: cleanId });
+    } else {
+      map.set(cleanId, {
+        ...prev,
+        ...item,
+        id: cleanId,
+        jobIds: (item.jobIds && item.jobIds.length > 0) ? item.jobIds : (prev.jobIds || []),
+        potonganIds: (item.potonganIds && item.potonganIds.length > 0) ? item.potonganIds : (prev.potonganIds || [])
+      });
+    }
+  };
+
+  if (Array.isArray(existingList)) {
+    existingList.forEach(addItem);
+  }
+  if (Array.isArray(incomingList)) {
+    incomingList.forEach(addItem);
+  }
+
+  return Array.from(map.values());
+}
+
 /**
  * Robust boolean parser for spreadsheet, JSON, or form values
  * Handles true/false, "true"/"false", 1/0, "ya"/"tidak", "yes"/"no", checks, etc.
@@ -1284,9 +1325,41 @@ export const StorageService = {
   savePotonganManual: (data: PotonganManual[]) => setStorage(STORAGE_KEYS.POTONGAN_MANUAL, data),
 
   getHonorLunas: (): HonorLunasRecord[] => {
-    return getStorage<HonorLunasRecord[]>(STORAGE_KEYS.HONOR_LUNAS, []);
+    const raw = getStorage<HonorLunasRecord[]>(STORAGE_KEYS.HONOR_LUNAS, []);
+    const deletedSet = new Set(StorageService.getDeletedHonorLunasIds());
+    if (deletedSet.size === 0) return raw;
+    return raw.filter(hl => hl && hl.id && !deletedSet.has(hl.id));
   },
-  saveHonorLunas: (data: HonorLunasRecord[]) => setStorage(STORAGE_KEYS.HONOR_LUNAS, data),
+  saveHonorLunas: (data: HonorLunasRecord[]) => {
+    const deletedSet = new Set(StorageService.getDeletedHonorLunasIds());
+    const cleaned = (Array.isArray(data) ? data : []).filter(hl => hl && hl.id && !deletedSet.has(hl.id));
+    setStorage(STORAGE_KEYS.HONOR_LUNAS, cleaned);
+  },
+
+  getDeletedHonorLunasIds: (): string[] => {
+    return getStorage<string[]>(STORAGE_KEYS.DELETED_HONOR_LUNAS, []);
+  },
+  addDeletedHonorLunasId: (id: string) => {
+    if (!id) return;
+    const cleanId = id.trim();
+    const current = StorageService.getDeletedHonorLunasIds();
+    if (!current.includes(cleanId)) {
+      setStorage(STORAGE_KEYS.DELETED_HONOR_LUNAS, [...current, cleanId]);
+    }
+  },
+  removeDeletedHonorLunasId: (id: string) => {
+    if (!id) return;
+    const cleanId = id.trim();
+    const current = StorageService.getDeletedHonorLunasIds();
+    if (current.includes(cleanId)) {
+      setStorage(STORAGE_KEYS.DELETED_HONOR_LUNAS, current.filter(x => x !== cleanId));
+    }
+  },
+  setDeletedHonorLunasIds: (ids: string[]) => {
+    if (!Array.isArray(ids)) return;
+    const set = new Set(ids.filter(Boolean).map(x => String(x).trim()));
+    setStorage(STORAGE_KEYS.DELETED_HONOR_LUNAS, Array.from(set));
+  },
 
   getSettings: (): AppSettings => {
     const s = getStorage(STORAGE_KEYS.SETTINGS, initialSettings);
@@ -1454,6 +1527,7 @@ export const StorageService = {
     try {
       const resolvedKeys = StorageService.getResolvedAttendanceKeys();
       const deletedIds = StorageService.getDeletedAttendanceIds();
+      const deletedHonorLunasIds = StorageService.getDeletedHonorLunasIds();
       const approvedLembur = StorageService.getApprovedLemburMap();
       await fetch('/api/sync/state', {
         method: 'POST',
@@ -1462,6 +1536,7 @@ export const StorageService = {
           ...state,
           resolvedAttendanceKeys: state.resolvedAttendanceKeys || resolvedKeys,
           deletedAttendanceIds: state.deletedAttendanceIds || deletedIds,
+          deletedHonorLunasIds: state.deletedHonorLunasIds || deletedHonorLunasIds,
           approvedLemburMap: state.approvedLemburMap || approvedLembur
         })
       });

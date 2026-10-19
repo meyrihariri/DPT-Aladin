@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { StorageService, consolidateAttendanceRecords, getNormalizedTechKey, sortJenisPekerjaan, pickBestPhotoUrl } from './services/storage';
+import { StorageService, consolidateAttendanceRecords, getNormalizedTechKey, sortJenisPekerjaan, pickBestPhotoUrl, mergeHonorLunasRecords } from './services/storage';
 import {
   Employee,
   ServerData,
@@ -984,9 +984,31 @@ export default function App() {
         setPotonganManualList(parsed.potonganManualList);
         StorageService.savePotonganManual(parsed.potonganManualList);
       }
+      let latestHonorLunasToSync = honorLunasList;
       if (parsed.honorLunasList !== undefined) {
-        setHonorLunasList(parsed.honorLunasList);
-        StorageService.saveHonorLunas(parsed.honorLunasList);
+        const localHonorLunas = mergeHonorLunasRecords(StorageService.getHonorLunas(), honorLunasList);
+        const mergedHonorLunas = mergeHonorLunasRecords(localHonorLunas, parsed.honorLunasList);
+        setHonorLunasList(mergedHonorLunas);
+        StorageService.saveHonorLunas(mergedHonorLunas);
+        latestHonorLunasToSync = mergedHonorLunas;
+
+        // Auto-heal: if local state has valid settled records that were missing in Google Sheets, push them back
+        if (mergedHonorLunas.length > parsed.honorLunasList.length && scriptUrl) {
+          const healPayload = buildGoogleSheetsSyncPayload({
+            servers: parsed.servers !== undefined ? parsed.servers : servers,
+            wilayah: parsed.wilayah !== undefined ? parsed.wilayah : wilayahList,
+            jenisList: parsed.jenisList !== undefined ? parsed.jenisList : jenisList,
+            employees: parsed.employees !== undefined && parsed.employees.length > 0 ? parsed.employees : employees,
+            jobs: latestJobsToSync,
+            planningTasks: parsed.planningTasks !== undefined ? parsed.planningTasks : planningTasks,
+            attendanceList: latestAttendanceToSync,
+            potonganManualList: parsed.potonganManualList !== undefined ? parsed.potonganManualList : potonganManualList,
+            honorLunasList: mergedHonorLunas,
+            settings: { ...settings, ...(parsed.settings || {}) },
+            onlySheets: ['HonorLunas']
+          });
+          sendToGoogleAppsScript(scriptUrl, healPayload).catch(() => {});
+        }
       }
       if (parsed.settings && Object.keys(parsed.settings).length > 0) {
         const mergedSettings = {
@@ -1015,6 +1037,7 @@ export default function App() {
         planningTasks: parsed.planningTasks !== undefined ? parsed.planningTasks : planningTasks,
         attendanceList: latestAttendanceToSync,
         potonganManualList: parsed.potonganManualList !== undefined ? parsed.potonganManualList : potonganManualList,
+        honorLunasList: latestHonorLunasToSync,
         settings: { ...settings, ...(parsed.settings || {}), googleAppsScriptUrl: scriptUrl, isGoogleSheetConnected: true }
       });
 
@@ -1063,6 +1086,9 @@ export default function App() {
           }
           if (serverState.deletedAttendanceIds && Array.isArray(serverState.deletedAttendanceIds)) {
             StorageService.setDeletedAttendanceIds(serverState.deletedAttendanceIds);
+          }
+          if (serverState.deletedHonorLunasIds && Array.isArray(serverState.deletedHonorLunasIds)) {
+            StorageService.setDeletedHonorLunasIds(serverState.deletedHonorLunasIds);
           }
           if (serverState.approvedLemburMap && typeof serverState.approvedLemburMap === 'object') {
             StorageService.setApprovedLemburMap(serverState.approvedLemburMap);
@@ -1123,6 +1149,11 @@ export default function App() {
           if (serverState.potonganManualList && serverState.potonganManualList.length > 0) {
             setPotonganManualList(serverState.potonganManualList);
             StorageService.savePotonganManual(serverState.potonganManualList);
+          }
+          if (serverState.honorLunasList && Array.isArray(serverState.honorLunasList) && serverState.honorLunasList.length > 0) {
+            const mergedHl = mergeHonorLunasRecords(StorageService.getHonorLunas(), serverState.honorLunasList);
+            setHonorLunasList(mergedHl);
+            StorageService.saveHonorLunas(mergedHl);
           }
         }
 
@@ -2136,7 +2167,8 @@ export default function App() {
       setSettings(updatedSettings);
       StorageService.saveSettings(updatedSettings);
 
-      // Perform an immediate full database push including PengaturanApp table
+      const mergedHonorLunas = mergeHonorLunasRecords(StorageService.getHonorLunas(), honorLunasList);
+      // Only push PengaturanApp on connection test so existing Google Sheets transactional tables (like HonorLunas) are never overwritten
       const payload = buildGoogleSheetsSyncPayload({
         servers,
         wilayah: wilayahList,
@@ -2146,7 +2178,9 @@ export default function App() {
         planningTasks,
         attendanceList,
         potonganManualList,
-        settings: updatedSettings
+        honorLunasList: mergedHonorLunas,
+        settings: updatedSettings,
+        onlySheets: ['PengaturanApp']
       });
 
       const res = await sendToGoogleAppsScript(url, payload);
@@ -2162,7 +2196,7 @@ export default function App() {
     setIsSyncing(true);
     try {
       if (settings.googleAppsScriptUrl) {
-        const curHonorLunas = StorageService.getHonorLunas();
+        const mergedHonorLunas = mergeHonorLunasRecords(StorageService.getHonorLunas(), honorLunasList);
         const curJobs = StorageService.getJobs();
         const curPotongan = StorageService.getPotonganManual();
         const payload = buildGoogleSheetsSyncPayload({
@@ -2174,7 +2208,7 @@ export default function App() {
           planningTasks,
           attendanceList,
           potonganManualList: curPotongan.length > 0 ? curPotongan : potonganManualList,
-          honorLunasList: curHonorLunas.length > 0 ? curHonorLunas : honorLunasList,
+          honorLunasList: mergedHonorLunas,
           settings
         });
 
@@ -2202,115 +2236,140 @@ export default function App() {
 
   // Pelunasan Honor: Simpan riwayat HonorLunas, tandai pekerjaan lunas, dan sinkronkan ke Google Sheets
   const handleSaveHonorLunas = async (newSettlements: HonorLunasRecord[], updatedJobs: JobRecord[], updatedPotongan: PotonganManual[]) => {
-    // Deduplicate by ID against both storage and current state
-    const existingList = StorageService.getHonorLunas();
-    const settlementMap = new Map<string, HonorLunasRecord>();
-    existingList.forEach(item => { if (item?.id) settlementMap.set(item.id, item); });
-    honorLunasList.forEach(item => { if (item?.id) settlementMap.set(item.id, item); });
-    newSettlements.forEach(item => { if (item?.id) settlementMap.set(item.id, item); });
-    const combinedSettlements = Array.from(settlementMap.values());
-
-    setHonorLunasList(combinedSettlements);
-    StorageService.saveHonorLunas(combinedSettlements);
-
-    if (updatedJobs && updatedJobs.length > 0) {
-      setJobs(updatedJobs);
-      StorageService.saveJobs(updatedJobs);
-    }
-    if (updatedPotongan && updatedPotongan.length > 0) {
-      setPotonganManualList(updatedPotongan);
-      StorageService.savePotonganManual(updatedPotongan);
-    }
-
-    // Sync to backend server
-    await StorageService.syncServerState({
-      jobs: updatedJobs || jobs,
-      potonganManualList: updatedPotongan || potonganManualList,
-      honorLunasList: combinedSettlements
+    setLoadingOverlay({
+      isOpen: true,
+      title: 'Menyimpan Pelunasan...',
+      message: 'Mencatat data pelunasan honor ke sheet HonorLunas di Google Sheets...'
     });
+    try {
+      newSettlements.forEach(item => {
+        if (item?.id) {
+          StorageService.removeDeletedHonorLunasId(item.id);
+        }
+      });
 
-    // Sync to Google Sheets if connected (only modified sheets)
-    if (settings.googleAppsScriptUrl) {
-      try {
-        const payload = buildGoogleSheetsSyncPayload({
-          servers,
-          wilayah: wilayahList,
-          jenisList,
-          employees,
-          jobs: updatedJobs || jobs,
-          planningTasks,
-          attendanceList,
-          potonganManualList: updatedPotongan || potonganManualList,
-          honorLunasList: combinedSettlements,
-          settings,
-          onlySheets: ['DaftarPekerjaan', 'PotonganManual', 'HonorLunas']
-        });
-        await sendToGoogleAppsScript(settings.googleAppsScriptUrl, payload);
-      } catch (err) {
-        console.warn('Sync honor lunas to Google Sheets failed:', err);
+      // Deduplicate by ID against both storage and current state
+      const existingMerged = mergeHonorLunasRecords(StorageService.getHonorLunas(), honorLunasList);
+      const combinedSettlements = mergeHonorLunasRecords(existingMerged, newSettlements);
+
+      setHonorLunasList(combinedSettlements);
+      StorageService.saveHonorLunas(combinedSettlements);
+
+      if (updatedJobs && updatedJobs.length > 0) {
+        setJobs(updatedJobs);
+        StorageService.saveJobs(updatedJobs);
       }
+      if (updatedPotongan && updatedPotongan.length > 0) {
+        setPotonganManualList(updatedPotongan);
+        StorageService.savePotonganManual(updatedPotongan);
+      }
+
+      // Sync to backend server
+      await StorageService.syncServerState({
+        jobs: updatedJobs || jobs,
+        potonganManualList: updatedPotongan || potonganManualList,
+        honorLunasList: combinedSettlements,
+        deletedHonorLunasIds: StorageService.getDeletedHonorLunasIds()
+      });
+
+      // Sync to Google Sheets if connected (only modified sheets)
+      if (settings.googleAppsScriptUrl) {
+        try {
+          const payload = buildGoogleSheetsSyncPayload({
+            servers,
+            wilayah: wilayahList,
+            jenisList,
+            employees,
+            jobs: updatedJobs || jobs,
+            planningTasks,
+            attendanceList,
+            potonganManualList: updatedPotongan || potonganManualList,
+            honorLunasList: combinedSettlements,
+            settings,
+            onlySheets: ['HonorLunas', 'PotonganManual', 'DaftarPekerjaan']
+          });
+          await sendToGoogleAppsScript(settings.googleAppsScriptUrl, payload);
+        } catch (err) {
+          console.warn('Sync honor lunas to Google Sheets failed:', err);
+        }
+      }
+    } finally {
+      setLoadingOverlay(prev => ({ ...prev, isOpen: false }));
     }
   };
 
   // Batalkan / Rollback pelunasan honor jika diperlukan
   const handleDeleteHonorLunas = async (settlementId: string) => {
-    const target = honorLunasList.find(hl => hl.id === settlementId);
+    const target = honorLunasList.find(hl => hl.id === settlementId) || StorageService.getHonorLunas().find(hl => hl.id === settlementId);
     if (!target) return;
 
-    const remaining = honorLunasList.filter(hl => hl.id !== settlementId);
-    setHonorLunasList(remaining);
-    StorageService.saveHonorLunas(remaining);
-
-    // Unmark settled jobs
-    const targetJobIds = new Set(target.jobIds || []);
-    const updatedJobs = jobs.map(j => {
-      if (targetJobIds.has(j.id) || j.honorLunasId === settlementId) {
-        const { isHonorLunas, honorLunasId, honorLunasAt, ...rest } = j;
-        return rest as JobRecord;
-      }
-      return j;
+    setLoadingOverlay({
+      isOpen: true,
+      title: 'Membatalkan Pelunasan...',
+      message: 'Memperbarui sheet HonorLunas pada Google Sheets...'
     });
-    setJobs(updatedJobs);
-    StorageService.saveJobs(updatedJobs);
+    try {
+      StorageService.addDeletedHonorLunasId(settlementId);
+      const currentCombined = mergeHonorLunasRecords(StorageService.getHonorLunas(), honorLunasList);
+      const remaining = currentCombined.filter(hl => hl.id !== settlementId);
+      setHonorLunasList(remaining);
+      StorageService.saveHonorLunas(remaining);
 
-    // Unmark settled potongan
-    const targetPotonganIds = new Set(target.potonganIds || []);
-    const updatedPotongan = potonganManualList.map(pm => {
-      if (targetPotonganIds.has(pm.id) || pm.honorLunasId === settlementId) {
-        const { isLunas, honorLunasId, ...rest } = pm;
-        return rest as PotonganManual;
+      // Unmark settled jobs
+      const targetJobIds = new Set(target.jobIds || []);
+      const updatedJobs = jobs.map(j => {
+        if (targetJobIds.has(j.id) || j.honorLunasId === settlementId) {
+          const { isHonorLunas, honorLunasId, honorLunasAt, ...rest } = j;
+          return rest as JobRecord;
+        }
+        return j;
+      });
+      setJobs(updatedJobs);
+      StorageService.saveJobs(updatedJobs);
+
+      // Unmark settled potongan
+      const targetPotonganIds = new Set(target.potonganIds || []);
+      const updatedPotongan = potonganManualList.map(pm => {
+        if (targetPotonganIds.has(pm.id) || pm.honorLunasId === settlementId) {
+          const { isLunas, honorLunasId, ...rest } = pm;
+          return rest as PotonganManual;
+        }
+        return pm;
+      });
+      setPotonganManualList(updatedPotongan);
+      StorageService.savePotonganManual(updatedPotongan);
+
+      // Sync to server & sheets
+      await StorageService.syncServerState({
+        jobs: updatedJobs,
+        potonganManualList: updatedPotongan,
+        honorLunasList: remaining,
+        deletedHonorLunasIds: StorageService.getDeletedHonorLunasIds()
+      });
+
+      if (settings.googleAppsScriptUrl) {
+        try {
+          const payload = buildGoogleSheetsSyncPayload({
+            servers,
+            wilayah: wilayahList,
+            jenisList,
+            employees,
+            jobs: updatedJobs,
+            planningTasks,
+            attendanceList,
+            potonganManualList: updatedPotongan,
+            honorLunasList: remaining,
+            settings,
+            onlySheets: ['HonorLunas', 'PotonganManual', 'DaftarPekerjaan'],
+            allowEmptyHonorLunas: remaining.length === 0
+          });
+          await sendToGoogleAppsScript(settings.googleAppsScriptUrl, payload);
+        } catch (err) {
+          console.warn('Sync rollback honor lunas to sheets failed:', err);
+        }
       }
-      return pm;
-    });
-    setPotonganManualList(updatedPotongan);
-    StorageService.savePotonganManual(updatedPotongan);
-
-    // Sync to server & sheets
-    await StorageService.syncServerState({
-      jobs: updatedJobs,
-      potonganManualList: updatedPotongan,
-      honorLunasList: remaining
-    });
-
-    if (settings.googleAppsScriptUrl) {
-      try {
-        const payload = buildGoogleSheetsSyncPayload({
-          servers,
-          wilayah: wilayahList,
-          jenisList,
-          employees,
-          jobs: updatedJobs,
-          planningTasks,
-          attendanceList,
-          potonganManualList: updatedPotongan,
-          honorLunasList: remaining,
-          settings,
-          onlySheets: ['DaftarPekerjaan', 'PotonganManual', 'HonorLunas']
-        });
-        await sendToGoogleAppsScript(settings.googleAppsScriptUrl, payload);
-      } catch (err) {
-        console.warn('Sync rollback honor lunas to sheets failed:', err);
-      }
+    } finally {
+      setLoadingOverlay(prev => ({ ...prev, isOpen: false }));
     }
   };
 

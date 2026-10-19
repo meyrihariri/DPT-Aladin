@@ -420,6 +420,41 @@ function mergeServerAttendanceLists(existingList: any[] = [], incomingList: any[
   return Array.from(map.values());
 }
 
+// Helper to merge HonorLunas records across clients and sheets without accidental erasure
+function mergeServerHonorLunasLists(
+  existingList: any[] = [],
+  incomingList: any[] = [],
+  deletedSet: Set<string> = new Set()
+): any[] {
+  const map = new Map<string, any>();
+  const addRecord = (item: any) => {
+    if (!item || !item.id) return;
+    const cleanId = String(item.id).trim();
+    if (!cleanId || deletedSet.has(cleanId)) return;
+    const prev = map.get(cleanId);
+    if (!prev) {
+      map.set(cleanId, { ...item, id: cleanId });
+    } else {
+      map.set(cleanId, {
+        ...prev,
+        ...item,
+        id: cleanId,
+        jobIds: (Array.isArray(item.jobIds) && item.jobIds.length > 0) ? item.jobIds : (prev.jobIds || []),
+        potonganIds: (Array.isArray(item.potonganIds) && item.potonganIds.length > 0) ? item.potonganIds : (prev.potonganIds || [])
+      });
+    }
+  };
+
+  if (Array.isArray(existingList)) {
+    existingList.forEach(addRecord);
+  }
+  if (Array.isArray(incomingList)) {
+    incomingList.forEach(addRecord);
+  }
+
+  return Array.from(map.values());
+}
+
 // POST /api/sync/state - Save latest application state from any client (PC Admin or HP)
 app.post('/api/sync/state', (req, res) => {
   try {
@@ -451,6 +486,22 @@ app.post('/api/sync/state', (req, res) => {
       mergedAttendanceList = mergedAttendanceList.filter((a: any) => !existingDeleted.has(a.id));
     }
 
+    // Merge deletedHonorLunasIds set across all clients
+    const existingDeletedHonorLunas = new Set<string>(
+      (currentState.deletedHonorLunasIds || []).map((id: any) => String(id || '').trim()).filter(Boolean)
+    );
+    if (Array.isArray(incoming.deletedHonorLunasIds)) {
+      incoming.deletedHonorLunasIds.forEach((id: string) => {
+        if (id && typeof id === 'string') existingDeletedHonorLunas.add(id.trim());
+      });
+    }
+
+    const mergedHonorLunasList = mergeServerHonorLunasLists(
+      currentState.honorLunasList || [],
+      incoming.honorLunasList || [],
+      existingDeletedHonorLunas
+    );
+
     // Merge approvedLemburMap across all clients
     const mergedLemburMap = {
       ...(currentState.approvedLemburMap || {}),
@@ -461,8 +512,10 @@ app.post('/api/sync/state', (req, res) => {
       ...currentState,
       ...incoming,
       attendanceList: mergedAttendanceList,
+      honorLunasList: mergedHonorLunasList,
       resolvedAttendanceKeys: Array.from(existingResolved),
       deletedAttendanceIds: Array.from(existingDeleted),
+      deletedHonorLunasIds: Array.from(existingDeletedHonorLunas),
       approvedLemburMap: mergedLemburMap,
       settings: {
         ...(currentState.settings || {}),
@@ -568,6 +621,8 @@ let SHEETS_RAW_CACHE: {
 } | null = null;
 
 let inflightSheetsFetch: Promise<Record<string, any[][]> | null> | null = null;
+let activeSheetWriteCount = 0;
+let lastSheetWriteCompletedAt = 0;
 
 // Fetch all 11 sheets in parallel via ?action=getData&sheet=... (~2.2s total vs 35s for getAllData)
 async function fetchAllSheetsParallelFromGas(scriptUrl: string): Promise<Record<string, any[][]> | null> {
@@ -612,14 +667,51 @@ async function refreshSheetsCacheAndServerState(scriptUrl: string): Promise<Reco
   const cleanUrl = scriptUrl.trim();
   if (!cleanUrl) return null;
 
+  // Do not overwrite cache with stale reads while a write to Google Sheets is actively in progress
+  if (activeSheetWriteCount > 0 && SHEETS_RAW_CACHE?.scriptUrl === cleanUrl) {
+    return SHEETS_RAW_CACHE.data;
+  }
+
   if (inflightSheetsFetch) {
     return inflightSheetsFetch;
   }
+
+  const writeTimeBeforeFetch = lastSheetWriteCompletedAt;
 
   inflightSheetsFetch = (async () => {
     try {
       const sheetsData = await fetchAllSheetsParallelFromGas(cleanUrl);
       if (!sheetsData || Object.keys(sheetsData).length === 0) return null;
+
+      // If a write started or completed while this GET was in flight, do not overwrite the newer write-through cache
+      if (
+        (activeSheetWriteCount > 0 || lastSheetWriteCompletedAt > writeTimeBeforeFetch) &&
+        SHEETS_RAW_CACHE &&
+        SHEETS_RAW_CACHE.scriptUrl === cleanUrl
+      ) {
+        return SHEETS_RAW_CACHE.data;
+      }
+
+      const currentState = readServerState() || {};
+      const deletedHonorSet = new Set<string>(
+        (currentState.deletedHonorLunasIds || []).map((id: any) => String(id || '').trim()).filter(Boolean)
+      );
+
+      // Protect HonorLunas raw table in cache if sheetsData returned <= 1 row while cache has active non-deleted rows
+      const existingCachedHonorRows = SHEETS_RAW_CACHE?.scriptUrl === cleanUrl ? SHEETS_RAW_CACHE?.data?.HonorLunas : undefined;
+      if (
+        (!sheetsData.HonorLunas || sheetsData.HonorLunas.length <= 1) &&
+        Array.isArray(existingCachedHonorRows) &&
+        existingCachedHonorRows.length > 1
+      ) {
+        const survivingRows = [
+          existingCachedHonorRows[0],
+          ...existingCachedHonorRows.slice(1).filter(r => r && r[0] && !deletedHonorSet.has(String(r[0]).trim()))
+        ];
+        if (survivingRows.length > 1) {
+          sheetsData.HonorLunas = survivingRows;
+        }
+      }
 
       SHEETS_RAW_CACHE = {
         scriptUrl: cleanUrl,
@@ -630,9 +722,14 @@ async function refreshSheetsCacheAndServerState(scriptUrl: string): Promise<Reco
         timestamp: Date.now()
       };
 
-      const currentState = readServerState() || {};
       const parsed = parseParsedSheetsToState(SHEETS_RAW_CACHE.data);
       const mergedAttendance = mergeServerAttendanceLists(currentState.attendanceList, parsed.attendanceList);
+      const mergedHonorLunas = mergeServerHonorLunasLists(
+        currentState.honorLunasList || [],
+        parsed.honorLunasList || [],
+        deletedHonorSet
+      );
+
       const updatedState = {
         ...currentState,
         ...parsed,
@@ -643,6 +740,7 @@ async function refreshSheetsCacheAndServerState(scriptUrl: string): Promise<Reco
           isGoogleSheetConnected: true
         },
         attendanceList: mergedAttendance,
+        honorLunasList: mergedHonorLunas,
         lastUpdated: new Date().toISOString()
       };
       writeServerState(updatedState);
@@ -660,17 +758,35 @@ async function refreshSheetsCacheAndServerState(scriptUrl: string): Promise<Reco
 
 // POST /api/sync/sheets - Server-side proxy to sync payload to Google Apps Script reliably (bypasses browser CORS & redirects)
 app.post('/api/sync/sheets', async (req, res) => {
+  activeSheetWriteCount++;
   try {
-    const { scriptUrl, payload } = req.body || {};
+    const { scriptUrl, payload, allowEmptyHonorLunas } = req.body || {};
     const url = scriptUrl || readServerState()?.settings?.googleAppsScriptUrl;
     if (!url || !url.trim()) {
       return res.status(400).json({ success: false, message: 'Google Apps Script URL is required' });
     }
 
     const cleanUrl = url.trim();
+    const isEmptyHonorLunasAllowed = Boolean(allowEmptyHonorLunas || payload?.allowEmptyHonorLunas);
+
+    // Server-side guard: Never allow an accidental header-only (<=1 row) HonorLunas table to wipe out HonorLunas in Google Sheets
+    if (
+      payload &&
+      payload.tables &&
+      Array.isArray(payload.tables.HonorLunas) &&
+      payload.tables.HonorLunas.length <= 1 &&
+      !isEmptyHonorLunasAllowed
+    ) {
+      const cachedHonorLunas = SHEETS_RAW_CACHE?.scriptUrl === cleanUrl ? SHEETS_RAW_CACHE?.data?.HonorLunas : undefined;
+      if (Array.isArray(cachedHonorLunas) && cachedHonorLunas.length > 1) {
+        payload.tables.HonorLunas = cachedHonorLunas;
+      } else {
+        delete payload.tables.HonorLunas;
+      }
+    }
 
     // Write-through cache: immediately update server's in-memory raw sheets cache so subsequent reads are 0ms
-    if (payload && payload.tables && typeof payload.tables === 'object') {
+    if (payload && payload.tables && typeof payload.tables === 'object' && Object.keys(payload.tables).length > 0) {
       const existingData = (SHEETS_RAW_CACHE && SHEETS_RAW_CACHE.scriptUrl === cleanUrl)
         ? SHEETS_RAW_CACHE.data
         : {};
@@ -684,26 +800,54 @@ app.post('/api/sync/sheets', async (req, res) => {
       };
     }
 
-    // If syncing both AbsensiHarian and ApprovalAbsensi (mirror sheets), send AbsensiHarian first for faster response
-    // and sync ApprovalAbsensi asynchronously in the background
+    // Prioritize critical fast tables (HonorLunas / AbsensiHarian) in primaryPayload and offload heavy secondary tables
     let primaryPayload = payload;
     let backgroundPayload: any = null;
-    if (
-      payload &&
-      payload.action === 'syncFullDatabase' &&
-      payload.tables &&
-      Object.keys(payload.tables).length === 2 &&
-      payload.tables.AbsensiHarian &&
-      payload.tables.ApprovalAbsensi
-    ) {
-      primaryPayload = {
-        action: 'syncFullDatabase',
-        tables: { AbsensiHarian: payload.tables.AbsensiHarian }
-      };
-      backgroundPayload = {
-        action: 'syncFullDatabase',
-        tables: { ApprovalAbsensi: payload.tables.ApprovalAbsensi }
-      };
+    if (payload && payload.action === 'syncFullDatabase' && payload.tables) {
+      const tableKeys = Object.keys(payload.tables);
+      if (
+        tableKeys.length === 2 &&
+        payload.tables.AbsensiHarian &&
+        payload.tables.ApprovalAbsensi
+      ) {
+        primaryPayload = {
+          action: 'syncFullDatabase',
+          tables: { AbsensiHarian: payload.tables.AbsensiHarian }
+        };
+        backgroundPayload = {
+          action: 'syncFullDatabase',
+          tables: { ApprovalAbsensi: payload.tables.ApprovalAbsensi }
+        };
+      } else if (
+        tableKeys.length >= 2 &&
+        payload.tables.HonorLunas &&
+        payload.tables.DaftarPekerjaan
+      ) {
+        // Write HonorLunas (and PotonganManual) FIRST so HonorLunas is saved in <1s without waiting behind 100+ rows of DaftarPekerjaan
+        const primaryTables: Record<string, any[][]> = {
+          HonorLunas: payload.tables.HonorLunas
+        };
+        if (payload.tables.PotonganManual) {
+          primaryTables.PotonganManual = payload.tables.PotonganManual;
+        }
+        const bgTables: Record<string, any[][]> = {};
+        for (const k of tableKeys) {
+          if (k !== 'HonorLunas' && k !== 'PotonganManual') {
+            bgTables[k] = payload.tables[k];
+          }
+        }
+        primaryPayload = {
+          action: 'syncFullDatabase',
+          tables: primaryTables,
+          ...(isEmptyHonorLunasAllowed ? { allowEmptyHonorLunas: true } : {})
+        };
+        if (Object.keys(bgTables).length > 0) {
+          backgroundPayload = {
+            action: 'syncFullDatabase',
+            tables: bgTables
+          };
+        }
+      }
     }
 
     const response = await fetch(cleanUrl, {
@@ -722,18 +866,35 @@ app.post('/api/sync/sheets', async (req, res) => {
       data = { raw: text };
     }
 
+    if (SHEETS_RAW_CACHE && SHEETS_RAW_CACHE.scriptUrl === cleanUrl) {
+      SHEETS_RAW_CACHE.timestamp = Date.now();
+    }
+    lastSheetWriteCompletedAt = Date.now();
+
     if (backgroundPayload) {
+      activeSheetWriteCount++;
       fetch(cleanUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(backgroundPayload)
-      }).catch(err => console.warn('Background ApprovalAbsensi sync warning:', err));
+      })
+        .catch(err => console.warn('Background secondary sheet sync warning:', err))
+        .finally(() => {
+          activeSheetWriteCount = Math.max(0, activeSheetWriteCount - 1);
+          lastSheetWriteCompletedAt = Date.now();
+          if (SHEETS_RAW_CACHE && SHEETS_RAW_CACHE.scriptUrl === cleanUrl) {
+            SHEETS_RAW_CACHE.timestamp = Date.now();
+          }
+        });
     }
 
     res.json({ success: true, data });
   } catch (err: any) {
     console.error('Proxy to Google Apps Script failed:', err);
     res.status(500).json({ success: false, error: err.message });
+  } finally {
+    activeSheetWriteCount = Math.max(0, activeSheetWriteCount - 1);
+    lastSheetWriteCompletedAt = Date.now();
   }
 });
 
@@ -760,10 +921,12 @@ app.get('/api/proxy/sheets', async (req, res) => {
         Object.keys(SHEETS_RAW_CACHE.data).length > 0
       );
 
-      if (hasValidCache && !hardForce) {
+      const recentlyWritten = activeSheetWriteCount > 0 || (Date.now() - lastSheetWriteCompletedAt < 6000);
+
+      if (hasValidCache && (!hardForce || recentlyWritten)) {
         const cacheAgeMs = Date.now() - SHEETS_RAW_CACHE!.timestamp;
-        // Trigger non-blocking background refresh if cache is older than 4 seconds
-        if (cacheAgeMs > 4000) {
+        // Trigger non-blocking background refresh only if cache is older than 5s and no write just happened
+        if (cacheAgeMs > 5000 && !recentlyWritten) {
           refreshSheetsCacheAndServerState(cleanUrl).catch(() => {});
         }
         return res.json({

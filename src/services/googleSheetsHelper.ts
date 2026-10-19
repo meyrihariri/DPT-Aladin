@@ -277,12 +277,16 @@ function doPost(e) {
     // 2. Action Full Sync Semua Tabel ke Google Sheets
     if (action === 'syncFullDatabase' || action === 'syncAll') {
       var tables = postData.tables || {};
+      var allowEmptyHonorLunas = Boolean(postData.allowEmptyHonorLunas);
       for (var sheetName in tables) {
         if (tables.hasOwnProperty(sheetName)) {
           var tableData = tables[sheetName]; // Array of row arrays
           var sheet = getOrCreateSheet(ss, sheetName);
           
           if (tableData && tableData.length > 0) {
+            if (sheetName === 'HonorLunas' && tableData.length <= 1 && !allowEmptyHonorLunas && sheet.getLastRow() > 1) {
+              continue;
+            }
             // Safety sanitization
             for (var r = 0; r < tableData.length; r++) {
               for (var c = 0; c < tableData[r].length; c++) {
@@ -959,6 +963,7 @@ export function buildGoogleSheetsSyncPayload(data: {
   honorLunasList?: any[];
   settings: any;
   onlySheets?: string[];
+  allowEmptyHonorLunas?: boolean;
 }) {
   const logoStr = String(data.settings?.logoUrl || '');
   const safeLogoUrl = logoStr.startsWith('data:image/') && logoStr.length > 2000
@@ -1314,7 +1319,8 @@ export function buildGoogleSheetsSyncPayload(data: {
 
   return {
     action: 'syncFullDatabase',
-    tables: sanitizedTables
+    tables: sanitizedTables,
+    ...(data.allowEmptyHonorLunas ? { allowEmptyHonorLunas: true } : {})
   };
 }
 
@@ -1330,6 +1336,22 @@ export async function sendToGoogleAppsScript(scriptUrl: string, payload: any) {
     return { success: false, message: 'URL Google Apps Script belum diisi.' };
   }
   const cleanUrl = scriptUrl.trim();
+
+  // Safety guard: Never allow an accidental header-only (<=1 row) HonorLunas payload to wipe out existing HonorLunas data
+  if (
+    payload &&
+    payload.tables &&
+    Array.isArray(payload.tables.HonorLunas) &&
+    payload.tables.HonorLunas.length <= 1 &&
+    !payload.allowEmptyHonorLunas
+  ) {
+    const cachedHonorLunas = clientSheetsMemoryCache?.data?.HonorLunas;
+    if (Array.isArray(cachedHonorLunas) && cachedHonorLunas.length > 1) {
+      payload.tables.HonorLunas = cachedHonorLunas;
+    } else if (Object.keys(payload.tables).length > 1) {
+      delete payload.tables.HonorLunas;
+    }
+  }
 
   // Immediately update client memory cache if writing tables
   if (payload && payload.tables && typeof payload.tables === 'object') {
@@ -1348,7 +1370,11 @@ export async function sendToGoogleAppsScript(scriptUrl: string, payload: any) {
     const proxyRes = await fetch('/api/sync/sheets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scriptUrl: cleanUrl, payload })
+      body: JSON.stringify({
+        scriptUrl: cleanUrl,
+        payload,
+        allowEmptyHonorLunas: Boolean(payload?.allowEmptyHonorLunas)
+      })
     });
     const cType = proxyRes.headers.get('content-type') || '';
     if (proxyRes.ok && (cType.includes('application/json') || cType.includes('text/plain'))) {
@@ -2469,6 +2495,17 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
         return idx >= 0 ? idx : fallback;
       };
 
+      const parseNumericCell = (val: any): number => {
+        if (typeof val === 'number') return isNaN(val) ? 0 : val;
+        if (val === undefined || val === null || val === '') return 0;
+        const str = String(val).trim();
+        if (!str || str === '-') return 0;
+        const direct = Number(str);
+        if (!isNaN(direct)) return direct;
+        const digitsOnly = str.replace(/[^0-9-]/g, '');
+        return Number(digitsOnly) || 0;
+      };
+
       const idCol = getColIndex(/^id$/i, 0);
       const tglLunasCol = getColIndex(/tanggal.*lunas|tgl.*lunas/i, 1);
       const perAwalCol = getColIndex(/periode.*awal|tgl.*mulai/i, 2);
@@ -2495,41 +2532,135 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
       const waktuCol = getColIndex(/waktu.*pelunasan|tanggal.*acc/i, 23);
       const catCol = getColIndex(/catatan|keterangan/i, 24);
 
-      const rows = rawRows.slice(1);
-      result.honorLunasList = rows.map((row: any[], idx: number) => {
-        const rawJobIds = String(row[jobIdsCol] || '');
-        const parsedJobIds = rawJobIds ? rawJobIds.split(',').map(s => s.trim()).filter(Boolean) : [];
-        const techIdVal = String(row[techIdCol] || '');
-        const techNamaVal = String(row[techNamaCol] || '');
+      let deletedHonorIdsSet = new Set<string>();
+      try {
+        if (typeof window !== 'undefined') {
+          const rawDeleted = localStorage.getItem('dpt_aladin_deleted_honor_lunas_ids_v1');
+          if (rawDeleted) {
+            const arr = JSON.parse(rawDeleted);
+            if (Array.isArray(arr)) {
+              deletedHonorIdsSet = new Set(arr.filter(Boolean).map(x => String(x).trim()));
+            }
+          }
+        }
+      } catch {}
 
-        return {
-          id: String(row[idCol] || `lunas-${Date.now()}-${idx}`),
-          tanggalLunas: sanitizeDateString(String(row[tglLunasCol] || '')),
-          periodeAwal: sanitizeDateString(String(row[perAwalCol] || '')),
-          periodeAkhir: sanitizeDateString(String(row[perAkhirCol] || '')),
-          teknisiId: techIdVal,
-          teknisiNama: techNamaVal,
-          statusKaryawan: String(row[statusCol] || 'Tetap'),
-          serverId: String(row[serverIdCol] || ''),
-          namaServer: String(row[serverNamaCol] || ''),
-          totalPekerjaanCount: Number(row[jobCountCol]) || 0,
-          honorTetapServer: Number(row[honorTetapCol]) || 0,
-          honorPJWilayah: Number(row[honorWilCol]) || 0,
-          honorDasarPekerjaan: Number(row[honorDasarCol]) || 0,
-          honorTitik: Number(row[honorTitikCol]) || 0,
-          honorPanjangKabel: Number(row[honorKabelCol]) || 0,
-          honorLembur: Number(row[honorLemburCol]) || 0,
-          honorTransportKendaraan: Number(row[honorTransCol]) || 0,
-          bonusTarget: Number(row[bonusCol]) || 0,
-          potonganTerlambatAbsen: Number(row[potAbsenCol]) || 0,
-          potonganManualKasbon: Number(row[potKasbonCol]) || 0,
-          totalHonorNett: Number(row[totalNettCol]) || 0,
-          jobIds: parsedJobIds,
-          dilunaskanOleh: String(row[olehCol] || 'Admin'),
-          waktuPelunasan: String(row[waktuCol] || ''),
-          catatan: String(row[catCol] || '')
-        };
-      }).filter((hl: any) => hl.id && (hl.teknisiId || hl.teknisiNama));
+      const knownEmployees = result.employees || [];
+      const rows = rawRows.slice(1);
+      result.honorLunasList = rows
+        .map((row: any[], idx: number) => {
+          if (!row || row.length === 0 || row.every(c => String(c || '').trim() === '')) return null;
+          const rawJobIds = String(row[jobIdsCol] || '');
+          const parsedJobIds = rawJobIds ? rawJobIds.split(',').map(s => s.trim()).filter(Boolean) : [];
+          let techIdVal = String(row[techIdCol] || '').trim();
+          let techNamaVal = String(row[techNamaCol] || '').trim();
+          if (!techIdVal && techNamaVal) {
+            const emp = knownEmployees.find(e => e.namaLengkap.toLowerCase().trim() === techNamaVal.toLowerCase());
+            if (emp) techIdVal = emp.id;
+          } else if (techIdVal && !techNamaVal) {
+            const emp = knownEmployees.find(e => e.id === techIdVal);
+            if (emp) techNamaVal = emp.namaLengkap;
+          }
+
+          const tglLunasVal = sanitizeDateString(String(row[tglLunasCol] || ''));
+          const perAwalVal = sanitizeDateString(String(row[perAwalCol] || ''));
+          const perAkhirVal = sanitizeDateString(String(row[perAkhirCol] || ''));
+          const rowId = String(row[idCol] || '').trim() || `hl-${tglLunasVal || 'sheet'}-${techIdVal || idx + 1}`;
+          if (deletedHonorIdsSet.has(rowId)) return null;
+
+          const totalPekerjaanCount = parseNumericCell(row[jobCountCol]);
+          const honorTetapServer = parseNumericCell(row[honorTetapCol]);
+          const honorPJWilayah = parseNumericCell(row[honorWilCol]);
+          const honorDasarPekerjaan = parseNumericCell(row[honorDasarCol]);
+          const honorTitik = parseNumericCell(row[honorTitikCol]);
+          const honorPanjangKabel = parseNumericCell(row[honorKabelCol]);
+          const honorLembur = parseNumericCell(row[honorLemburCol]);
+          const honorTransportKendaraan = parseNumericCell(row[honorTransCol]);
+          const bonusTarget = parseNumericCell(row[bonusCol]);
+          const potonganTerlambatAbsen = parseNumericCell(row[potAbsenCol]);
+          const potonganManualKasbon = parseNumericCell(row[potKasbonCol]);
+          const totalHonorNett = parseNumericCell(row[totalNettCol]);
+
+          const totalHonorGross =
+            honorTetapServer +
+            honorPJWilayah +
+            honorDasarPekerjaan +
+            honorTitik +
+            honorPanjangKabel +
+            honorLembur +
+            honorTransportKendaraan +
+            bonusTarget;
+          const totalPotongan = potonganTerlambatAbsen + potonganManualKasbon;
+          const totalTagihanAwal = Math.max(totalHonorNett, totalHonorGross - totalPotongan);
+          const catatanStr = String(row[catCol] || '');
+          const isParsial =
+            /sebagian|parsial|cicil/i.test(catatanStr) ||
+            (totalTagihanAwal > totalHonorNett && totalHonorNett > 0);
+          const sisaHonor = isParsial ? Math.max(0, totalTagihanAwal - totalHonorNett) : 0;
+          const waktuPelunasanStr = String(row[waktuCol] || '');
+
+          return {
+            id: rowId,
+            tanggalLunas: tglLunasVal,
+            periodeAwal: perAwalVal,
+            periodeAkhir: perAkhirVal,
+            teknisiId: techIdVal,
+            teknisiNama: techNamaVal,
+            statusKaryawan: String(row[statusCol] || 'Tetap'),
+            serverId: String(row[serverIdCol] || ''),
+            namaServer: String(row[serverNamaCol] || ''),
+            jobCount: totalPekerjaanCount,
+            totalPekerjaanCount,
+            honorTetapServer,
+            honorPJWilayah,
+            honorDasarPekerjaan,
+            honorTitik,
+            honorPanjangKabel,
+            honorLembur,
+            honorTransportKendaraan,
+            bonusTarget,
+            potonganTerlambatAbsen,
+            potonganManualKasbon,
+            totalHonorGross,
+            totalPotongan,
+            totalTagihanAwal,
+            totalHonorNett,
+            sisaHonor,
+            isParsial,
+            jobIds: parsedJobIds,
+            dilunaskanOleh: String(row[olehCol] || 'Admin'),
+            dilunaskanAt: waktuPelunasanStr || tglLunasVal,
+            waktuPelunasan: waktuPelunasanStr,
+            catatan: catatanStr
+          } as HonorLunasRecord;
+        })
+        .filter((hl): hl is HonorLunasRecord => Boolean(hl && hl.id && (hl.teknisiId || hl.teknisiNama)));
+
+      // Mark settled jobs based on HonorLunas records
+      if (result.jobs && result.jobs.length > 0 && result.honorLunasList.length > 0) {
+        const fullSettledList = result.honorLunasList.filter(hl => !hl.isParsial);
+        if (fullSettledList.length > 0) {
+          result.jobs = result.jobs.map(j => {
+            const techIds = j.teknisiIds || [];
+            if (techIds.length === 0) return j;
+            const matchingSettlements = fullSettledList.filter(hl => hl.jobIds && hl.jobIds.includes(j.id));
+            if (matchingSettlements.length === 0) return j;
+            const allTechsSettled = techIds.every(tId =>
+              matchingSettlements.some(hl => hl.teknisiId === tId)
+            );
+            if (allTechsSettled) {
+              const firstHl = matchingSettlements[0];
+              return {
+                ...j,
+                isHonorLunas: true,
+                honorLunasId: firstHl.id,
+                honorLunasAt: firstHl.waktuPelunasan || firstHl.tanggalLunas
+              };
+            }
+            return j;
+          });
+        }
+      }
     } else {
       result.honorLunasList = [];
     }
