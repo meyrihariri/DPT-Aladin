@@ -423,11 +423,11 @@ function doPost(e) {
         // Helper normalisasi tanggal untuk perbandingan di GAS (mendukung YYYY-MM-DD dan DD/MM/YYYY)
         function normalizeDateForMatch(dStr) {
           if (!dStr) return '';
-          var s = String(dStr).trim().split('T')[0];
-          var dmy = s.match(/^([0-9]{1,2})(?:\/|-|\.)([0-9]{1,2})(?:\/|-|\.)([0-9]{2,4})$/);
-          if (dmy) {
-            var y = dmy[3].length === 2 ? ('20' + dmy[3]) : dmy[3];
-            return y + '-' + ('0' + dmy[2]).slice(-2) + '-' + ('0' + dmy[1]).slice(-2);
+          var s = String(dStr).trim().split('T')[0].split(' ')[0];
+          var parts = s.split('.').join('-').split('/').join('-').split('-');
+          if (parts.length === 3 && parts[0].length <= 2 && parts[2].length >= 2) {
+            var y = parts[2].length === 2 ? ('20' + parts[2]) : parts[2];
+            return y + '-' + ('0' + parts[1]).slice(-2) + '-' + ('0' + parts[0]).slice(-2);
           }
           return s;
         }
