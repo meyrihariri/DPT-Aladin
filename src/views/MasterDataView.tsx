@@ -30,12 +30,13 @@ import {
   JenisPekerjaan,
   Employee
 } from '../types';
-import { formatRupiah } from '../services/payroll';
+import { formatRupiah, formatPeriodMonthLabel } from '../services/payroll';
 import { NumericInput } from '../components/NumericInput';
 import { MapLocationPicker } from '../components/MapLocationPicker';
 import { parseCoordinate, isValidLatLng, formatCoordinate } from '../utils/coordinates';
 import { showAppConfirm } from '../utils/dialogService';
 import { sortJenisPekerjaan, StorageService } from '../services/storage';
+import { getEffectiveTodayISO } from '../services/googleSheetsHelper';
 
 export type MasterTab = 'server' | 'wilayah' | 'jenis' | 'karyawan';
 
@@ -119,6 +120,14 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
   const [wilayahForm, setWilayahForm] = useState<Partial<WilayahPekerjaan>>({});
   const [jenisForm, setJenisForm] = useState<Partial<JenisPekerjaan>>({});
   const [employeeForm, setEmployeeForm] = useState<Partial<Employee>>({});
+  const [honorEffectiveMonth, setHonorEffectiveMonth] = useState<string>(() => getEffectiveTodayISO().slice(0, 7));
+
+  const getPrevMonthYYYYMM = (yyyyMm: string): string => {
+    if (!yyyyMm || !/^\d{4}-\d{2}$/.test(yyyyMm)) return '2026-09';
+    const [y, m] = yyyyMm.split('-').map(Number);
+    if (m <= 1) return `${y - 1}-12`;
+    return `${y}-${String(m - 1).padStart(2, '0')}`;
+  };
 
   // Auto-save draft for MasterData forms
   React.useEffect(() => {
@@ -204,6 +213,7 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
       });
     } else if (activeTab === 'karyawan') {
       const draft = StorageService.getMasterDataDraft('karyawan');
+      setHonorEffectiveMonth(getEffectiveTodayISO().slice(0, 7));
 
       setEmployeeForm({
         namaLengkap: draft?.namaLengkap || '',
@@ -248,6 +258,7 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
     if (activeTab === 'wilayah') setWilayahForm(item);
     if (activeTab === 'jenis') setJenisForm(item);
     if (activeTab === 'karyawan') {
+      setHonorEffectiveMonth(getEffectiveTodayISO().slice(0, 7));
       const matchedServer = servers.find(
         s => s.id === item.serverId ||
         s.penanggungJawabId === item.id ||
@@ -259,7 +270,12 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
         serverId: item.serverId || matchedServer?.id || '',
         namaServer: item.namaServer || matchedServer?.namaServer || '',
         wilayahHandledIds: item.wilayahHandledIds || [],
-        serverHonors: Array.isArray(item.serverHonors) ? item.serverHonors : []
+        serverHonors: Array.isArray(item.serverHonors)
+          ? item.serverHonors.map((sh: any) => ({
+              ...sh,
+              riwayat: Array.isArray(sh.riwayat) ? [...sh.riwayat] : undefined
+            }))
+          : []
       });
     }
     setModalOpen(true);
@@ -340,11 +356,27 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
         ? servers.find(s => s.id === employeeForm.serverId)
         : undefined;
 
-      const currentServerHonors = (employeeForm.serverHonors || []).map(sh => ({
-        serverId: sh.serverId,
-        namaServer: sh.namaServer || servers.find(s => s.id === sh.serverId)?.namaServer || '',
-        nominal: Number(sh.nominal) || 0
-      })).filter(sh => sh.nominal > 0);
+      const currentServerHonors = (employeeForm.serverHonors || []).map(sh => {
+        const cleanRiwayat = Array.isArray(sh.riwayat)
+          ? sh.riwayat
+              .filter(r => r && r.berlakuMulai && /^\d{4}-\d{2}$/.test(r.berlakuMulai) && Number(r.nominal) >= 0)
+              .sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai))
+          : [];
+        const latestNominal = cleanRiwayat.length > 0
+          ? Number(cleanRiwayat[cleanRiwayat.length - 1].nominal) || 0
+          : (Number(sh.nominal) || 0);
+        const latestBerlaku = cleanRiwayat.length > 0
+          ? cleanRiwayat[cleanRiwayat.length - 1].berlakuMulai
+          : sh.berlakuMulai;
+
+        return {
+          serverId: sh.serverId,
+          namaServer: sh.namaServer || servers.find(s => s.id === sh.serverId)?.namaServer || '',
+          nominal: latestNominal,
+          ...(latestBerlaku ? { berlakuMulai: latestBerlaku } : {}),
+          ...(cleanRiwayat.length > 0 ? { riwayat: cleanRiwayat } : {})
+        };
+      }).filter(sh => sh.nominal > 0 || (sh.riwayat && sh.riwayat.some(r => r.nominal > 0)));
 
       const totalHonorTetap = currentServerHonors.reduce((sum, sh) => sum + sh.nominal, 0);
 
@@ -1163,13 +1195,21 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                             <div className="flex flex-wrap gap-1">
                               {activeHonors.map(sh => {
                                 const srvName = sh.namaServer || servers.find(s => s.id === sh.serverId)?.namaServer || 'Server';
+                                const sortedHist = Array.isArray(sh.riwayat)
+                                  ? [...sh.riwayat].sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai))
+                                  : [];
+                                const hasHistory = sortedHist.length > 1;
                                 return (
-                                  <span
-                                    key={sh.serverId}
-                                    className="px-2 py-0.5 bg-maroon-50 text-maroon-900 border border-maroon-200 rounded-md text-[10px] font-bold"
-                                  >
-                                    {srvName}: {formatRupiah(sh.nominal)}
-                                  </span>
+                                  <div key={sh.serverId} className="inline-flex flex-col">
+                                    <span className="px-2 py-0.5 bg-maroon-50 text-maroon-900 border border-maroon-200 rounded-md text-[10px] font-bold">
+                                      {srvName}: {formatRupiah(sh.nominal)}
+                                    </span>
+                                    {hasHistory && (
+                                      <span className="text-[9px] text-slate-500 font-semibold mt-0.5 px-1">
+                                        {sortedHist.map(h => `${formatPeriodMonthLabel(h.berlakuMulai)}: ${formatRupiah(h.nominal)}`).join(' → ')}
+                                      </span>
+                                    )}
+                                  </div>
                                 );
                               })}
                             </div>
@@ -1304,13 +1344,21 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                                 <div className="flex flex-wrap gap-1 max-w-xs">
                                   {activeHonors.map(sh => {
                                     const srvName = sh.namaServer || servers.find(s => s.id === sh.serverId)?.namaServer || 'Server';
+                                    const sortedHist = Array.isArray(sh.riwayat)
+                                      ? [...sh.riwayat].sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai))
+                                      : [];
+                                    const hasHistory = sortedHist.length > 1;
                                     return (
-                                      <span
-                                        key={sh.serverId}
-                                        className="px-2 py-0.5 bg-maroon-50 text-maroon-900 border border-maroon-200 rounded-md text-[10px] font-bold"
-                                      >
-                                        {srvName}: {formatRupiah(sh.nominal)}
-                                      </span>
+                                      <div key={sh.serverId} className="inline-flex flex-col">
+                                        <span className="px-2 py-0.5 bg-maroon-50 text-maroon-900 border border-maroon-200 rounded-md text-[10px] font-bold">
+                                          {srvName}: {formatRupiah(sh.nominal)}
+                                        </span>
+                                        {hasHistory && (
+                                          <span className="text-[9px] text-slate-500 font-semibold mt-0.5 px-0.5">
+                                            {sortedHist.map(h => `${formatPeriodMonthLabel(h.berlakuMulai)}: ${formatRupiah(h.nominal)}`).join(' → ')}
+                                          </span>
+                                        )}
+                                      </div>
                                     );
                                   })}
                                 </div>
@@ -1889,10 +1937,30 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                       </div>
                     </div>
 
+                    <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="space-y-0.5">
+                        <span className="text-[11px] font-extrabold text-amber-900 block">
+                          Periode Mulai Berlaku Tarif (Proteksi Rekap Bulan Sebelumnya)
+                        </span>
+                        <span className="text-[10px] text-amber-700 block">
+                          Jika ada kenaikan/perubahan honor tetap, tarif bulan sebelumnya otomatis disimpan agar rekap bulan lalu tidak berubah.
+                        </span>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-amber-900">Berlaku Mulai:</span>
+                        <input
+                          type="month"
+                          value={honorEffectiveMonth}
+                          onChange={e => setHonorEffectiveMonth(e.target.value || getEffectiveTodayISO().slice(0, 7))}
+                          className="px-2.5 py-1 bg-white border border-amber-300 rounded-lg text-xs font-extrabold text-slate-800 focus:ring-2 focus:ring-amber-500"
+                        />
+                      </div>
+                    </div>
+
                     {servers.length === 0 ? (
                       <p className="text-slate-400 text-xs italic">Belum ada data server di Master Data.</p>
                     ) : (
-                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 max-h-52 overflow-y-auto">
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2.5 max-h-80 overflow-y-auto">
                         {servers.map(srv => {
                           const currentHonors = employeeForm.serverHonors || [];
                           const honorEntry = currentHonors.find(
@@ -1900,7 +1968,10 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                             (sh.namaServer && srv.namaServer && sh.namaServer.toLowerCase().trim() === srv.namaServer.toLowerCase().trim())
                           );
                           const currentNominal = honorEntry ? (Number(honorEntry.nominal) || 0) : 0;
-                          const isAssigned = currentNominal > 0;
+                          const currentRiwayat = Array.isArray(honorEntry?.riwayat)
+                            ? [...honorEntry!.riwayat].sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai))
+                            : [];
+                          const isAssigned = currentNominal > 0 || currentRiwayat.length > 0;
 
                           return (
                             <div
@@ -1933,14 +2004,52 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                                           sh => sh.serverId === srv.id ||
                                           (sh.namaServer && srv.namaServer && sh.namaServer.toLowerCase().trim() === srv.namaServer.toLowerCase().trim())
                                         );
+                                        const origHonor = Array.isArray(editingItem?.serverHonors)
+                                          ? editingItem.serverHonors.find(
+                                              (sh: any) => sh.serverId === srv.id ||
+                                              (sh.namaServer && srv.namaServer && sh.namaServer.toLowerCase().trim() === srv.namaServer.toLowerCase().trim())
+                                            )
+                                          : undefined;
+
                                         let updated = [...currentHonors];
                                         if (existingIndex >= 0) {
                                           if (val > 0) {
+                                            let nextRiwayat = Array.isArray(updated[existingIndex].riwayat)
+                                              ? [...updated[existingIndex].riwayat!]
+                                              : [];
+
+                                            const origNominal = origHonor ? (Number(origHonor.nominal) || 0) : 0;
+                                            if (nextRiwayat.length === 0 && origNominal > 0 && origNominal !== val) {
+                                              const prevMonth = origHonor?.berlakuMulai && origHonor.berlakuMulai < honorEffectiveMonth
+                                                ? origHonor.berlakuMulai
+                                                : getPrevMonthYYYYMM(honorEffectiveMonth);
+                                              nextRiwayat.push({
+                                                berlakuMulai: prevMonth,
+                                                nominal: origNominal
+                                              });
+                                            }
+
+                                            if (nextRiwayat.length > 0) {
+                                              const periodIdx = nextRiwayat.findIndex(r => r.berlakuMulai === honorEffectiveMonth);
+                                              if (periodIdx >= 0) {
+                                                nextRiwayat[periodIdx] = { berlakuMulai: honorEffectiveMonth, nominal: val };
+                                              } else {
+                                                nextRiwayat.push({ berlakuMulai: honorEffectiveMonth, nominal: val });
+                                              }
+                                              nextRiwayat.sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai));
+                                            }
+
+                                            const latestNom = nextRiwayat.length > 0
+                                              ? nextRiwayat[nextRiwayat.length - 1].nominal
+                                              : val;
+
                                             updated[existingIndex] = {
                                               ...updated[existingIndex],
                                               serverId: srv.id,
                                               namaServer: srv.namaServer,
-                                              nominal: val
+                                              nominal: latestNom,
+                                              berlakuMulai: honorEffectiveMonth,
+                                              ...(nextRiwayat.length > 0 ? { riwayat: nextRiwayat } : {})
                                             };
                                           } else {
                                             updated.splice(existingIndex, 1);
@@ -1949,7 +2058,8 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                                           updated.push({
                                             serverId: srv.id,
                                             namaServer: srv.namaServer,
-                                            nominal: val
+                                            nominal: val,
+                                            berlakuMulai: honorEffectiveMonth
                                           });
                                         }
                                         setEmployeeForm({
@@ -1982,6 +2092,145 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                                   )}
                                 </div>
                               </div>
+
+                              {/* RIWAYAT TARIF PER PERIODE (BULAN) */}
+                              {isAssigned && (
+                                <div className="mt-2 pt-2 border-t border-slate-100 space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-slate-600">
+                                      Riwayat Tarif per Periode Bulan:
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const existingIndex = currentHonors.findIndex(
+                                          sh => sh.serverId === srv.id ||
+                                          (sh.namaServer && srv.namaServer && sh.namaServer.toLowerCase().trim() === srv.namaServer.toLowerCase().trim())
+                                        );
+                                        if (existingIndex < 0) return;
+                                        let nextRiwayat = Array.isArray(currentHonors[existingIndex].riwayat)
+                                          ? [...currentHonors[existingIndex].riwayat!]
+                                          : [];
+                                        if (nextRiwayat.length === 0) {
+                                          const prevM = getPrevMonthYYYYMM(honorEffectiveMonth);
+                                          nextRiwayat = [
+                                            { berlakuMulai: prevM, nominal: currentNominal },
+                                            { berlakuMulai: honorEffectiveMonth, nominal: currentNominal }
+                                          ];
+                                        } else {
+                                          const earliestM = nextRiwayat[0].berlakuMulai;
+                                          const newMonth = getPrevMonthYYYYMM(earliestM);
+                                          nextRiwayat.unshift({
+                                            berlakuMulai: newMonth,
+                                            nominal: nextRiwayat[0].nominal
+                                          });
+                                        }
+                                        nextRiwayat.sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai));
+                                        const updated = [...currentHonors];
+                                        updated[existingIndex] = {
+                                          ...updated[existingIndex],
+                                          nominal: nextRiwayat[nextRiwayat.length - 1].nominal,
+                                          berlakuMulai: nextRiwayat[nextRiwayat.length - 1].berlakuMulai,
+                                          riwayat: nextRiwayat
+                                        };
+                                        setEmployeeForm({ ...employeeForm, serverHonors: updated });
+                                      }}
+                                      className="text-[10px] font-extrabold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-200 transition-colors"
+                                    >
+                                      + Atur Tarif Bulan Sebelumnya
+                                    </button>
+                                  </div>
+
+                                  {currentRiwayat.length > 0 && (
+                                    <div className="space-y-1.5 bg-slate-50/90 p-2 rounded-lg border border-slate-200/80">
+                                      {currentRiwayat.map((histItem, hIdx) => (
+                                        <div key={hIdx} className="flex items-center justify-between gap-2 text-xs">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-[10px] font-semibold text-slate-500">Mulai:</span>
+                                            <input
+                                              type="month"
+                                              value={histItem.berlakuMulai}
+                                              onChange={e => {
+                                                const newMonth = e.target.value;
+                                                if (!newMonth) return;
+                                                const existingIndex = currentHonors.findIndex(
+                                                  sh => sh.serverId === srv.id ||
+                                                  (sh.namaServer && srv.namaServer && sh.namaServer.toLowerCase().trim() === srv.namaServer.toLowerCase().trim())
+                                                );
+                                                if (existingIndex < 0) return;
+                                                const nextRiwayat = [...currentRiwayat];
+                                                nextRiwayat[hIdx] = { ...nextRiwayat[hIdx], berlakuMulai: newMonth };
+                                                nextRiwayat.sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai));
+                                                const updated = [...currentHonors];
+                                                updated[existingIndex] = {
+                                                  ...updated[existingIndex],
+                                                  nominal: nextRiwayat[nextRiwayat.length - 1].nominal,
+                                                  berlakuMulai: nextRiwayat[nextRiwayat.length - 1].berlakuMulai,
+                                                  riwayat: nextRiwayat
+                                                };
+                                                setEmployeeForm({ ...employeeForm, serverHonors: updated });
+                                              }}
+                                              className="px-2 py-1 bg-white border border-slate-200 rounded-md text-[11px] font-bold text-slate-800"
+                                            />
+                                          </div>
+                                          <div className="flex items-center gap-1.5">
+                                            <div className="w-32">
+                                              <NumericInput
+                                                value={histItem.nominal}
+                                                onChange={newNom => {
+                                                  const existingIndex = currentHonors.findIndex(
+                                                    sh => sh.serverId === srv.id ||
+                                                    (sh.namaServer && srv.namaServer && sh.namaServer.toLowerCase().trim() === srv.namaServer.toLowerCase().trim())
+                                                  );
+                                                  if (existingIndex < 0) return;
+                                                  const nextRiwayat = [...currentRiwayat];
+                                                  nextRiwayat[hIdx] = { ...nextRiwayat[hIdx], nominal: newNom };
+                                                  nextRiwayat.sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai));
+                                                  const updated = [...currentHonors];
+                                                  updated[existingIndex] = {
+                                                    ...updated[existingIndex],
+                                                    nominal: nextRiwayat[nextRiwayat.length - 1].nominal,
+                                                    berlakuMulai: nextRiwayat[nextRiwayat.length - 1].berlakuMulai,
+                                                    riwayat: nextRiwayat
+                                                  };
+                                                  setEmployeeForm({ ...employeeForm, serverHonors: updated });
+                                                }}
+                                                min={0}
+                                                prefix="Rp "
+                                              />
+                                            </div>
+                                            {currentRiwayat.length > 1 && (
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  const existingIndex = currentHonors.findIndex(
+                                                    sh => sh.serverId === srv.id ||
+                                                    (sh.namaServer && srv.namaServer && sh.namaServer.toLowerCase().trim() === srv.namaServer.toLowerCase().trim())
+                                                  );
+                                                  if (existingIndex < 0) return;
+                                                  const nextRiwayat = currentRiwayat.filter((_, idx) => idx !== hIdx);
+                                                  const updated = [...currentHonors];
+                                                  updated[existingIndex] = {
+                                                    ...updated[existingIndex],
+                                                    nominal: nextRiwayat[nextRiwayat.length - 1]?.nominal ?? currentNominal,
+                                                    berlakuMulai: nextRiwayat[nextRiwayat.length - 1]?.berlakuMulai,
+                                                    riwayat: nextRiwayat.length > 1 ? nextRiwayat : undefined
+                                                  };
+                                                  setEmployeeForm({ ...employeeForm, serverHonors: updated });
+                                                }}
+                                                className="text-slate-400 hover:text-rose-600 px-1 py-0.5 text-xs font-bold rounded hover:bg-rose-50"
+                                                title="Hapus periode tarif ini"
+                                              >
+                                                ✕
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           );
                         })}

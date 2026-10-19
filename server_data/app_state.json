@@ -25,9 +25,10 @@
     "notifyViaBrowserPush": true,
     "notifyViaWhatsApp": true,
     "googleAppsScriptUrl": "https://script.google.com/macros/s/AKfycbyVyW9TxnWgCAQLS-sehGPay574Vnne2Fhn8t-mKqTX3PlvBwpS8kEbLzFF31dSaUj5/exec",
-    "isGoogleSheetConnected": true
+    "isGoogleSheetConnected": true,
+    "googleSheetUrl": ""
   },
-  "lastUpdated": "2026-10-18T05:30:08.977Z",
+  "lastUpdated": "2026-10-19T12:05:47.982Z",
   "servers": [
     {
       "id": "srv-1788698535178",
@@ -487,7 +488,18 @@
         {
           "serverId": "srv-1788695298813",
           "namaServer": "AlbiNet",
-          "nominal": 500000
+          "nominal": 500000,
+          "berlakuMulai": "2026-10",
+          "riwayat": [
+            {
+              "berlakuMulai": "2026-09",
+              "nominal": 250000
+            },
+            {
+              "berlakuMulai": "2026-10",
+              "nominal": 500000
+            }
+          ]
         }
       ],
       "wilayahHandledIds": [
@@ -4343,7 +4355,7 @@
       "menitLembur": 120,
       "lemburApproved": true,
       "lemburApprovedBy": "Admin",
-      "lemburApprovedAt": "2026-10-14T05:34:46.976Z",
+      "lemburApprovedAt": "2026-10-13T08:12:53.719Z",
       "estimasiTotalHonor": 191000,
       "honorPerTeknisi": 95500,
       "buktiFotoUrls": [
@@ -4426,7 +4438,7 @@
       "menitLembur": 120,
       "lemburApproved": true,
       "lemburApprovedBy": "Admin",
-      "lemburApprovedAt": "2026-10-14T05:34:46.976Z",
+      "lemburApprovedAt": "2026-10-13T08:12:53.719Z",
       "estimasiTotalHonor": 63200,
       "honorPerTeknisi": 63200,
       "buktiFotoUrls": [
@@ -4762,7 +4774,7 @@
       "menitLembur": 60,
       "lemburApproved": true,
       "lemburApprovedBy": "Admin",
-      "lemburApprovedAt": "2026-10-17T10:29:35.668Z",
+      "lemburApprovedAt": "2026-10-17T10:38:57.887Z",
       "estimasiTotalHonor": 144960,
       "honorPerTeknisi": 72480,
       "buktiFotoUrls": [
@@ -4898,6 +4910,306 @@
         "https://drive.usercontent.google.com/download?id=1Va-6EAvBREVrKIySULaqXkkMwOfXJ42e&export=view"
       ],
       "catatan": "Ganti rasio ODP sadir mor gunung"
+    },
+    {
+      "id": "job-1792311839211",
+      "tanggal": "2026-10-18",
+      "teknisiIds": [
+        "emp-1788736945517",
+        "emp-1791590828141",
+        "emp-1788737718306",
+        "emp-1788737753097"
+      ],
+      "teknisiNamas": [
+        "Ribut",
+        "Amar",
+        "Andre Ariansyah",
+        "Moh. Abdurrohman"
+      ],
+      "teknisiVehicles": {
+        "emp-1788736945517": "Pribadi",
+        "emp-1791590828141": "Pribadi",
+        "emp-1788737718306": "Inventaris",
+        "emp-1788737753097": "Inventaris"
+      },
+      "jenisPekerjaanId": "jp-1788736487687",
+      "jenisPekerjaanNama": "Trouble/Maintenance",
+      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "serverId": "srv-1788695298813",
+      "namaServer": "AlbiNet",
+      "wilayahId": "wil-1788735730659",
+      "wilayahIds": [
+        "wil-1788735730659"
+      ],
+      "wilayahNamas": [
+        "Waru Barat"
+      ],
+      "totalTransportWilayah": 3000,
+      "transport": 3000,
+      "jumlahTitik": 1,
+      "panjangKabelMeter": 0,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "estimasiTotalHonor": 38750,
+      "honorPerTeknisi": 17500,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=125z7Y5ivfH3KJLi0LinOQCSiIRHvsZkE&export=view",
+        "https://drive.usercontent.google.com/download?id=17aqWB_X9JIOQX_uTQTX7azM8lfiG-oVh&export=view"
+      ],
+      "catatan": "Splicing kabel pelanggan atas nama usmanto"
+    },
+    {
+      "id": "job-1792388831174",
+      "tanggal": "2026-10-19",
+      "teknisiIds": [
+        "emp-1788736945517",
+        "emp-1791590828141"
+      ],
+      "teknisiNamas": [
+        "Ribut",
+        "Amar"
+      ],
+      "teknisiVehicles": {
+        "emp-1788736945517": "Pribadi",
+        "emp-1791590828141": "Pribadi"
+      },
+      "jenisPekerjaanId": "jp-1788735939199",
+      "jenisPekerjaanNama": "Instalasi",
+      "subPekerjaanNama": "PSB Pelanggan",
+      "serverId": "srv-1788695298813",
+      "namaServer": "AlbiNet",
+      "wilayahId": "wil-1788698580605",
+      "wilayahIds": [
+        "wil-1788698580605"
+      ],
+      "wilayahNamas": [
+        "Dsn. Tengah"
+      ],
+      "totalTransportWilayah": 2000,
+      "transport": 2000,
+      "jumlahTitik": 1,
+      "panjangKabelMeter": 88,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "estimasiTotalHonor": 79000,
+      "honorPerTeknisi": 39500,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1oMWNcv_Cu0wydg5jWMm6rQzH_XbGePrZ&export=view",
+        "https://drive.usercontent.google.com/download?id=1lOdZW3bKfM1g4cTcVR3MrB3RZJq2PyAg&export=view"
+      ],
+      "catatan": "Pasang baru atas nama Moh Akmal dan tengah"
+    },
+    {
+      "id": "job-1792388998531",
+      "tanggal": "2026-10-19",
+      "teknisiIds": [
+        "emp-1788736945517",
+        "emp-1791590828141"
+      ],
+      "teknisiNamas": [
+        "Ribut",
+        "Amar"
+      ],
+      "teknisiVehicles": {
+        "emp-1788736945517": "Pribadi",
+        "emp-1791590828141": "Pribadi"
+      },
+      "jenisPekerjaanId": "jp-1788735939199",
+      "jenisPekerjaanNama": "Instalasi",
+      "subPekerjaanNama": "PSB Pelanggan",
+      "serverId": "srv-1788695298813",
+      "namaServer": "AlbiNet",
+      "wilayahId": "wil-1788735703828",
+      "wilayahIds": [
+        "wil-1788735703828"
+      ],
+      "wilayahNamas": [
+        "Dsn. Kappuwen"
+      ],
+      "totalTransportWilayah": 3000,
+      "transport": 3000,
+      "jumlahTitik": 1,
+      "panjangKabelMeter": 128,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "estimasiTotalHonor": 99000,
+      "honorPerTeknisi": 49500,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1kZUziW7bFFkbUJ-tqB2iBpcf-RtdvPdZ&export=view",
+        "https://drive.usercontent.google.com/download?id=147D0WGclRN4gW9Fys2QvwxVyxwaLlb75&export=view"
+      ],
+      "catatan": "Pasang baru atas nama Abd Bakir kappuan"
+    },
+    {
+      "id": "job-1792389281167",
+      "tanggal": "2026-10-19",
+      "teknisiIds": [
+        "emp-1788736945517",
+        "emp-1791590828141"
+      ],
+      "teknisiNamas": [
+        "Ribut",
+        "Amar"
+      ],
+      "teknisiVehicles": {
+        "emp-1788736945517": "Inventaris",
+        "emp-1791590828141": "Inventaris"
+      },
+      "jenisPekerjaanId": "jp-1788736746767",
+      "jenisPekerjaanNama": "Pemeliharaan Jaringan",
+      "subPekerjaanNama": "Pindah Jalur/Pelepasan Kabel",
+      "serverId": "srv-1788695298813",
+      "namaServer": "AlbiNet",
+      "wilayahId": "wil-1788735703828",
+      "wilayahIds": [
+        "wil-1788735703828"
+      ],
+      "wilayahNamas": [
+        "Dsn. Kappuwen"
+      ],
+      "totalTransportWilayah": 3000,
+      "transport": 3000,
+      "jumlahTitik": 0,
+      "panjangKabelMeter": 66,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "estimasiTotalHonor": 46400,
+      "honorPerTeknisi": 23200,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1n-nv_bLGpz0fbDhe9mjeUpgQXdDwyOKi&export=view",
+        "https://drive.usercontent.google.com/download?id=1QEHcEg5fLyI0NKNDQWOE9IQqh_5pC2zs&export=view"
+      ],
+      "catatan": "Pindah jalur kabel pelanggan atas nama Romli"
+    },
+    {
+      "id": "job-1792397154023",
+      "tanggal": "2026-10-19",
+      "teknisiIds": [
+        "emp-1788737513190",
+        "emp-1788737577045"
+      ],
+      "teknisiNamas": [
+        "Moh. Maulidi",
+        "Ifanur Rohman"
+      ],
+      "teknisiVehicles": {
+        "emp-1788737513190": "Inventaris",
+        "emp-1788737577045": "Inventaris"
+      },
+      "jenisPekerjaanId": "jp-1788736611374",
+      "jenisPekerjaanNama": "Trouble/Maintenance",
+      "subPekerjaanNama": "Perbaikan Redaman",
+      "serverId": "srv-1788698535178",
+      "namaServer": "DindaNet",
+      "wilayahId": "wil-1788735770166",
+      "wilayahIds": [
+        "wil-1788735770166"
+      ],
+      "wilayahNamas": [
+        "Tag. Daya"
+      ],
+      "totalTransportWilayah": 4000,
+      "transport": 4000,
+      "jumlahTitik": 4,
+      "panjangKabelMeter": 0,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "estimasiTotalHonor": 70000,
+      "honorPerTeknisi": 35000,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=198c4YrEjiKVDKk0lVKOV5WwK4t2Qaepy&export=view",
+        "https://drive.usercontent.google.com/download?id=13QBkhYVytc4IUW-8nhHf15gFk4WTrHtL&export=view"
+      ],
+      "catatan": "Perbaiki redaman dari odp abahrama ke odp terakhir nampan daya"
+    },
+    {
+      "id": "job-1792397255078",
+      "tanggal": "2026-10-19",
+      "teknisiIds": [
+        "emp-1788737513190",
+        "emp-1788737577045"
+      ],
+      "teknisiNamas": [
+        "Moh. Maulidi",
+        "Ifanur Rohman"
+      ],
+      "teknisiVehicles": {
+        "emp-1788737513190": "Inventaris",
+        "emp-1788737577045": "Inventaris"
+      },
+      "jenisPekerjaanId": "jp-1788772392649",
+      "jenisPekerjaanNama": "Pemeliharaan Jaringan",
+      "subPekerjaanNama": "Splicing Kabel Feeder",
+      "serverId": "srv-1788698535178",
+      "namaServer": "DindaNet",
+      "wilayahId": "wil-1788735770166",
+      "wilayahIds": [
+        "wil-1788735770166"
+      ],
+      "wilayahNamas": [
+        "Tag. Daya"
+      ],
+      "totalTransportWilayah": 4000,
+      "transport": 4000,
+      "jumlahTitik": 1,
+      "panjangKabelMeter": 0,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "estimasiTotalHonor": 45000,
+      "honorPerTeknisi": 22500,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1dUXeaXSwx107BWglhyaaxefcB0tdNVWA&export=view",
+        "https://drive.usercontent.google.com/download?id=1pJG9DG5_7nWPDbcdhqlgY3I5excX5vz8&export=view"
+      ],
+      "catatan": "Spilicing kabel feeder di ODP abahrama"
+    },
+    {
+      "id": "job-1792397349516",
+      "tanggal": "2026-10-19",
+      "teknisiIds": [
+        "emp-1788737513190",
+        "emp-1788737577045"
+      ],
+      "teknisiNamas": [
+        "Moh. Maulidi",
+        "Ifanur Rohman"
+      ],
+      "teknisiVehicles": {
+        "emp-1788737513190": "Inventaris",
+        "emp-1788737577045": "Inventaris"
+      },
+      "jenisPekerjaanId": "jp-1788736487687",
+      "jenisPekerjaanNama": "Trouble/Maintenance",
+      "subPekerjaanNama": "Splicing Kabel/Pathcord",
+      "serverId": "srv-1788698535178",
+      "namaServer": "DindaNet",
+      "wilayahId": "wil-1788735770166",
+      "wilayahIds": [
+        "wil-1788735770166"
+      ],
+      "wilayahNamas": [
+        "Tag. Daya"
+      ],
+      "totalTransportWilayah": 4000,
+      "transport": 4000,
+      "jumlahTitik": 2,
+      "panjangKabelMeter": 0,
+      "adaLembur": false,
+      "menitLembur": 0,
+      "lemburApproved": false,
+      "estimasiTotalHonor": 50000,
+      "honorPerTeknisi": 25000,
+      "buktiFotoUrls": [
+        "https://drive.usercontent.google.com/download?id=1g8-WrcKWmPbWPvlMnpA4zpFSPZqg1Dhr&export=view",
+        "https://drive.usercontent.google.com/download?id=1WKt5nju6u3Nvjydx5feMjBECvOTXTJs8&export=view"
+      ],
+      "catatan": "Spilicing kabel pelanggan yang putus atas nama sipol tagangser daya"
     }
   ],
   "planningTasks": [],
@@ -6872,7 +7184,7 @@
       "teknisiNama": "Amar",
       "jamMasuk": "10:29",
       "fotoProofUrl": "https://drive.usercontent.google.com/download?id=1nP3ZbdtAsYuSXgdTDEJVLa0ekd6ioomG&export=view",
-      "fotoPulangUrl": "",
+      "fotoPulangUrl": "https://drive.usercontent.google.com/download?id=1VlEa_bFZjLOiU8HgFg7bSvj9eN4YLNLJ&export=view",
       "serverId": "srv-1788695298813",
       "serverNama": "AlbiNet",
       "distanceMeter": 21,
@@ -6882,7 +7194,105 @@
       "potonganOtomatis": 0,
       "needsApproval": false,
       "isApproved": true,
+      "keteranganPulang": "",
+      "jamPulang": "18:12"
+    },
+    {
+      "id": "att-1792396947112",
+      "tanggal": "2026-10-19",
+      "teknisiId": "emp-1788737577045",
+      "teknisiNama": "Ifanur Rohman",
+      "jamMasuk": "15:02",
+      "fotoProofUrl": "https://drive.usercontent.google.com/download?id=1eidIiO_OR6tqMWZZnaWI5GwrB9glB2xk&export=view",
+      "fotoPulangUrl": "",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "distanceMeter": 16,
+      "isWithinRadius": true,
+      "status": "Pending Approval",
+      "keterangan": "Terlambat hadir (15:02 WIB, batas toleransi 08:15)",
+      "potonganOtomatis": 25000,
+      "needsApproval": true,
+      "approvalType": "Terlambat",
+      "isApproved": false,
       "keteranganPulang": ""
+    },
+    {
+      "id": "att-1792376477282",
+      "tanggal": "2026-10-19",
+      "teknisiId": "emp-1788737513190",
+      "teknisiNama": "Moh. Maulidi",
+      "jamMasuk": "09:21",
+      "fotoProofUrl": "https://drive.usercontent.google.com/download?id=1qA6UKMp97FARapDx1B04lK1jPVckvJSJ&export=view",
+      "jamPulang": "15:10",
+      "fotoPulangUrl": "https://drive.usercontent.google.com/download?id=1NiMolQK7GGLu9Vkton6e2SFpkprYFjfd&export=view",
+      "serverId": "srv-1788698535178",
+      "serverNama": "DindaNet",
+      "distanceMeter": 19,
+      "isWithinRadius": true,
+      "status": "Pending Approval",
+      "keterangan": "Terlambat hadir (09:21 WIB, batas toleransi 08:15)",
+      "potonganOtomatis": 25000,
+      "needsApproval": true,
+      "approvalType": "Terlambat",
+      "isApproved": false
+    },
+    {
+      "id": "att-1792368115893",
+      "tanggal": "2026-10-19",
+      "teknisiId": "emp-1788736945517",
+      "teknisiNama": "Ribut",
+      "jamMasuk": "07:01",
+      "fotoProofUrl": "https://drive.usercontent.google.com/download?id=15IsNi29kNbwOrDwmMok0560vvR1wVKg4&export=view",
+      "jamPulang": "16:03",
+      "fotoPulangUrl": "https://drive.usercontent.google.com/download?id=1bKvo4Q0RnpMXLlyWopnHIqeVAYPhKrZ9&export=view",
+      "serverId": "srv-1788695298813",
+      "serverNama": "AlbiNet",
+      "distanceMeter": 20,
+      "isWithinRadius": true,
+      "status": "Hadir",
+      "keterangan": "",
+      "potonganOtomatis": 0,
+      "needsApproval": false,
+      "isApproved": true
+    },
+    {
+      "id": "att-1792367758127",
+      "tanggal": "2026-10-19",
+      "teknisiId": "emp-1791590828141",
+      "teknisiNama": "Amar",
+      "jamMasuk": "06:55",
+      "fotoProofUrl": "https://drive.usercontent.google.com/download?id=1ZeiZMduPeh1-iTPDN-RC3m2ORrZUWP-F&export=view",
+      "jamPulang": "16:36",
+      "fotoPulangUrl": "https://drive.usercontent.google.com/download?id=1PATlVYUJaBjKWs54yxbiCjAHC-9v0shk&export=view",
+      "serverId": "srv-1788695298813",
+      "serverNama": "AlbiNet",
+      "distanceMeter": 24,
+      "isWithinRadius": true,
+      "status": "Hadir",
+      "keterangan": "",
+      "potonganOtomatis": 0,
+      "needsApproval": false,
+      "isApproved": true
+    },
+    {
+      "id": "att-1792311133514",
+      "tanggal": "2026-10-18",
+      "teknisiId": "emp-1788736945517",
+      "teknisiNama": "Ribut",
+      "jamMasuk": "15:12",
+      "fotoProofUrl": "https://drive.usercontent.google.com/download?id=1VnEDp0_GOI24AHqhYMs1LUpzpuYhgLTn&export=view",
+      "jamPulang": "18:43",
+      "fotoPulangUrl": "https://drive.usercontent.google.com/download?id=1MK7REgdsFZ-O8WI4hIpXQ5orXmAw0pui&export=view",
+      "serverId": "srv-1788695298813",
+      "serverNama": "AlbiNet",
+      "distanceMeter": 26,
+      "isWithinRadius": true,
+      "status": "Hadir",
+      "keterangan": "Terlambat hadir (15:12 WIB, batas toleransi 08:15)",
+      "potonganOtomatis": 0,
+      "needsApproval": false,
+      "isApproved": true
     }
   ],
   "potonganManualList": [],
@@ -7155,5 +7565,6 @@
     "att-leave-leave-1791494420303"
   ],
   "approvedLemburMap": {},
-  "honorLunasList": []
+  "honorLunasList": [],
+  "deletedHonorLunasIds": []
 }

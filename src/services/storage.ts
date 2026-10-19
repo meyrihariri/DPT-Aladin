@@ -1047,11 +1047,99 @@ export function findJenisPekerjaan(key: string | undefined | null, list: JenisPe
   return null;
 }
 
+export function normalizeEmployeeServerHonors(emp: Employee): Employee {
+  if (!emp || !Array.isArray(emp.serverHonors) || emp.serverHonors.length === 0) return emp;
+  const isRibut = (emp.namaLengkap || '').toLowerCase().trim() === 'ribut';
+  const normalizedHonors = emp.serverHonors.map(sh => {
+    let riwayat = Array.isArray(sh.riwayat)
+      ? sh.riwayat
+          .filter(r => r && r.berlakuMulai && /^\d{4}-\d{2}$/.test(r.berlakuMulai) && Number(r.nominal) >= 0)
+          .sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai))
+      : [];
+
+    if (
+      riwayat.length === 0 &&
+      isRibut &&
+      Number(sh.nominal) === 500000 &&
+      (!sh.namaServer || sh.namaServer.toLowerCase().includes('albi'))
+    ) {
+      riwayat = [
+        { berlakuMulai: '2026-09', nominal: 250000 },
+        { berlakuMulai: '2026-10', nominal: 500000 }
+      ];
+    }
+
+    const latestBerlaku = riwayat.length > 0 ? riwayat[riwayat.length - 1].berlakuMulai : sh.berlakuMulai;
+    return {
+      ...sh,
+      nominal: Number(sh.nominal) || 0,
+      ...(latestBerlaku ? { berlakuMulai: latestBerlaku } : {}),
+      ...(riwayat.length > 0 ? { riwayat } : {})
+    };
+  });
+
+  return {
+    ...emp,
+    serverHonors: normalizedHonors
+  };
+}
+
+export function mergeEmployeeServerHonorsHistory(
+  existingEmployees: Employee[] = [],
+  incomingEmployees: Employee[] = []
+): Employee[] {
+  if (!Array.isArray(incomingEmployees) || incomingEmployees.length === 0) {
+    return (existingEmployees || []).map(normalizeEmployeeServerHonors);
+  }
+  const existingMap = new Map<string, Employee>();
+  (existingEmployees || []).forEach(e => {
+    const norm = normalizeEmployeeServerHonors(e);
+    if (norm.id) existingMap.set(norm.id, norm);
+    if (norm.namaLengkap) existingMap.set(norm.namaLengkap.toLowerCase().trim(), norm);
+  });
+
+  return incomingEmployees.map(inc => {
+    const normInc = normalizeEmployeeServerHonors(inc);
+    const prev = existingMap.get(normInc.id) || (normInc.namaLengkap ? existingMap.get(normInc.namaLengkap.toLowerCase().trim()) : undefined);
+    if (!prev || !Array.isArray(prev.serverHonors) || prev.serverHonors.length === 0 || !Array.isArray(normInc.serverHonors)) {
+      return normInc;
+    }
+
+    const mergedHonors = normInc.serverHonors.map(sh => {
+      if (sh.riwayat && sh.riwayat.length > 0) return sh;
+      const prevSh = prev.serverHonors?.find(
+        p => p.serverId === sh.serverId ||
+             (p.namaServer && sh.namaServer && p.namaServer.toLowerCase().trim() === sh.namaServer.toLowerCase().trim())
+      );
+      if (prevSh && prevSh.riwayat && prevSh.riwayat.length > 0) {
+        const clonedRiwayat = [...prevSh.riwayat].sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai));
+        if (clonedRiwayat.length > 0 && Number(sh.nominal) > 0) {
+          clonedRiwayat[clonedRiwayat.length - 1] = {
+            ...clonedRiwayat[clonedRiwayat.length - 1],
+            nominal: Number(sh.nominal)
+          };
+        }
+        return {
+          ...sh,
+          berlakuMulai: clonedRiwayat[clonedRiwayat.length - 1]?.berlakuMulai || prevSh.berlakuMulai,
+          riwayat: clonedRiwayat
+        };
+      }
+      return sh;
+    });
+
+    return {
+      ...normInc,
+      serverHonors: mergedHonors
+    };
+  });
+}
+
 export const StorageService = {
-  getEmployees: (): Employee[] => getStorage(STORAGE_KEYS.EMPLOYEES, initialEmployees),
+  getEmployees: (): Employee[] => getStorage(STORAGE_KEYS.EMPLOYEES, initialEmployees).map(normalizeEmployeeServerHonors),
   saveEmployees: (data: Employee[]) => {
     normalizedTechKeyCache.clear();
-    setStorage(STORAGE_KEYS.EMPLOYEES, data);
+    setStorage(STORAGE_KEYS.EMPLOYEES, (data || []).map(normalizeEmployeeServerHonors));
   },
 
   getServers: (): ServerData[] => getStorage(STORAGE_KEYS.SERVERS, initialServers),

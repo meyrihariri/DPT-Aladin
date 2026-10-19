@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { StorageService, consolidateAttendanceRecords, getNormalizedTechKey, sortJenisPekerjaan, pickBestPhotoUrl, mergeHonorLunasRecords } from './services/storage';
+import { StorageService, consolidateAttendanceRecords, getNormalizedTechKey, sortJenisPekerjaan, pickBestPhotoUrl, mergeHonorLunasRecords, mergeEmployeeServerHonorsHistory } from './services/storage';
 import {
   Employee,
   ServerData,
@@ -933,8 +933,9 @@ export default function App() {
         StorageService.saveJenisPekerjaan(sortedJp);
       }
       if (parsed.employees !== undefined && parsed.employees.length > 0) {
-        setEmployees(parsed.employees);
-        StorageService.saveEmployees(parsed.employees);
+        const mergedEmps = mergeEmployeeServerHonorsHistory(StorageService.getEmployees(), parsed.employees);
+        setEmployees(mergedEmps);
+        StorageService.saveEmployees(mergedEmps);
       }
       let latestJobsToSync = jobs;
       if (parsed.jobs !== undefined) {
@@ -1104,7 +1105,7 @@ export default function App() {
           }
           if (serverState.employees && serverState.employees.length > 0) {
             setEmployees(prev => {
-              const merged = [...serverState.employees];
+              const merged = mergeEmployeeServerHonorsHistory(prev, serverState.employees);
               if (currentUser && !merged.some(e => e.id === currentUser.id || (e.username && e.username.toLowerCase() === currentUser.username?.toLowerCase()))) {
                 merged.push(currentUser);
               }

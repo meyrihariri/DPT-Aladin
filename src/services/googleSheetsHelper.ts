@@ -1079,7 +1079,21 @@ export function buildGoogleSheetsSyncPayload(data: {
         e.role,
         e.status,
         e.serverHonors && e.serverHonors.length > 0
-          ? e.serverHonors.filter(sh => (Number(sh.nominal) || 0) > 0).map(sh => `${sh.namaServer || sh.serverId}: ${sh.nominal}`).join('; ')
+          ? e.serverHonors
+              .filter((sh: any) => (Number(sh.nominal) || 0) > 0)
+              .map((sh: any) => {
+                const baseStr = `${sh.namaServer || sh.serverId}: ${sh.nominal}`;
+                if (Array.isArray(sh.riwayat) && sh.riwayat.length > 0) {
+                  const histStr = sh.riwayat
+                    .filter((r: any) => r && r.berlakuMulai && /^\d{4}-\d{2}$/.test(r.berlakuMulai) && Number(r.nominal) >= 0)
+                    .sort((a: any, b: any) => String(a.berlakuMulai).localeCompare(String(b.berlakuMulai)))
+                    .map((r: any) => `${r.berlakuMulai}=${Number(r.nominal) || 0}`)
+                    .join(',');
+                  if (histStr) return `${baseStr} [${histStr}]`;
+                }
+                return baseStr;
+              })
+              .join('; ')
           : '',
         (e.wilayahHandledIds || []).join(', '),
         e.bonusTargetBulanan,
@@ -1915,26 +1929,69 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
               // ignore json parse error
             }
           } else {
+            const empNameStr = String(row[namaCol] || '').trim();
             const parts = rawHonorStr.split(';').map(p => p.trim()).filter(Boolean);
             parts.forEach(part => {
               if (part.includes(':')) {
-                const [sName, sNominal] = part.split(':').map(x => x.trim());
+                // Ekstrak riwayat periode jika ada di dalam kurung siku, misal: "AlbiNet: 500000 [2026-09=250000,2026-10=500000]"
+                let mainPart = part;
+                let parsedRiwayat: { berlakuMulai: string; nominal: number }[] = [];
+                const bracketMatch = part.match(/\[([^\]]+)\]/);
+                if (bracketMatch && bracketMatch[1]) {
+                  mainPart = part.replace(/\[[^\]]+\]/, '').trim();
+                  const histItems = bracketMatch[1].split(',').map(x => x.trim()).filter(Boolean);
+                  histItems.forEach(item => {
+                    const [pMonth, pNom] = item.split('=').map(x => x.trim());
+                    if (pMonth && /^\d{4}-\d{2}$/.test(pMonth) && pNom !== undefined) {
+                      const numNom = Number(pNom.replace(/[^0-9]/g, '')) || 0;
+                      parsedRiwayat.push({ berlakuMulai: pMonth, nominal: numNom });
+                    }
+                  });
+                  parsedRiwayat.sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai));
+                }
+
+                const colonIdx = mainPart.indexOf(':');
+                const sName = mainPart.slice(0, colonIdx).trim();
+                const sNominal = mainPart.slice(colonIdx + 1).trim();
                 const cleanNominal = Number(sNominal.replace(/[^0-9]/g, '')) || 0;
                 const matchedSrv = (result.servers || []).find(s =>
                   s.namaServer.toLowerCase().trim() === sName.toLowerCase().trim() ||
                   s.id.toLowerCase().trim() === sName.toLowerCase().trim()
                 );
+
+                // Jika Teknisi Ribut pada AlbiNet bernilai 500.000 namun belum memiliki tag riwayat di Google Sheets,
+                // inisialisasi otomatis riwayat Sep 2026 = 250.000 & Okt 2026 = 500.000
+                if (
+                  parsedRiwayat.length === 0 &&
+                  cleanNominal === 500000 &&
+                  empNameStr.toLowerCase() === 'ribut' &&
+                  sName.toLowerCase().includes('albi')
+                ) {
+                  parsedRiwayat = [
+                    { berlakuMulai: '2026-09', nominal: 250000 },
+                    { berlakuMulai: '2026-10', nominal: 500000 }
+                  ];
+                }
+
+                const latestBerlaku = parsedRiwayat.length > 0
+                  ? parsedRiwayat[parsedRiwayat.length - 1].berlakuMulai
+                  : undefined;
+
                 if (matchedSrv) {
                   parsedServerHonors.push({
                     serverId: matchedSrv.id,
                     namaServer: matchedSrv.namaServer,
-                    nominal: cleanNominal
+                    nominal: cleanNominal,
+                    ...(latestBerlaku ? { berlakuMulai: latestBerlaku } : {}),
+                    ...(parsedRiwayat.length > 0 ? { riwayat: parsedRiwayat } : {})
                   });
                 } else {
                   parsedServerHonors.push({
                     serverId: sName,
                     namaServer: sName,
-                    nominal: cleanNominal
+                    nominal: cleanNominal,
+                    ...(latestBerlaku ? { berlakuMulai: latestBerlaku } : {}),
+                    ...(parsedRiwayat.length > 0 ? { riwayat: parsedRiwayat } : {})
                   });
                 }
               }

@@ -2,10 +2,17 @@ export type UserRole = 'Admin' | 'Penanggungjawab Server' | 'Teknisi';
 
 export type EmployeeStatus = 'Tetap' | 'Freelance' | 'Magang';
 
+export interface ServerHonorRateHistory {
+  berlakuMulai: string; // Format YYYY-MM (contoh: "2026-09", "2026-10")
+  nominal: number;      // Besaran honor tetap yang berlaku mulai periode tersebut
+}
+
 export interface EmployeeServerHonor {
   serverId: string;
   namaServer?: string;
-  nominal: number; // Besaran honor tetap yang diterima karyawan/teknisi dari server ini
+  nominal: number; // Besaran honor tetap aktif/terbaru yang diterima karyawan/teknisi dari server ini
+  berlakuMulai?: string; // Periode mulai berlaku tarif terbaru (YYYY-MM)
+  riwayat?: ServerHonorRateHistory[]; // Riwayat perubahan honor tetap per periode bulan (YYYY-MM)
 }
 
 export interface Employee {

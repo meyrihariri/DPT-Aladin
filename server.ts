@@ -6,6 +6,7 @@ import http from 'http';
 import sharp from 'sharp';
 import { createServer as createViteServer } from 'vite';
 import { parseParsedSheetsToState } from './src/services/googleSheetsHelper';
+import { mergeEmployeeServerHonorsHistory } from './src/services/storage';
 
 const app = express();
 const PORT = 3000;
@@ -508,9 +509,14 @@ app.post('/api/sync/state', (req, res) => {
       ...(incoming.approvedLemburMap || {})
     };
 
+    const mergedEmployees = incoming.employees !== undefined
+      ? mergeEmployeeServerHonorsHistory(currentState.employees || [], incoming.employees)
+      : (currentState.employees || []).map((e: any) => e);
+
     const updatedState = {
       ...currentState,
       ...incoming,
+      employees: mergedEmployees,
       attendanceList: mergedAttendanceList,
       honorLunasList: mergedHonorLunasList,
       resolvedAttendanceKeys: Array.from(existingResolved),
@@ -730,9 +736,14 @@ async function refreshSheetsCacheAndServerState(scriptUrl: string): Promise<Reco
         deletedHonorSet
       );
 
+      const mergedEmployees = parsed.employees !== undefined && parsed.employees.length > 0
+        ? mergeEmployeeServerHonorsHistory(currentState.employees || [], parsed.employees)
+        : currentState.employees;
+
       const updatedState = {
         ...currentState,
         ...parsed,
+        employees: mergedEmployees,
         settings: {
           ...(currentState.settings || {}),
           ...(parsed.settings || {}),

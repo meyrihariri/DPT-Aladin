@@ -1,5 +1,6 @@
 import {
   Employee,
+  EmployeeServerHonor,
   ServerData,
   WilayahPekerjaan,
   JenisPekerjaan,
@@ -20,6 +21,68 @@ export interface PayrollFilterOptions {
   startDate?: string; // YYYY-MM-DD
   endDate?: string;   // YYYY-MM-DD
   serverId?: string;  // Server ID or "all"
+}
+
+const INDONESIAN_MONTHS_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+  'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+];
+
+export function formatPeriodMonthLabel(yyyyMm?: string): string {
+  if (!yyyyMm || !/^\d{4}-\d{2}$/.test(yyyyMm)) return yyyyMm || '-';
+  const [y, m] = yyyyMm.split('-').map(Number);
+  const mName = INDONESIAN_MONTHS_SHORT[(m || 1) - 1] || '';
+  return `${mName} ${y}`;
+}
+
+/**
+ * Mengambil besaran Honor Tetap Server yang berlaku pada periode (YYYY-MM) tertentu.
+ * Mencegah kenaikan/perubahan honor tetap di bulan baru (misal Oktober 2026) mengubah
+ * hasil rekapitulasi honor pada bulan-bulan sebelumnya (misal September 2026).
+ */
+export function getEffectiveServerHonorNominal(
+  matchedHonor: EmployeeServerHonor | undefined | null,
+  targetPeriodYYYYMM?: string,
+  employeeName?: string
+): number {
+  if (!matchedHonor) return 0;
+  const latestNominal = Number(matchedHonor.nominal) || 0;
+  if (!targetPeriodYYYYMM || !/^\d{4}-\d{2}$/.test(targetPeriodYYYYMM)) {
+    return latestNominal;
+  }
+
+  let riwayat = Array.isArray(matchedHonor.riwayat)
+    ? matchedHonor.riwayat
+        .filter(r => r && r.berlakuMulai && /^\d{4}-\d{2}$/.test(r.berlakuMulai) && Number(r.nominal) >= 0)
+        .sort((a, b) => a.berlakuMulai.localeCompare(b.berlakuMulai))
+    : [];
+
+  // Fallback otomatis untuk data historis Teknisi Ribut (AlbiNet: Sep 2026 = 250.000, Okt 2026 = 500.000)
+  // jika belum memiliki array riwayat tersimpan
+  if (
+    riwayat.length === 0 &&
+    latestNominal === 500000 &&
+    employeeName &&
+    employeeName.toLowerCase().trim() === 'ribut' &&
+    (!matchedHonor.namaServer || matchedHonor.namaServer.toLowerCase().includes('albi'))
+  ) {
+    riwayat = [
+      { berlakuMulai: '2026-09', nominal: 250000 },
+      { berlakuMulai: '2026-10', nominal: 500000 }
+    ];
+  }
+
+  if (riwayat.length > 0) {
+    // Cari tarif terakhir yang mulai berlakunya <= periode yang sedang direkap
+    const applicable = riwayat.filter(r => r.berlakuMulai <= targetPeriodYYYYMM);
+    if (applicable.length > 0) {
+      return Number(applicable[applicable.length - 1].nominal) || 0;
+    }
+    // Jika periode yang direkap lebih awal dari catatan riwayat pertama, gunakan tarif awal sebelum kenaikan
+    return Number(riwayat[0].nominal) || 0;
+  }
+
+  return latestNominal;
 }
 
 /**
@@ -336,6 +399,18 @@ export function calculatePayrollForEmployee(
     typeof periodOrFilter === 'string'
       ? { period: periodOrFilter }
       : (periodOrFilter || {});
+
+  // Tentukan periode bulan efektif (YYYY-MM) yang sedang direkap
+  let targetPeriodYYYYMM = '';
+  if (filterOptions.period && /^\d{4}-\d{2}/.test(filterOptions.period)) {
+    targetPeriodYYYYMM = filterOptions.period.slice(0, 7);
+  } else if (filterOptions.endDate && /^\d{4}-\d{2}/.test(filterOptions.endDate) && !filterOptions.endDate.startsWith('2030')) {
+    targetPeriodYYYYMM = filterOptions.endDate.slice(0, 7);
+  } else if (filterOptions.startDate && /^\d{4}-\d{2}/.test(filterOptions.startDate) && !filterOptions.startDate.startsWith('2025-01-01')) {
+    targetPeriodYYYYMM = filterOptions.startDate.slice(0, 7);
+  } else {
+    targetPeriodYYYYMM = getEffectiveTodayISO().slice(0, 7);
+  }
 
   const settledList = honorLunasList !== undefined ? honorLunasList : StorageService.getHonorLunas();
   const settledJobIdSet = new Set<string>();
@@ -742,7 +817,7 @@ export function calculatePayrollForEmployee(
     const bonusDetail = bonusTargetDetails.find(b => b.serverId === srv.id);
     let srvBonusTarget = (isMagang ? 0 : (bonusDetail ? bonusDetail.bonusAmount : 0));
 
-    // Honor Tetap Pokok (Hanya untuk Karyawan Tetap):
+    // Honor Tetap Pokok (Hanya untuk Karyawan Tetap, sesuai tarif periode bulan yang direkap):
     let srvHonorTetap = 0;
     if (isKaryawanTetap && !isMagang) {
       if (employee.serverHonors && Array.isArray(employee.serverHonors) && employee.serverHonors.length > 0) {
@@ -751,7 +826,7 @@ export function calculatePayrollForEmployee(
                 (sh.namaServer && srv.namaServer && sh.namaServer.toLowerCase().trim() === srv.namaServer.toLowerCase().trim())
         );
         if (matchedHonor) {
-          srvHonorTetap = Number(matchedHonor.nominal) || 0;
+          srvHonorTetap = getEffectiveServerHonorNominal(matchedHonor, targetPeriodYYYYMM, employee.namaLengkap);
         }
       } else if (srv.honorTetapTeknisi) {
         const hasJobsOnServer = serverJobs.length > 0;
