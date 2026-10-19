@@ -1066,8 +1066,8 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                   >
                     {/* Header: Avatar, Nama, Role, Aksi */}
                     <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-                      <div className="flex items-center space-x-2.5 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-maroon-700 to-rose-900 text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                      <div className="flex items-start space-x-2.5 min-w-0">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-maroon-700 to-rose-900 text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
                           {initials}
                         </div>
                         <div className="min-w-0">
@@ -1077,6 +1077,39 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                           <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate">
                             @{emp.username} {emp.kontak ? `• ${emp.kontak}` : ''}
                           </p>
+                          {emp.wilayahHandledIds && emp.wilayahHandledIds.length > 0 && (() => {
+                            const validWilayahs = emp.wilayahHandledIds
+                              .map(wId => wilayahList.find(x => x.id === wId))
+                              .filter((w): w is NonNullable<typeof w> => Boolean(w));
+                            const rowsOfThree: typeof validWilayahs[] = [];
+                            for (let i = 0; i < validWilayahs.length; i += 3) {
+                              rowsOfThree.push(validWilayahs.slice(i, i + 3));
+                            }
+                            return (
+                              <div className="mt-2 pt-1.5 border-t border-slate-100 space-y-1">
+                                <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block">
+                                  Wilayah Handled (PJ):
+                                </span>
+                                <div className="space-y-1">
+                                  {rowsOfThree.map((rowItems, rIdx) => (
+                                    <div key={rIdx} className="flex flex-wrap items-center gap-1">
+                                      {rowItems.map(w => (
+                                        <span
+                                          key={w.id}
+                                          className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md text-[10px] font-bold whitespace-nowrap"
+                                        >
+                                          {w.namaWilayah} ({w.namaServer})
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ))}
+                                </div>
+                                <p className="text-[10px] font-extrabold text-emerald-700 pt-0.5">
+                                  Est. Honor PJ: {formatRupiah(estHonorPJ)}
+                                </p>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                       <div className="flex items-center space-x-1 shrink-0">
@@ -1149,29 +1182,6 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                         )}
                       </div>
 
-                      {/* Wilayah PJ */}
-                      {emp.wilayahHandledIds && emp.wilayahHandledIds.length > 0 && (
-                        <div className="pt-2 border-t border-slate-200/60">
-                          <span className="text-[10px] text-slate-400 font-semibold block mb-1">Wilayah Handled (PJ):</span>
-                          <div className="flex flex-wrap gap-1">
-                            {emp.wilayahHandledIds.map(wId => {
-                              const w = wilayahList.find(x => x.id === wId);
-                              return w ? (
-                                <span
-                                  key={wId}
-                                  className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[10px] font-bold"
-                                >
-                                  {w.namaWilayah} ({w.namaServer})
-                                </span>
-                              ) : null;
-                            })}
-                          </div>
-                          <p className="text-[10px] font-extrabold text-emerald-700 mt-1">
-                            Est. Honor PJ: {formatRupiah(estHonorPJ)}
-                          </p>
-                        </div>
-                      )}
-
                       {/* Alamat & Rekening */}
                       <div className="pt-2 border-t border-slate-200/60 grid grid-cols-1 gap-1">
                         <div>
@@ -1200,7 +1210,6 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                     <th className="p-3.5">Karyawan</th>
                     <th className="p-3.5">Role & Status</th>
                     <th className="p-3.5">Honor Tetap Server</th>
-                    <th className="p-3.5">Wilayah Handled (PJ)</th>
                     <th className="p-3.5">Alamat & Rekening</th>
                     <th className="p-3.5">Bonus Target</th>
                     <th className="p-3.5 text-center">Aksi</th>
@@ -1209,7 +1218,7 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {filteredEmployees.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="p-8 text-center text-slate-400">
+                      <td colSpan={7} className="p-8 text-center text-slate-400">
                         <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                         <p className="font-bold text-slate-700 text-sm">Tidak ada karyawan yang cocok</p>
                         <p className="text-xs text-slate-400 mt-0.5">Ubah kata kunci pencarian atau reset filter peran/server.</p>
@@ -1223,13 +1232,13 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                       const initials = emp.namaLengkap.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
                       return (
-                        <tr key={emp.id} className="hover:bg-slate-50/70 transition-colors">
+                        <tr key={emp.id} className="hover:bg-slate-50/70 transition-colors align-top">
                           <td className="p-3.5 text-center font-bold text-slate-400">
                             #{idx + 1}
                           </td>
                           <td className="p-3.5">
-                            <div className="flex items-center space-x-2.5">
-                              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-maroon-700 to-rose-900 text-white font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-2xs">
+                            <div className="flex items-start space-x-2.5">
+                              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-maroon-700 to-rose-900 text-white font-extrabold text-[11px] flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
                                 {initials}
                               </div>
                               <div className="min-w-0">
@@ -1239,6 +1248,39 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                                 <p className="text-[11px] text-slate-400 font-mono mt-0.5">
                                   @{emp.username} {emp.kontak ? `• ${emp.kontak}` : ''}
                                 </p>
+                                {emp.wilayahHandledIds && emp.wilayahHandledIds.length > 0 && (() => {
+                                  const validWilayahs = emp.wilayahHandledIds
+                                    .map(wId => wilayahList.find(x => x.id === wId))
+                                    .filter((w): w is NonNullable<typeof w> => Boolean(w));
+                                  const rowsOfThree: typeof validWilayahs[] = [];
+                                  for (let i = 0; i < validWilayahs.length; i += 3) {
+                                    rowsOfThree.push(validWilayahs.slice(i, i + 3));
+                                  }
+                                  return (
+                                    <div className="mt-2 pt-1.5 border-t border-slate-100 space-y-1">
+                                      <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                                        Wilayah Handled (PJ):
+                                      </span>
+                                      <div className="space-y-1">
+                                        {rowsOfThree.map((rowItems, rIdx) => (
+                                          <div key={rIdx} className="flex items-center gap-1.5">
+                                            {rowItems.map(w => (
+                                              <span
+                                                key={w.id}
+                                                className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md text-[10px] font-bold whitespace-nowrap"
+                                              >
+                                                {w.namaWilayah} ({w.namaServer})
+                                              </span>
+                                            ))}
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <p className="text-[10px] font-extrabold text-emerald-700 pt-0.5">
+                                        Est. Honor PJ: {formatRupiah(estHonorPJ)}
+                                      </p>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </td>
@@ -1278,30 +1320,6 @@ const MasterDataViewComponent: React.FC<MasterDataViewProps> = ({
                               </div>
                             ) : (
                               <span className="text-slate-400 italic text-[11px]">- (Rp 0)</span>
-                            )}
-                          </td>
-                          <td className="p-3.5">
-                            {emp.wilayahHandledIds && emp.wilayahHandledIds.length > 0 ? (
-                              <div className="space-y-1">
-                                <div className="flex flex-wrap gap-1 max-w-xs">
-                                  {emp.wilayahHandledIds.map(wId => {
-                                    const w = wilayahList.find(x => x.id === wId);
-                                    return w ? (
-                                      <span
-                                        key={wId}
-                                        className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md text-[10px] font-bold"
-                                      >
-                                        {w.namaWilayah} ({w.namaServer})
-                                      </span>
-                                    ) : null;
-                                  })}
-                                </div>
-                                <p className="text-[10px] font-extrabold text-emerald-700">
-                                  Est. Honor PJ: {formatRupiah(estHonorPJ)}
-                                </p>
-                              </div>
-                            ) : (
-                              <span className="text-slate-400 italic text-[11px]">- (Bukan PJ Wilayah)</span>
                             )}
                           </td>
                           <td className="p-3.5 text-slate-700">
