@@ -123,22 +123,15 @@ export default function App() {
   const [honorLunasList, setHonorLunasList] = useState<HonorLunasRecord[]>(() => StorageService.getHonorLunas());
   const [settings, setSettings] = useState<AppSettings>(() => StorageService.getSettings());
 
-  // UI Navigation States
+  // UI Navigation States: Saat pertama aplikasi dibuka selalu diarahkan ke Dashboard meskipun sesi user masih aktif
   const [activeView, setActiveView] = useState<NavView>(() => {
+    const initialView: NavView = currentUser?.role === 'Teknisi' ? 'teknisi_dashboard' : 'dashboard';
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('dpt_aladin_active_view') as NavView | null;
-        if (saved && currentUser) {
-          if (currentUser.role === 'Teknisi') {
-            const allowed: NavView[] = ['teknisi_dashboard', 'dashboard', 'pekerjaan_planning', 'approval_absensi', 'rekap_honor', 'pekerjaan_daftar', 'tentang'];
-            if (allowed.includes(saved)) return saved;
-            return 'teknisi_dashboard';
-          }
-          return saved;
-        }
+        localStorage.setItem('dpt_aladin_active_view', initialView);
       } catch {}
     }
-    return currentUser?.role === 'Teknisi' ? 'teknisi_dashboard' : 'dashboard';
+    return initialView;
   });
 
   const [isBootstrapLoaded, setIsBootstrapLoaded] = useState(false);
