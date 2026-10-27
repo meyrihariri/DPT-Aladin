@@ -118,28 +118,31 @@ const MasterPekerjaanViewComponent: React.FC<MasterPekerjaanViewProps> = ({
   const pendingAccCount = useMemo(() => jobs.filter(j => j.adaLembur && !j.lemburApproved).length, [jobs]);
   const approvedAccCount = useMemo(() => jobs.filter(j => j.adaLembur && Boolean(j.lemburApproved)).length, [jobs]);
 
-  const handleToggleLemburAcc = async (job: JobRecord) => {
+  const handleToggleLemburAcc = async (job: JobRecord, explicitApproval?: boolean) => {
     if (syncingLemburJobId === job.id) return;
+    const targetApproval = explicitApproval !== undefined ? explicitApproval : !job.lemburApproved;
+
     setSyncingLemburJobId(job.id);
-    const targetApproval = !job.lemburApproved;
 
     try {
       if (onApproveLembur) {
         const res = await onApproveLembur(job.id, targetApproval);
         setLemburToast({
           type: res.success ? 'success' : 'error',
-          message: res.message || (targetApproval ? 'Lembur berhasil disetujui & dikonfirmasi ke Google Sheets!' : 'Persetujuan lembur dibatalkan.')
+          message: res.message || (targetApproval ? 'Lembur berhasil disetujui & dikonfirmasi ke Google Sheets!' : 'ACC Lembur ditolak. Pekerjaan ini tidak termasuk lembur.')
         });
       } else {
         onSaveJob({
           ...job,
+          adaLembur: targetApproval ? true : false,
+          menitLembur: targetApproval ? job.menitLembur : 0,
           lemburApproved: targetApproval,
           lemburApprovedBy: targetApproval ? currentUser?.namaLengkap || 'Admin' : undefined,
           lemburApprovedAt: targetApproval ? new Date().toISOString() : undefined
         });
         setLemburToast({
           type: 'success',
-          message: targetApproval ? 'Lembur berhasil disetujui & disimpan!' : 'Persetujuan lembur dibatalkan.'
+          message: targetApproval ? 'Lembur berhasil disetujui & disimpan!' : 'ACC Lembur ditolak. Pekerjaan ini tidak termasuk lembur.'
         });
       }
     } catch (err: any) {
@@ -1735,35 +1738,41 @@ const MasterPekerjaanViewComponent: React.FC<MasterPekerjaanViewProps> = ({
                                   )}
 
                                   {currentUser?.role === 'Admin' && (
-                                    <div>
-                                      <button
-                                        type="button"
-                                        disabled={syncingLemburJobId === job.id}
-                                        onClick={() => handleToggleLemburAcc(job)}
-                                        className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors flex items-center space-x-1 ${
-                                          syncingLemburJobId === job.id
-                                            ? 'opacity-70 cursor-wait bg-slate-200 text-slate-600'
-                                            : job.lemburApproved
-                                            ? 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700 border border-slate-200'
-                                            : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-2xs'
-                                        }`}
-                                        title={
-                                          job.lemburApproved
-                                            ? 'Batalkan ACC Lembur'
-                                            : 'Setujui Lembur'
-                                        }
-                                      >
-                                        {syncingLemburJobId === job.id ? (
-                                          <>
-                                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
-                                            <span>Menyimpan...</span>
-                                          </>
-                                        ) : job.lemburApproved ? (
-                                          <span>Batal ACC</span>
-                                        ) : (
-                                          <span>Setujui ACC</span>
-                                        )}
-                                      </button>
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {syncingLemburJobId === job.id ? (
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-600 inline-flex items-center space-x-1">
+                                          <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                                          <span>Menyimpan...</span>
+                                        </span>
+                                      ) : job.lemburApproved ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleLemburAcc(job, false)}
+                                          className="px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors flex items-center space-x-1 bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700 border border-slate-200"
+                                          title="Tolak / Batalkan ACC Lembur (Pekerjaan tidak termasuk lembur)"
+                                        >
+                                          <span>Tolak ACC</span>
+                                        </button>
+                                      ) : (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleToggleLemburAcc(job, true)}
+                                            className="px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors flex items-center space-x-1 bg-emerald-600 text-white hover:bg-emerald-700 shadow-2xs"
+                                            title="Setujui ACC Lembur"
+                                          >
+                                            <span>Setujui ACC</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleToggleLemburAcc(job, false)}
+                                            className="px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors flex items-center space-x-1 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white border border-rose-200"
+                                            title="Tolak ACC Lembur (Pekerjaan tidak termasuk lembur)"
+                                          >
+                                            <span>Tolak</span>
+                                          </button>
+                                        </>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -2201,18 +2210,40 @@ const MasterPekerjaanViewComponent: React.FC<MasterPekerjaanViewProps> = ({
                                     </span>
                                   )}
                                   {currentUser?.role === 'Admin' && (
-                                    <button
-                                      type="button"
-                                      disabled={syncingLemburJobId === job.id}
-                                      onClick={() => handleToggleLemburAcc(job)}
-                                      className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors ${
-                                        job.lemburApproved
-                                          ? 'bg-slate-200 text-slate-700 hover:bg-rose-100'
-                                          : 'bg-emerald-600 text-white'
-                                      }`}
-                                    >
-                                      {job.lemburApproved ? 'Batal' : 'ACC'}
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                      {job.lemburApproved ? (
+                                        <button
+                                          type="button"
+                                          disabled={syncingLemburJobId === job.id}
+                                          onClick={() => handleToggleLemburAcc(job, false)}
+                                          className="px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors bg-slate-200 text-slate-700 hover:bg-rose-100 hover:text-rose-700"
+                                          title="Tolak / Batalkan ACC Lembur"
+                                        >
+                                          Tolak ACC
+                                        </button>
+                                      ) : (
+                                        <>
+                                          <button
+                                            type="button"
+                                            disabled={syncingLemburJobId === job.id}
+                                            onClick={() => handleToggleLemburAcc(job, true)}
+                                            className="px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors bg-emerald-600 text-white hover:bg-emerald-700"
+                                            title="Setujui ACC Lembur"
+                                          >
+                                            ACC
+                                          </button>
+                                          <button
+                                            type="button"
+                                            disabled={syncingLemburJobId === job.id}
+                                            onClick={() => handleToggleLemburAcc(job, false)}
+                                            className="px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-600 hover:text-white"
+                                            title="Tolak ACC Lembur (Pekerjaan tidak termasuk lembur)"
+                                          >
+                                            Tolak
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               )}

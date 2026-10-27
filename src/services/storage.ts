@@ -255,6 +255,7 @@ const initialAttendance: AttendanceRecord[] = [];
 const initialLeave: LeaveRequest[] = [];
 
 export const DEFAULT_GOOGLE_APPS_SCRIPT_URL =
+  (typeof process !== 'undefined' && process.env?.VITE_GOOGLE_APPS_SCRIPT_URL) ||
   (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GOOGLE_APPS_SCRIPT_URL) ||
   'https://script.google.com/macros/s/AKfycbyVyW9TxnWgCAQLS-sehGPay574Vnne2Fhn8t-mKqTX3PlvBwpS8kEbLzFF31dSaUj5/exec';
 
@@ -561,6 +562,7 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
       r.isManual === true ||
       r.id.startsWith('att-manual-') ||
       r.isApproved === true ||
+      r.keterangan?.includes('[Disetujui Admin]') ||
       r.keteranganPulang?.toLowerCase().includes('admin') ||
       r.keteranganPulang?.toLowerCase().includes('manual') ||
       r.keterangan?.includes('[Absen Manual Admin]') ||
@@ -765,6 +767,8 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
             existing.isManual === true ||
             r.id?.startsWith('att-manual-') ||
             existing.id?.startsWith('att-manual-') ||
+            existing.keterangan?.includes('[Disetujui Admin]') ||
+            r.keterangan?.includes('[Disetujui Admin]') ||
             existing.keteranganPulang?.toLowerCase().includes('admin') ||
             r.keteranganPulang?.toLowerCase().includes('admin') ||
             existing.keteranganPulang?.toLowerCase().includes('manual') ||
@@ -1200,9 +1204,35 @@ export const StorageService = {
         updated.namaServer = match.namaServer;
       }
 
+      const lemburMap = StorageService.getApprovedLemburMap();
+      const savedLemburState = lemburMap[j.id];
+      if (savedLemburState) {
+        if (savedLemburState.rejected === true && !savedLemburState.approved) {
+          if (updated.adaLembur || (updated.menitLembur && updated.menitLembur > 0) || updated.lemburApproved) {
+            modified = true;
+            updated.adaLembur = false;
+            updated.menitLembur = 0;
+            updated.lemburApproved = false;
+            updated.lemburApprovedBy = undefined;
+            updated.lemburApprovedAt = undefined;
+          }
+        } else if (savedLemburState.approved === true && updated.adaLembur && !updated.lemburApproved) {
+          modified = true;
+          updated.lemburApproved = true;
+          updated.lemburApprovedBy = updated.lemburApprovedBy || savedLemburState.approvedBy || 'Admin';
+          updated.lemburApprovedAt = updated.lemburApprovedAt || savedLemburState.approvedAt;
+        }
+      }
+
+      if (!updated.adaLembur && ((updated.menitLembur && updated.menitLembur > 0) || updated.lemburApproved)) {
+        modified = true;
+        updated.menitLembur = 0;
+        updated.lemburApproved = false;
+      }
+
       // Re-verify honor calculation with SOP:
       // Honor dasar diterima UTUH oleh masing-masing teknisi Tetap & Freelance (Magang = Rp 0).
-      // Honor lembur diterima UTUH oleh masing-masing teknisi termasuk Magang.
+      // Honor lembur diterima UTUH oleh masing-masing teknisi termasuk Magang HANYA JIKA lembur telah di-ACC (lemburApproved === true).
       // Honor titik & kabel:
       // - Teknisi Tetap/Freelance dibagi HANYA sesama teknisi reguler (kehadiran magang TIDAK memotong).
       // - Teknisi Magang memperoleh 50% dari pembagian honor tersebut.
@@ -1215,11 +1245,12 @@ export const StorageService = {
         const tarifKabel = needKabel ? (jp.tarifTarikKabelPerMeter || 0) : 0;
         const tarifLembur = jp.tarifLemburPerMenit || 0;
 
-        const titik = needTitik ? (Number(j.jumlahTitik) || 0) : 0;
-        const kabel = needKabel ? (Number(j.panjangKabelMeter) || 0) : 0;
-        const lembur = (j.adaLembur || (j.menitLembur && j.menitLembur > 0)) ? (Number(j.menitLembur) || 0) : 0;
+        const titik = needTitik ? (Number(updated.jumlahTitik) || 0) : 0;
+        const kabel = needKabel ? (Number(updated.panjangKabelMeter) || 0) : 0;
+        const isLemburCounted = Boolean(updated.adaLembur && updated.lemburApproved);
+        const lembur = isLemburCounted ? (Number(updated.menitLembur) || 0) : 0;
 
-        const techObjs = (j.teknisiIds || []).map(id => emps.find(e => e.id === id));
+        const techObjs = (updated.teknisiIds || []).map(id => emps.find(e => e.id === id));
         const magangTechs = techObjs.filter(t => t?.status === 'Magang');
         const regularTechs = techObjs.filter(t => t?.status !== 'Magang');
         const magangCount = magangTechs.length;
@@ -1251,10 +1282,10 @@ export const StorageService = {
         const magangWorkTotal = 0 + lemburPerTech + magangPointShare + magangCableShare;
 
         const expectedTotal = (regularWorkTotal * regularCount) + (magangWorkTotal * magangCount);
-        const mainTech = emps.find(e => e.id === (j.teknisiIds?.[0]));
+        const mainTech = emps.find(e => e.id === (updated.teknisiIds?.[0]));
         const expectedPerTech = mainTech?.status === 'Magang' ? magangWorkTotal : regularWorkTotal;
 
-        if (j.honorPerTeknisi !== expectedPerTech || j.estimasiTotalHonor !== expectedTotal) {
+        if (updated.honorPerTeknisi !== expectedPerTech || updated.estimasiTotalHonor !== expectedTotal) {
           modified = true;
           updated.honorPerTeknisi = expectedPerTech;
           updated.estimasiTotalHonor = expectedTotal;
@@ -1367,18 +1398,19 @@ export const StorageService = {
   },
 
   // Lembur Approval persistent tracking across reloads & devices
-  getApprovedLemburMap: (): Record<string, { approved: boolean; approvedBy?: string; approvedAt?: string }> => {
-    return getStorage<Record<string, { approved: boolean; approvedBy?: string; approvedAt?: string }>>(
+  getApprovedLemburMap: (): Record<string, { approved: boolean; rejected?: boolean; approvedBy?: string; approvedAt?: string }> => {
+    return getStorage<Record<string, { approved: boolean; rejected?: boolean; approvedBy?: string; approvedAt?: string }>>(
       STORAGE_KEYS.APPROVED_LEMBUR,
       {}
     );
   },
 
-  setLemburApproval: (jobId: string, approved: boolean, approvedBy?: string, approvedAt?: string) => {
+  setLemburApproval: (jobId: string, approved: boolean, approvedBy?: string, approvedAt?: string, rejected = false) => {
     if (!jobId) return;
     const map = StorageService.getApprovedLemburMap();
     map[jobId] = {
       approved,
+      rejected: !approved && rejected,
       approvedBy: approved ? (approvedBy || 'Admin') : undefined,
       approvedAt: approved ? (approvedAt || new Date().toISOString()) : undefined
     };

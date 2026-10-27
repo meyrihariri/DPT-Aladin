@@ -703,7 +703,7 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
 
   // Progress metrics calculation based on total target across all servers
   const completedJobsCount = myMonthlyJobs.length;
-  const inProgressJobsCount = myMonthlyJobs.filter(j => j.adaLembur || (j.menitLembur !== undefined && Number(j.menitLembur) > 0)).length;
+  const inProgressJobsCount = myMonthlyJobs.filter(j => Boolean(j.adaLembur && j.lemburApproved && Number(j.menitLembur) > 0)).length;
   const monthlyJobTarget = useMemo(() => {
     if (!servers || servers.length === 0) return 100;
     const total = servers.reduce((sum, s) => {
@@ -1239,6 +1239,24 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
     const mm = String(now.getMinutes()).padStart(2, '0');
     const nowTime = `${hh}:${mm}`;
 
+    const stdPulangStr = sanitizeTimeString(settings?.jamPulangDefinisikan, '17:00');
+    const [pulH, pulM] = stdPulangStr.split(':').map(Number);
+    const endOfDayMins = (pulH || 17) * 60 + (pulM || 0);
+    const checkOutMins = ( Number(hh) || 0 ) * 60 + ( Number(mm) || 0 );
+    const isEarlyOutNow = checkOutMins < endOfDayMins;
+
+    const resolvedKeys = new Set(StorageService.getResolvedAttendanceKeys());
+    const isMorningAlreadyApproved = Boolean(
+      todayAttendance && (
+        todayAttendance.isApproved === true ||
+        (todayAttendance.status === 'Hadir' && !todayAttendance.needsApproval) ||
+        todayAttendance.keterangan?.includes('[Disetujui Admin]') ||
+        resolvedKeys.has(todayAttendance.id.toLowerCase()) ||
+        resolvedKeys.has(`${todayStr}_${currentUser.id}`.toLowerCase()) ||
+        resolvedKeys.has(`${todayStr}_${currentUser.namaLengkap.toLowerCase().trim()}`)
+      )
+    );
+
     const evalRes = evaluateAttendanceApproval({
       jamMasuk: todayAttendance?.jamMasuk || nowTime,
       jamPulang: nowTime,
@@ -1246,10 +1264,10 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
       isWithinRadius: isWithinRad,
       distanceMeter: dist,
       settings: settings,
-      alreadyApproved: false
+      alreadyApproved: isMorningAlreadyApproved && !isEarlyOutNow && isWithinRad
     });
 
-    const isPending = evalRes.needsApproval || Boolean(todayAttendance?.needsApproval && todayAttendance?.status === 'Pending Approval') || !isWithinRad;
+    const isPending = evalRes.needsApproval || Boolean(!isMorningAlreadyApproved && todayAttendance?.needsApproval && todayAttendance?.status === 'Pending Approval') || !isWithinRad;
 
     const updateRecord: Partial<AttendanceRecord> = {
       ...todayAttendance,
@@ -1265,8 +1283,9 @@ const TeknisiDashboardViewComponent: React.FC<TeknisiDashboardViewProps> = ({
       keteranganPulang: absenPulangNote || evalRes.reason || (!isWithinRad ? `Luar radius (${dist}m)` : ''),
       status: isPending ? 'Pending Approval' : (todayAttendance?.status || 'Hadir'),
       needsApproval: isPending,
+      isApproved: !isPending && (isMorningAlreadyApproved || evalRes.status === 'Hadir'),
       approvalType: evalRes.approvalType || (!isWithinRad ? 'Luar Radius' : todayAttendance?.approvalType),
-      potonganOtomatis: evalRes.potonganOtomatis || todayAttendance?.potonganOtomatis || 0
+      potonganOtomatis: isPending ? (evalRes.potonganOtomatis || todayAttendance?.potonganOtomatis || 0) : 0
     };
 
     await onCheckIn(updateRecord);

@@ -793,8 +793,26 @@ const JobModalContent: React.FC<JobModalProps> = ({
       const menitLemburFinal = isLemburFinal ? (jobForm.menitLembur > 0 ? Number(jobForm.menitLembur) : (isJobHoliday ? 60 : 0)) : 0;
       const isApprovedFinal = isJobHoliday ? true : (isLemburFinal ? Boolean(lemburApprovedState) : false);
 
+      // Selama jam kerja, lembur wajib di-ACC oleh Admin agar masuk dalam perhitungan honor
+      const previewForSave = (isLemburFinal && isApprovedFinal)
+        ? preview
+        : calculatePreviewHonor({ ...jobForm, adaLembur: false, menitLembur: 0 });
+
+      const targetJobId = editingJob ? editingJob.id : `job-${Date.now()}`;
+      if (editingJob && editingJob.adaLembur && !isLemburFinal) {
+        StorageService.setLemburApproval(targetJobId, false, undefined, undefined, true);
+      } else if (isLemburFinal && isApprovedFinal) {
+        StorageService.setLemburApproval(
+          targetJobId,
+          true,
+          isJobHoliday ? 'Sistem (Otomatis Hari Libur)' : (editingJob?.lemburApprovedBy || currentUser?.namaLengkap || 'Admin'),
+          editingJob?.lemburApprovedAt || new Date().toISOString(),
+          false
+        );
+      }
+
       const savedRecord: JobRecord = {
-        id: editingJob ? editingJob.id : `job-${Date.now()}`,
+        id: targetJobId,
         tanggal: jobForm.tanggal,
         teknisiIds: uniqueTechIds,
         teknisiNamas: techNamas,
@@ -820,8 +838,8 @@ const JobModalContent: React.FC<JobModalProps> = ({
         lemburApprovedAt: isApprovedFinal
           ? (editingJob?.lemburApprovedAt || new Date().toISOString())
           : undefined,
-        estimasiTotalHonor: preview.estimasiTotal,
-        honorPerTeknisi: preview.perTech,
+        estimasiTotalHonor: previewForSave.estimasiTotal,
+        honorPerTeknisi: previewForSave.perTech,
         buktiFotoUrls: validPhotos,
         buktiFotoUrl: validPhotos[0] || '',
         catatan: cleanCatatan

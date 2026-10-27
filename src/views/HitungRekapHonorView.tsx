@@ -1772,7 +1772,7 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
                           <span className="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] text-slate-700">
                             {job.panjangKabelMeter || 0} m
                           </span>
-                          {job.menitLembur ? (
+                          {job.adaLembur && job.lemburApproved && job.menitLembur ? (
                             <span className="bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded text-[10px]">
                               +{job.menitLembur}m Lembur
                             </span>
@@ -1895,7 +1895,7 @@ const HitungRekapHonorViewComponent: React.FC<HitungRekapHonorViewProps> = ({
                             <span className="text-[10px] text-slate-500 block">{job.panjangKabelMeter || 0} m</span>
                           </td>
                           <td className="p-3 text-center">
-                            {job.menitLembur ? (
+                            {job.adaLembur && job.lemburApproved && job.menitLembur ? (
                               <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded text-[10px] font-bold">
                                 {job.menitLembur} mnt
                               </span>

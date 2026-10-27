@@ -736,6 +736,36 @@ async function refreshSheetsCacheAndServerState(scriptUrl: string): Promise<Reco
         deletedHonorSet
       );
 
+      // Extract ResolvedAttendanceKeys and ApprovedLemburMap from PengaturanApp sheet rows if present
+      const existingResolved = new Set<string>(
+        (currentState.resolvedAttendanceKeys || []).map((k: any) => String(k || '').toLowerCase().trim()).filter(Boolean)
+      );
+      let sheetLemburMap: Record<string, any> = {};
+      const pengRows = SHEETS_RAW_CACHE.data['PengaturanApp'];
+      if (Array.isArray(pengRows)) {
+        for (let i = 1; i < pengRows.length; i++) {
+          const k = String(pengRows[i]?.[0] || '').trim();
+          const v = pengRows[i]?.[1];
+          if (k === 'ResolvedAttendanceKeys' && v) {
+            String(v).split(',').map(s => s.trim().toLowerCase()).filter(Boolean).forEach(rk => existingResolved.add(rk));
+          }
+          if (k === 'ApprovedLemburMap' && v) {
+            try {
+              const parsedMap = JSON.parse(String(v));
+              if (parsedMap && typeof parsedMap === 'object') sheetLemburMap = parsedMap;
+            } catch {}
+          }
+        }
+      }
+      // Also record any explicitly approved attendance from mergedAttendance into existingResolved
+      (mergedAttendance || []).forEach((a: any) => {
+        if (a && (a.isApproved === true || (a.status === 'Hadir' && !a.needsApproval))) {
+          if (a.id) existingResolved.add(String(a.id).toLowerCase().trim());
+          if (a.tanggal && a.teknisiId) existingResolved.add(`${a.tanggal}_${a.teknisiId}`.toLowerCase().trim());
+          if (a.tanggal && a.teknisiNama) existingResolved.add(`${a.tanggal}_${String(a.teknisiNama).toLowerCase().trim()}`);
+        }
+      });
+
       const mergedEmployees = parsed.employees !== undefined && parsed.employees.length > 0
         ? mergeEmployeeServerHonorsHistory(currentState.employees || [], parsed.employees)
         : currentState.employees;
@@ -744,6 +774,11 @@ async function refreshSheetsCacheAndServerState(scriptUrl: string): Promise<Reco
         ...currentState,
         ...parsed,
         employees: mergedEmployees,
+        resolvedAttendanceKeys: Array.from(existingResolved),
+        approvedLemburMap: {
+          ...(currentState.approvedLemburMap || {}),
+          ...sheetLemburMap
+        },
         settings: {
           ...(currentState.settings || {}),
           ...(parsed.settings || {}),
@@ -796,6 +831,66 @@ app.post('/api/sync/sheets', async (req, res) => {
       }
     }
 
+    // Protect already-approved attendance rows from being overwritten back to Pending Approval by another device that hasn't pulled yet
+    if (payload && payload.tables) {
+      const srvState = readServerState() || {};
+      const resolvedSet = new Set<string>(
+        (srvState.resolvedAttendanceKeys || []).map((k: any) => String(k || '').toLowerCase().trim()).filter(Boolean)
+      );
+      (srvState.attendanceList || []).forEach((a: any) => {
+        if (a && (a.isApproved === true || (a.status === 'Hadir' && !a.needsApproval))) {
+          if (a.id) resolvedSet.add(String(a.id).toLowerCase().trim());
+          if (a.tanggal && a.teknisiId) resolvedSet.add(`${a.tanggal}_${a.teknisiId}`.toLowerCase().trim());
+          if (a.tanggal && a.teknisiNama) resolvedSet.add(`${a.tanggal}_${String(a.teknisiNama).toLowerCase().trim()}`);
+        }
+      });
+
+      if (Array.isArray(payload.tables.AbsensiHarian) && payload.tables.AbsensiHarian.length > 1) {
+        payload.tables.AbsensiHarian = payload.tables.AbsensiHarian.map((row: any[], idx: number) => {
+          if (idx === 0 || !Array.isArray(row)) return row;
+          const rId = String(row[0] || '').toLowerCase().trim();
+          const rTgl = String(row[1] || '').trim();
+          const rTechId = String(row[2] || '').toLowerCase().trim();
+          const rTechNama = String(row[3] || '').toLowerCase().trim();
+          const rStatus = String(row[12] || '').trim();
+          if (
+            rStatus === 'Pending Approval' &&
+            (resolvedSet.has(rId) || resolvedSet.has(`${rTgl}_${rTechId}`) || resolvedSet.has(`${rTgl}_${rTechNama}`))
+          ) {
+            const copy = [...row];
+            copy[12] = 'Hadir';
+            const ket = String(copy[13] || '').trim();
+            copy[13] = ket && !ket.includes('[Disetujui Admin]') ? `${ket} [Disetujui Admin]` : (ket || '[Disetujui Admin]');
+            copy[14] = 0;
+            return copy;
+          }
+          return row;
+        });
+      }
+
+      if (Array.isArray(payload.tables.ApprovalAbsensi) && payload.tables.ApprovalAbsensi.length > 1) {
+        payload.tables.ApprovalAbsensi = payload.tables.ApprovalAbsensi.map((row: any[], idx: number) => {
+          if (idx === 0 || !Array.isArray(row)) return row;
+          const rId = String(row[0] || '').toLowerCase().trim();
+          const rTgl = String(row[1] || '').trim();
+          const rTechId = String(row[2] || '').toLowerCase().trim();
+          const rTechNama = String(row[3] || '').toLowerCase().trim();
+          const rStatus = String(row[11] || '').trim();
+          if (
+            rStatus === 'Pending Approval' &&
+            (resolvedSet.has(rId) || resolvedSet.has(`${rTgl}_${rTechId}`) || resolvedSet.has(`${rTgl}_${rTechNama}`))
+          ) {
+            const copy = [...row];
+            copy[11] = 'Hadir';
+            copy[12] = 'Tidak';
+            copy[14] = 0;
+            return copy;
+          }
+          return row;
+        });
+      }
+    }
+
     // Write-through cache: immediately update server's in-memory raw sheets cache so subsequent reads are 0ms
     if (payload && payload.tables && typeof payload.tables === 'object' && Object.keys(payload.tables).length > 0) {
       const existingData = (SHEETS_RAW_CACHE && SHEETS_RAW_CACHE.scriptUrl === cleanUrl)
@@ -811,25 +906,13 @@ app.post('/api/sync/sheets', async (req, res) => {
       };
     }
 
-    // Prioritize critical fast tables (HonorLunas / AbsensiHarian) in primaryPayload and offload heavy secondary tables
+    // Prioritize critical fast tables (HonorLunas) in primaryPayload and offload heavy secondary tables
+    // Keep AbsensiHarian, ApprovalAbsensi, and PengaturanApp together in a single atomic POST so GAS never has concurrent write races
     let primaryPayload = payload;
     let backgroundPayload: any = null;
     if (payload && payload.action === 'syncFullDatabase' && payload.tables) {
       const tableKeys = Object.keys(payload.tables);
       if (
-        tableKeys.length === 2 &&
-        payload.tables.AbsensiHarian &&
-        payload.tables.ApprovalAbsensi
-      ) {
-        primaryPayload = {
-          action: 'syncFullDatabase',
-          tables: { AbsensiHarian: payload.tables.AbsensiHarian }
-        };
-        backgroundPayload = {
-          action: 'syncFullDatabase',
-          tables: { ApprovalAbsensi: payload.tables.ApprovalAbsensi }
-        };
-      } else if (
         tableKeys.length >= 2 &&
         payload.tables.HonorLunas &&
         payload.tables.DaftarPekerjaan
@@ -933,13 +1016,10 @@ app.get('/api/proxy/sheets', async (req, res) => {
       );
 
       const recentlyWritten = activeSheetWriteCount > 0 || (Date.now() - lastSheetWriteCompletedAt < 6000);
+      const cacheAgeMs = hasValidCache ? (Date.now() - SHEETS_RAW_CACHE!.timestamp) : Infinity;
 
-      if (hasValidCache && (!hardForce || recentlyWritten)) {
-        const cacheAgeMs = Date.now() - SHEETS_RAW_CACHE!.timestamp;
-        // Trigger non-blocking background refresh only if cache is older than 5s and no write just happened
-        if (cacheAgeMs > 5000 && !recentlyWritten) {
-          refreshSheetsCacheAndServerState(cleanUrl).catch(() => {});
-        }
+      // Return in-memory cache immediately ONLY if a write just happened on this server or cache is ultra-fresh (<2.5s) and not hardForce
+      if (hasValidCache && (recentlyWritten || (!hardForce && cacheAgeMs < 2500))) {
         return res.json({
           status: 'success',
           cached: true,

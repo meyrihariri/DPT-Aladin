@@ -15,7 +15,7 @@ import {
 import { parseCoordinate } from '../utils/coordinates';
 import { PhotoCacheService } from './photoCache';
 import { sanitizePhotoUrl } from '../utils/imageHelper';
-import { sortJenisPekerjaan, consolidateAttendanceRecords, getNormalizedTechKey } from './storage';
+import { sortJenisPekerjaan, consolidateAttendanceRecords, getNormalizedTechKey, StorageService } from './storage';
 
 export const GOOGLE_SHEETS_SCHEMA = [
   {
@@ -359,6 +359,7 @@ function doPost(e) {
     if (action === 'updateLemburStatus' || action === 'approveLembur') {
       var jobId = String(postData.jobId || '').trim();
       var lemburApproved = postData.lemburApproved === true || String(postData.lemburApproved).toLowerCase() === 'true';
+      var isRejectedOrCancelled = !lemburApproved && (postData.adaLembur === false || String(postData.adaLembur).toLowerCase() === 'false');
       var approvedBy = postData.approvedBy || 'Admin';
       var approvedAt = postData.approvedAt || new Date().toISOString();
       var sheet = getOrCreateSheet(ss, 'DaftarPekerjaan');
@@ -367,15 +368,23 @@ function doPost(e) {
       if (data.length > 1) {
         var header = data[0].map(function(h) { return String(h || '').toLowerCase().trim(); });
         var idCol = 0;
+        var adaLemburCol = -1;
+        var menitLemburCol = -1;
         var statusCol = -1;
         var byCol = -1;
         var atCol = -1;
+        var totalHonorCol = -1;
+        var honorPerTechCol = -1;
 
         for (var c = 0; c < header.length; c++) {
           if (/^id$/i.test(header[c])) idCol = c;
+          if (/^ada lembur$|^lembur$/i.test(header[c])) adaLemburCol = c;
+          if (/menit lembur/i.test(header[c])) menitLemburCol = c;
           if (/status lembur|acc lembur|lembur acc/i.test(header[c])) statusCol = c;
           if (/disetujui oleh|approved by|acc oleh/i.test(header[c])) byCol = c;
           if (/waktu acc|approved at|tanggal acc/i.test(header[c])) atCol = c;
+          if (/total honor/i.test(header[c])) totalHonorCol = c;
+          if (/honor per/i.test(header[c])) honorPerTechCol = c;
         }
 
         if (statusCol === -1) {
@@ -391,13 +400,23 @@ function doPost(e) {
           sheet.getRange(1, atCol + 1).setValue('Waktu ACC Lembur').setFontWeight('bold').setBackground('#E2E8F0');
         }
 
-        var statusStr = lemburApproved ? 'Disetujui (ACC)' : 'Menunggu ACC';
+        var statusStr = lemburApproved ? 'Disetujui (ACC)' : (isRejectedOrCancelled ? 'Tanpa Lembur' : 'Menunggu ACC');
         var byStr = lemburApproved ? approvedBy : '-';
         var atStr = lemburApproved ? approvedAt : '-';
 
         for (var r = 1; r < data.length; r++) {
           if (String(data[r][idCol] || '').trim() === jobId) {
             var rowNum = r + 1;
+            if (isRejectedOrCancelled) {
+              if (adaLemburCol !== -1) sheet.getRange(rowNum, adaLemburCol + 1).setNumberFormat('@').setValue('Tidak');
+              if (menitLemburCol !== -1) sheet.getRange(rowNum, menitLemburCol + 1).setNumberFormat('@').setValue('0');
+            }
+            if (postData.estimasiTotalHonor !== undefined && totalHonorCol !== -1) {
+              sheet.getRange(rowNum, totalHonorCol + 1).setNumberFormat('@').setValue(String(postData.estimasiTotalHonor));
+            }
+            if (postData.honorPerTeknisi !== undefined && honorPerTechCol !== -1) {
+              sheet.getRange(rowNum, honorPerTechCol + 1).setNumberFormat('@').setValue(String(postData.honorPerTeknisi));
+            }
             sheet.getRange(rowNum, statusCol + 1).setNumberFormat('@').setValue(statusStr);
             sheet.getRange(rowNum, byCol + 1).setNumberFormat('@').setValue(byStr);
             sheet.getRange(rowNum, atCol + 1).setNumberFormat('@').setValue(atStr);
@@ -1202,6 +1221,14 @@ export function buildGoogleSheetsSyncPayload(data: {
           ? '[Foto Pulang Tersimpan]'
           : rawPulang;
 
+        const isApprovedHadir = !isPending && (a.status === 'Hadir' || !a.status) && (a.isApproved === true || Boolean(a.approvalType) || a.keterangan?.includes('[Disetujui Admin]'));
+        let ketCell = a.keterangan || (isPending ? (a.approvalType || 'Perlu Approval') : '');
+        if (isApprovedHadir && ketCell && !ketCell.includes('[Disetujui Admin]') && !ketCell.includes('[Absen Manual Admin]')) {
+          ketCell = `${ketCell} [Disetujui Admin]`;
+        } else if (isApprovedHadir && !ketCell && a.approvalType) {
+          ketCell = `${a.approvalType} [Disetujui Admin]`;
+        }
+
         return [
           a.id,
           sanitizeDateString(a.tanggal),
@@ -1216,8 +1243,8 @@ export function buildGoogleSheetsSyncPayload(data: {
           a.distanceMeter || 0,
           a.isWithinRadius ? 'Ya' : 'Tidak',
           isPending ? 'Pending Approval' : (a.status || 'Hadir'),
-          a.keterangan || (isPending ? (a.approvalType || 'Perlu Approval') : ''),
-          a.potonganOtomatis || 0
+          ketCell,
+          isPending ? (a.potonganOtomatis || 0) : (a.status === 'Ditolak' ? (a.potonganOtomatis || 25000) : 0)
         ];
       })
     ],
@@ -1245,7 +1272,7 @@ export function buildGoogleSheetsSyncPayload(data: {
           isPending ? 'Pending Approval' : (a.status || 'Hadir'),
           isPending ? 'Ya' : 'Tidak',
           a.approvalType || (isPending ? 'Terlambat' : ''),
-          a.potonganOtomatis || 0
+          isPending ? (a.potonganOtomatis || 0) : (a.status === 'Ditolak' ? (a.potonganOtomatis || 25000) : 0)
         ];
       })
     ],
@@ -1270,7 +1297,9 @@ export function buildGoogleSheetsSyncPayload(data: {
       ['WaApiUrl', data.settings?.waApiUrl || 'https://api.fonnte.com/send', 'URL Endpoint API WhatsApp'],
       ['AutoNotifyTechnicianOnPlanning', data.settings?.autoNotifyTechnicianOnPlanning !== false ? 'Ya' : 'Tidak', 'Auto Notifikasi Teknisi saat Planning Baru'],
       ['NotifyViaBrowserPush', data.settings?.notifyViaBrowserPush !== false ? 'Ya' : 'Tidak', 'Notifikasi Push Layar HP & Laptop'],
-      ['NotifyViaWhatsApp', data.settings?.notifyViaWhatsApp !== false ? 'Ya' : 'Tidak', 'Notifikasi Pesan WhatsApp ke HP Teknisi']
+      ['NotifyViaWhatsApp', data.settings?.notifyViaWhatsApp !== false ? 'Ya' : 'Tidak', 'Notifikasi Pesan WhatsApp ke HP Teknisi'],
+      ['ResolvedAttendanceKeys', (StorageService.getResolvedAttendanceKeys() || []).slice(-600).join(','), 'Daftar Key Absensi Disetujui Admin (Sinkron Lintas Perangkat)'],
+      ['ApprovedLemburMap', JSON.stringify(StorageService.getApprovedLemburMap() || {}), 'Status ACC & Penolakan Lembur Pekerjaan (Sinkron Lintas Perangkat)']
     ],
     PotonganManual: [
       ['ID', 'Tanggal', 'Karyawan ID', 'Nama Karyawan', 'Server ID', 'Nama Server', 'Jenis Potongan', 'Nominal', 'Keterangan', 'Dibuat Oleh'],
@@ -1556,6 +1585,10 @@ export async function sendLemburStatusToSheets(
   params: {
     jobId: string;
     lemburApproved: boolean;
+    adaLembur?: boolean;
+    menitLembur?: number;
+    estimasiTotalHonor?: number;
+    honorPerTeknisi?: number;
     approvedBy?: string;
     approvedAt?: string;
   }
@@ -1568,6 +1601,10 @@ export async function sendLemburStatusToSheets(
     action: 'updateLemburStatus',
     jobId: params.jobId,
     lemburApproved: params.lemburApproved,
+    ...(params.adaLembur !== undefined ? { adaLembur: params.adaLembur } : {}),
+    ...(params.menitLembur !== undefined ? { menitLembur: params.menitLembur } : {}),
+    ...(params.estimasiTotalHonor !== undefined ? { estimasiTotalHonor: params.estimasiTotalHonor } : {}),
+    ...(params.honorPerTeknisi !== undefined ? { honorPerTeknisi: params.honorPerTeknisi } : {}),
     approvedBy: params.approvedBy || 'Admin',
     approvedAt: params.approvedAt || new Date().toISOString()
   };
@@ -1641,6 +1678,20 @@ export function parsePengaturanFromSheetRows(rows: any[][]): Partial<AppSettings
     }
     if (key === 'NotifyViaWhatsApp') {
       settingsObj.notifyViaWhatsApp = String(val || '').toLowerCase() !== 'tidak';
+    }
+    if (key === 'ResolvedAttendanceKeys' && val) {
+      const parsedKeys = String(val).split(',').map(s => s.trim()).filter(Boolean);
+      if (parsedKeys.length > 0) {
+        StorageService.addResolvedAttendanceKeys(parsedKeys);
+      }
+    }
+    if (key === 'ApprovedLemburMap' && val) {
+      try {
+        const parsedMap = JSON.parse(String(val));
+        if (parsedMap && typeof parsedMap === 'object') {
+          StorageService.setApprovedLemburMap(parsedMap);
+        }
+      } catch {}
     }
   }
   return settingsObj;
@@ -2126,8 +2177,13 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
         const isJobHoliday = isHolidayDate(rawTgl, result.settings).isHoliday;
 
         const jobIdVal = String(row[idCol] || `job-${idx + 1}`);
-        const hasLembur = isJobHoliday || String(row[lemburCol]).toLowerCase() === 'ya' || String(row[lemburCol]).toLowerCase() === 'true';
         const rawStatusLembur = statusLemburCol >= 0 ? String(row[statusLemburCol] || '').trim().toLowerCase() : '';
+        const lemburMapEntry = StorageService.getApprovedLemburMap()?.[jobIdVal];
+        const isExplicitlyRejected = !isJobHoliday && (
+          /ditolak|tanpa lembur|batal/i.test(rawStatusLembur) ||
+          Boolean(lemburMapEntry && lemburMapEntry.rejected === true && !/disetujui|acc|approved/i.test(rawStatusLembur))
+        );
+        const hasLembur = isJobHoliday || (!isExplicitlyRejected && (String(row[lemburCol]).toLowerCase() === 'ya' || String(row[lemburCol]).toLowerCase() === 'true'));
         
         let approvedByVal = lemburByCol >= 0 && row[lemburByCol] && String(row[lemburByCol]) !== '-'
           ? String(row[lemburByCol]).trim()
@@ -2147,25 +2203,15 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
             isLemburApproved = true;
           } else if (statusLemburCol < 0 && Boolean(approvedByVal)) {
             isLemburApproved = true;
-          } else {
-            // Cek localStorage persistent map jika kolom Status Lembur belum ada di Google Sheet atau sel kosong
-            try {
-              const rawPersistent = typeof window !== 'undefined' ? localStorage.getItem('dpt_aladin_approved_lembur_v1') : null;
-              if (rawPersistent) {
-                const map = JSON.parse(rawPersistent);
-                const saved = map[jobIdVal];
-                if (saved && saved.approved && !/menunggu|pending|tolak|batal|belum/i.test(rawStatusLembur)) {
-                  isLemburApproved = true;
-                  approvedByVal = approvedByVal || saved.approvedBy || 'Admin';
-                  approvedAtVal = approvedAtVal || saved.approvedAt;
-                }
-              }
-            } catch {}
+          } else if (lemburMapEntry && lemburMapEntry.approved && !/menunggu|pending|tolak|batal|belum/i.test(rawStatusLembur)) {
+            isLemburApproved = true;
+            approvedByVal = approvedByVal || lemburMapEntry.approvedBy || 'Admin';
+            approvedAtVal = approvedAtVal || lemburMapEntry.approvedAt;
           }
         }
 
         const rawMinLembur = Number(row[menitLemburCol]) || 0;
-        const finalMenitLembur = rawMinLembur > 0 ? rawMinLembur : (isJobHoliday ? 60 : 0);
+        const finalMenitLembur = hasLembur ? (rawMinLembur > 0 ? rawMinLembur : (isJobHoliday ? 60 : 0)) : 0;
 
         return {
           id: jobIdVal,
@@ -2244,15 +2290,9 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
     }
   } else {
     const knownEmployees = result.employees || [];
-    let resolvedKeysSet = new Set<string>();
-    try {
-      if (typeof window !== 'undefined') {
-        const storedKeys = JSON.parse(localStorage.getItem('dpt_aladin_resolved_attendance_keys_v1') || '[]');
-        if (Array.isArray(storedKeys)) {
-          resolvedKeysSet = new Set(storedKeys);
-        }
-      }
-    } catch {}
+    const resolvedKeysSet = new Set<string>(
+      (StorageService.getResolvedAttendanceKeys() || []).map(k => String(k || '').toLowerCase().trim())
+    );
 
     const allRawParsed: AttendanceRecord[] = [];
 
@@ -2347,15 +2387,19 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
 
         const statusVal = String(row[statusCol] || '').trim();
         const needsApprovalVal = needsApprovalCol >= 0 ? String(row[needsApprovalCol] || '').trim().toLowerCase() : '';
+        const rawKetVal = ketCol >= 0 ? String(row[ketCol] || '').trim() : '';
 
         const rawTechId = String(row[techIdCol] || '').trim();
         const rawTechNama = String(row[techNamaCol] || '').trim();
         const lowerGroupKey = groupKey.toLowerCase();
         const lowerRowId = rowId.toLowerCase();
-        const lowerTechId = rawTechId.toLowerCase();
+        const lowerTechId = (techId || rawTechId).toLowerCase();
         const lowerTechNama = rawTechNama.toLowerCase();
 
-        const isSheetApproved = /^(approved|disetujui)$/i.test(statusVal);
+        const isSheetApproved =
+          /^(approved|disetujui)$/i.test(statusVal) ||
+          rawKetVal.includes('[Disetujui Admin]') ||
+          rawKetVal.includes('[Absen Manual Admin]');
         const isSheetRejected = /^(ditolak|rejected)$/i.test(statusVal);
         const isSheetHadir = /^(hadir)$/i.test(statusVal) && needsApprovalVal !== 'ya' && needsApprovalVal !== 'true' && !/pending/i.test(needsApprovalVal);
 
@@ -2367,6 +2411,17 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
           isSheetApproved ||
           isSheetHadir ||
           isSheetRejected;
+
+        if ((isSheetApproved || isSheetHadir) && !isSheetRejected) {
+          const keysToRemember = [
+            lowerGroupKey,
+            lowerRowId,
+            lowerTechId ? `${cleanTgl}_${lowerTechId}` : '',
+            lowerTechNama ? `${cleanTgl}_${lowerTechNama}` : ''
+          ].filter(Boolean);
+          keysToRemember.forEach(k => resolvedKeysSet.add(k));
+          StorageService.addResolvedAttendanceKeys(keysToRemember);
+        }
 
         // Evaluate business rules for approval (late check-in, outside radius, early check-out)
         const evalRes = evaluateAttendanceApproval({

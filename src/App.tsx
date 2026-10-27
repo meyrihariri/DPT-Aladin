@@ -835,14 +835,14 @@ export default function App() {
         if (overrides.wilayahList !== undefined) targetSheets.push('DataWilayah');
         if (overrides.jenisList !== undefined) targetSheets.push('JenisPekerjaan');
         if (overrides.employees !== undefined) targetSheets.push('DataKaryawan');
-        if (overrides.jobs !== undefined) targetSheets.push('DaftarPekerjaan');
+        if (overrides.jobs !== undefined) targetSheets.push('DaftarPekerjaan', 'PengaturanApp');
         if (overrides.planningTasks !== undefined) targetSheets.push('PlanningPekerjaan');
         if (overrides.attendanceList !== undefined) {
-          targetSheets.push('AbsensiHarian', 'ApprovalAbsensi');
+          targetSheets.push('AbsensiHarian', 'ApprovalAbsensi', 'PengaturanApp');
         }
         if (overrides.potonganManualList !== undefined) targetSheets.push('PotonganManual');
         if (overrides.honorLunasList !== undefined) targetSheets.push('HonorLunas');
-        if (overrides.settings !== undefined) targetSheets.push('PengaturanApp');
+        if (overrides.settings !== undefined && !targetSheets.includes('PengaturanApp')) targetSheets.push('PengaturanApp');
       }
 
       const payload = buildGoogleSheetsSyncPayload({
@@ -934,9 +934,20 @@ export default function App() {
       if (parsed.jobs !== undefined) {
         const lemburMap = StorageService.getApprovedLemburMap();
         const currentLocalJobs = StorageService.getJobs();
-        const mergedJobs = parsed.jobs.map((pj: JobRecord) => {
+        const rawMergedJobs = parsed.jobs.map((pj: JobRecord) => {
           const localJob = currentLocalJobs.find(j => j.id === pj.id);
           const lemburEntry = lemburMap[pj.id];
+
+          if (lemburEntry && lemburEntry.rejected === true && !lemburEntry.approved) {
+            return {
+              ...pj,
+              adaLembur: false,
+              menitLembur: 0,
+              lemburApproved: false,
+              lemburApprovedBy: undefined,
+              lemburApprovedAt: undefined
+            };
+          }
 
           let isApproved = Boolean(pj.lemburApproved);
           let approver = pj.lemburApprovedBy;
@@ -946,7 +957,7 @@ export default function App() {
             isApproved = true;
             approver = lemburEntry.approvedBy || approver;
             approvedTime = lemburEntry.approvedAt || approvedTime;
-          } else if (localJob?.lemburApproved) {
+          } else if (localJob?.lemburApproved && pj.adaLembur) {
             isApproved = true;
             approver = localJob.lemburApprovedBy || approver;
             approvedTime = localJob.lemburApprovedAt || approvedTime;
@@ -954,14 +965,15 @@ export default function App() {
 
           return {
             ...pj,
-            lemburApproved: isApproved,
-            lemburApprovedBy: isApproved ? (approver || 'Admin') : undefined,
-            lemburApprovedAt: isApproved ? (approvedTime || new Date().toISOString()) : undefined
+            lemburApproved: pj.adaLembur ? isApproved : false,
+            lemburApprovedBy: (pj.adaLembur && isApproved) ? (approver || 'Admin') : undefined,
+            lemburApprovedAt: (pj.adaLembur && isApproved) ? (approvedTime || new Date().toISOString()) : undefined
           };
         });
-        setJobs(mergedJobs);
-        StorageService.saveJobs(mergedJobs);
-        latestJobsToSync = mergedJobs;
+        StorageService.saveJobs(rawMergedJobs);
+        const normalizedMergedJobs = StorageService.getJobs();
+        setJobs(normalizedMergedJobs);
+        latestJobsToSync = normalizedMergedJobs;
       }
       if (parsed.planningTasks !== undefined) {
         setPlanningTasks(parsed.planningTasks);
@@ -1490,41 +1502,68 @@ export default function App() {
     return { success: true, message: 'Data pekerjaan berhasil disimpan dan disinkronkan ke Google Sheets!' };
   };
 
-  // Dedicated instant handler for Overtime (Lembur) Approval
+  // Dedicated instant handler for Overtime (Lembur) Approval & Rejection
+  // Sesuai aturan: Setiap pekerjaan lembur selama jam kerja wajib di-ACC oleh Admin.
+  // Ketika ACC ditolak (isApproved === false), maka pekerjaan tidak termasuk lembur (adaLembur: false, menitLembur: 0).
   const handleApproveLembur = async (jobId: string, isApproved: boolean): Promise<{ success: boolean; message?: string }> => {
     const approverName = currentUser?.namaLengkap || 'Admin';
     const approvedTimestamp = new Date().toISOString();
 
-    // 1. Simpan langsung ke Persistent Storage lokal
-    StorageService.setLemburApproval(jobId, isApproved, isApproved ? approverName : undefined, isApproved ? approvedTimestamp : undefined);
+    // 1. Simpan langsung ke Persistent Storage lokal (tandai rejected=true jika ditolak)
+    StorageService.setLemburApproval(
+      jobId,
+      isApproved,
+      isApproved ? approverName : undefined,
+      isApproved ? approvedTimestamp : undefined,
+      !isApproved
+    );
 
-    // 2. Update state jobs aplikasi
-    const next = jobs.map(j => {
+    // 2. Update state jobs aplikasi dan hitung ulang honor via StorageService.getJobs()
+    const rawNext = jobs.map(j => {
       if (j.id === jobId) {
+        if (!isApproved) {
+          // Ketika ACC ditolak, maka pekerjaan tidak termasuk lembur
+          return {
+            ...j,
+            adaLembur: false,
+            menitLembur: 0,
+            lemburApproved: false,
+            lemburApprovedBy: undefined,
+            lemburApprovedAt: undefined
+          };
+        }
         return {
           ...j,
-          lemburApproved: isApproved,
-          lemburApprovedBy: isApproved ? approverName : undefined,
-          lemburApprovedAt: isApproved ? approvedTimestamp : undefined
+          adaLembur: true,
+          lemburApproved: true,
+          lemburApprovedBy: approverName,
+          lemburApprovedAt: approvedTimestamp
         };
       }
       return j;
     });
 
+    StorageService.saveJobs(rawNext);
+    const next = StorageService.getJobs();
     setJobs(next);
-    StorageService.saveJobs(next);
+
+    const updatedJob = next.find(j => j.id === jobId);
+
     StorageService.syncServerState({
       jobs: next,
       approvedLemburMap: StorageService.getApprovedLemburMap()
     });
 
     // 3. Kirim action updateLemburStatus ke Google Apps Script (Sangat cepat dan andal)
-    let directResult: { success: boolean; message?: string } = { success: true };
     if (settings.googleAppsScriptUrl) {
       try {
-        directResult = await sendLemburStatusToSheets(settings.googleAppsScriptUrl, {
+        await sendLemburStatusToSheets(settings.googleAppsScriptUrl, {
           jobId,
           lemburApproved: isApproved,
+          adaLembur: isApproved ? true : false,
+          menitLembur: isApproved ? (updatedJob?.menitLembur || 0) : 0,
+          estimasiTotalHonor: updatedJob?.estimasiTotalHonor,
+          honorPerTeknisi: updatedJob?.honorPerTeknisi,
           approvedBy: isApproved ? approverName : undefined,
           approvedAt: isApproved ? approvedTimestamp : undefined
         });
@@ -1533,14 +1572,14 @@ export default function App() {
       }
     }
 
-    // 4. Sinkronkan juga tabel DaftarPekerjaan penuh ke Google Sheets di latar belakang tanpa overlay ganda
+    // 4. Sinkronkan juga tabel DaftarPekerjaan & PengaturanApp penuh ke Google Sheets di latar belakang
     sendSyncToGoogleSheets({ jobs: next, showLoading: false }).catch(err => console.warn('sendSyncToGoogleSheets warning:', err));
 
     return {
       success: true,
       message: isApproved
-        ? 'Persetujuan lembur berhasil disimpan dan dikonfirmasi ke Google Sheets!'
-        : 'Persetujuan lembur berhasil dibatalkan.'
+        ? 'ACC Lembur berhasil disetujui dan disimpan ke Google Sheets!'
+        : 'ACC Lembur ditolak. Pekerjaan ini tidak termasuk lembur.'
     };
   };
 
@@ -1611,11 +1650,16 @@ export default function App() {
 
       const isMatch = a.id === id || (targetGroupKey && aGroupKey === targetGroupKey);
       if (isMatch) {
+        const baseKet = (a.keterangan || a.approvalType || '').trim();
+        const updatedKet = isApproved
+          ? (baseKet && !baseKet.includes('[Disetujui Admin]') ? `${baseKet} [Disetujui Admin]` : (baseKet || '[Disetujui Admin]'))
+          : baseKet;
         return {
           ...a,
           status: (isApproved ? 'Hadir' : 'Ditolak') as AttendanceRecord['status'],
           needsApproval: false,
           isApproved: isApproved,
+          keterangan: updatedKet,
           potonganOtomatis: isApproved ? 0 : (a.potonganOtomatis || 25000)
         };
       }
@@ -1625,7 +1669,10 @@ export default function App() {
     const consolidated = consolidateAttendanceRecords(next);
     setAttendanceList(consolidated);
     StorageService.saveAttendance(consolidated);
-    StorageService.syncServerState({ attendanceList: consolidated });
+    StorageService.syncServerState({
+      attendanceList: consolidated,
+      resolvedAttendanceKeys: StorageService.getResolvedAttendanceKeys()
+    });
     isDataLoadedFromSheetsRef.current = true;
     return await sendSyncToGoogleSheets({ attendanceList: consolidated });
   };
@@ -1643,11 +1690,15 @@ export default function App() {
         if (cleanDate && a.teknisiId) keysToAdd.push(`${cleanDate}_${a.teknisiId}`);
         if (cleanDate && a.teknisiNama) keysToAdd.push(`${cleanDate}_${a.teknisiNama}`);
 
+        const baseKet = (a.keterangan || a.approvalType || '').trim();
+        const updatedKet = baseKet && !baseKet.includes('[Disetujui Admin]') ? `${baseKet} [Disetujui Admin]` : (baseKet || '[Disetujui Admin]');
+
         return {
           ...a,
           status: 'Hadir' as AttendanceRecord['status'],
           needsApproval: false,
           isApproved: true,
+          keterangan: updatedKet,
           potonganOtomatis: 0
         };
       }
@@ -1658,7 +1709,10 @@ export default function App() {
     const consolidated = consolidateAttendanceRecords(next);
     setAttendanceList(consolidated);
     StorageService.saveAttendance(consolidated);
-    StorageService.syncServerState({ attendanceList: consolidated });
+    StorageService.syncServerState({
+      attendanceList: consolidated,
+      resolvedAttendanceKeys: StorageService.getResolvedAttendanceKeys()
+    });
     isDataLoadedFromSheetsRef.current = true;
     return await sendSyncToGoogleSheets({ attendanceList: consolidated });
   };
@@ -2001,25 +2055,36 @@ export default function App() {
     const resolvedKeysSet = new Set(StorageService.getResolvedAttendanceKeys());
     const groupKey = `${cleanTargetTanggal}_${targetTechKey}`.toLowerCase();
     const dateTechIdKey = `${cleanTargetTanggal}_${targetTeknisiId}`.toLowerCase();
+    const dateTechNamaKey = `${cleanTargetTanggal}_${targetTeknisiNama.toLowerCase().trim()}`;
     const isExplicitlyApprovedByAdmin = Boolean(
       resolvedKeysSet.has(groupKey) || 
       (existingRecord && resolvedKeysSet.has(existingRecord.id.toLowerCase())) ||
       resolvedKeysSet.has(dateTechIdKey) ||
+      resolvedKeysSet.has(dateTechNamaKey) ||
       att.isManual === true || 
-      existingRecord?.isManual === true
+      existingRecord?.isManual === true ||
+      existingRecord?.keterangan?.includes('[Disetujui Admin]') ||
+      (existingRecord && existingRecord.isApproved === true && !existingRecord.needsApproval && existingRecord.status === 'Hadir')
     );
 
-    const isExistingResolved = Boolean(
-      isExplicitlyApprovedByAdmin ||
-      (existingRecord &&
-      existingRecord.isApproved === true &&
-      !existingRecord.needsApproval &&
-      existingRecord.status === 'Hadir' &&
-      !isLateCheckIn)
-    );
+    const isExistingResolved = isExplicitlyApprovedByAdmin;
     const isNewDeparture = Boolean(att.jamPulang && (!existingRecord?.jamPulang || existingRecord.jamPulang === '-'));
 
+    // Check if the new departure itself is an early checkout or outside radius
+    const stdPulangStr = sanitizeTimeString(settings?.jamPulangDefinisikan, '17:00');
+    const [pulH, pulM] = stdPulangStr.split(':').map(Number);
+    const endOfDayMins = (pulH || 17) * 60 + (pulM || 0);
+    let isEarlyCheckOut = false;
+    if (finalJamPulang && finalJamPulang.includes(':')) {
+      const [outH, outM] = sanitizeTimeString(finalJamPulang, '').split(':').map(Number);
+      if (!isNaN(outH) && (outH * 60 + (outM || 0)) < endOfDayMins) {
+        isEarlyCheckOut = true;
+      }
+    }
+    const isDepartureViolation = isNewDeparture && (isEarlyCheckOut || att.isWithinRadius === false);
+
     // Strictly evaluate business rules for late check-in, early checkout, outside radius, and outside work hours
+    // If morning check-in was ALREADY approved by Admin and technician is now checking out normally (not early/outside radius), keep it approved!
     const evalRes = evaluateAttendanceApproval({
       jamMasuk: finalJamMasuk,
       jamPulang: finalJamPulang,
@@ -2027,22 +2092,23 @@ export default function App() {
       isWithinRadius: att.isWithinRadius !== undefined ? att.isWithinRadius : (existingRecord ? existingRecord.isWithinRadius : true),
       distanceMeter: att.distanceMeter !== undefined ? att.distanceMeter : (existingRecord ? existingRecord.distanceMeter : 0),
       settings: settings,
-      alreadyApproved: isExistingResolved && !isNewDeparture && att.needsApproval !== true
+      alreadyApproved: isExistingResolved && !isDepartureViolation
     });
 
-    // PENTING SESUAI ATURAN SISTEM: Teknisi yang absen terlambat WAJIB approval Admin
+    // PENTING SESUAI ATURAN SISTEM: Teknisi yang absen terlambat WAJIB approval Admin (kecuali sudah disetujui Admin sebelumnya)
     const isPendingApproval = Boolean(
       (!isExplicitlyApprovedByAdmin && isLateCheckIn) ||
-      att.needsApproval || 
+      isDepartureViolation ||
+      (!isExplicitlyApprovedByAdmin && att.needsApproval) || 
       evalRes.needsApproval
     );
     const finalStatus = isPendingApproval 
       ? 'Pending Approval' 
-      : (att.status || (existingRecord ? existingRecord.status : 'Hadir'));
+      : (isExplicitlyApprovedByAdmin ? 'Hadir' : (att.status || (existingRecord ? existingRecord.status : 'Hadir')));
     const finalApprovalType = (isLateCheckIn && !isExplicitlyApprovedByAdmin) 
       ? 'Terlambat' 
       : (att.approvalType || evalRes.approvalType);
-    const finalPotongan = !isPendingApproval && (existingRecord?.status === 'Hadir' || existingRecord?.isApproved)
+    const finalPotongan = !isPendingApproval && (isExplicitlyApprovedByAdmin || existingRecord?.status === 'Hadir' || existingRecord?.isApproved)
       ? 0
       : (att.potonganOtomatis !== undefined ? att.potonganOtomatis : evalRes.potonganOtomatis);
 
