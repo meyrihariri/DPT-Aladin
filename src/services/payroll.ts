@@ -191,14 +191,8 @@ export function checkTechnicianHasPulang(
 
   if (matchingRecords.length === 0) return false;
 
-  // If ALL records are explicitly 'Ditolak', then attendance is rejected
-  const allRejected = matchingRecords.every(a => a.status === 'Ditolak');
-  if (allRejected) return false;
-
   // Check if ANY matching record has a valid jamPulang or is an approved/manual attendance
   const hasValidPulang = matchingRecords.some(att => {
-    if (att.status === 'Ditolak') return false;
-
     // Check if jamPulang has a valid time string or contains checkout confirmation
     const jamPulangClean = att.jamPulang ? sanitizeTimeString(att.jamPulang, '') : '';
     const hasValidJamPulang = Boolean(
@@ -229,10 +223,10 @@ export function checkTechnicianHasPulang(
 
   if (hasValidPulang) return true;
 
-  // Untuk tanggal di masa lalu (seperti 04-10-2026), teknisi yang telah tercatat absensinya dan tidak berstatus Ditolak
+  // Untuk tanggal di masa lalu (seperti 04-10-2026), teknisi yang telah tercatat absensinya
   // secara otomatis diakui telah menyelesaikan jam kerjanya (Sudah Absen Pulang).
   const isPastDate = cleanDate < getEffectiveTodayISO();
-  if (isPastDate && !allRejected) {
+  if (isPastDate && matchingRecords.length > 0) {
     return true;
   }
 
@@ -313,10 +307,14 @@ export function checkTechnicianAttendanceApproved(
     return { isEligible: false, reason: 'Belum ada absensi pada tanggal ini' };
   }
 
-  // Jika ada record yang secara eksplisit Ditolak oleh admin
-  const hasRejected = matchingRecords.some(a => a.status === 'Ditolak');
+  // Jika ada record yang secara eksplisit Ditolak oleh admin / PS Server
+  const hasRejected = matchingRecords.some(a =>
+    a.status === 'Ditolak' ||
+    a.keterangan?.includes('[Ditolak Admin]') ||
+    a.keterangan?.includes('[Ditolak PS Server]')
+  );
   if (hasRejected) {
-    return { isEligible: false, reason: 'Absensi ditolak oleh Admin' };
+    return { isEligible: false, reason: 'Absensi terlambat tidak disetujui (Potong Honor Otomatis)' };
   }
 
   // Dapatkan konfigurasi jam kerja standar dan toleransi keterlambatan
@@ -343,6 +341,7 @@ export function checkTechnicianAttendanceApproved(
     const requiresApproval = Boolean(
       att.needsApproval ||
       att.status === 'Pending Approval' ||
+      att.status === 'Terlambat' ||
       (isLate && !att.isManual && !att.id?.startsWith('att-manual-'))
     );
 
@@ -352,28 +351,26 @@ export function checkTechnicianAttendanceApproved(
       const groupKey = `${cleanDate}_${techKey}`.toLowerCase();
       const dateTechIdKey = `${cleanDate}_${att.teknisiId}`.toLowerCase();
       const dateTechNamaKey = `${cleanDate}_${(att.teknisiNama || '').toLowerCase().trim()}`;
-      const hasJamPulangValid = Boolean(att.jamPulang && att.jamPulang !== '-' && att.jamPulang.trim().length > 0);
-      const isExplicitlyApproved = 
+      const isExplicitlyApproved =
         att.isApproved === true ||
-        (att.status === 'Hadir' && att.needsApproval === false) ||
-        (att.status === 'Hadir' && !att.needsApproval) ||
-        resolvedKeys.has(groupKey) || 
+        resolvedKeys.has(groupKey) ||
         resolvedKeys.has((att.id || '').toLowerCase()) ||
         resolvedKeys.has(dateTechIdKey) ||
         resolvedKeys.has(dateTechNamaKey) ||
         att.isManual === true ||
         att.id?.startsWith('att-manual-') ||
+        att.keterangan?.includes('[Disetujui Admin]') ||
+        att.keterangan?.includes('[Disetujui PS Server]') ||
         att.keteranganPulang?.toLowerCase().includes('manual') ||
         att.keteranganPulang?.toLowerCase().includes('admin') ||
         att.keterangan?.includes('[Absen Manual Admin]') ||
         att.keterangan?.toLowerCase().includes('absen manual') ||
-        (hasJamPulangValid && (att.isManual || att.isApproved || att.status === 'Hadir'));
+        (!isLate && att.status === 'Hadir' && !att.needsApproval);
 
-      // Sebelum di-approval oleh admin, honor tidak boleh masuk
       if (!isExplicitlyApproved || att.status === 'Ditolak' || (att.needsApproval === true && att.isApproved !== true)) {
         const reasonText = isLate
-          ? `Absen masuk terlambat (${jamMasukClean} WIB > batas toleransi ${stdMasuk}+${toleransi}m) dan belum disetujui Admin`
-          : (att.keterangan || att.approvalType || 'Menunggu persetujuan (Approval) Admin');
+          ? `Absen masuk terlambat (${jamMasukClean} WIB > batas toleransi ${stdMasuk}+${toleransi}m) belum disetujui Admin/PS Server (Potong Honor Otomatis)`
+          : (att.keterangan || att.approvalType || 'Menunggu persetujuan (Approval) Admin / PS Server');
         return { isEligible: false, reason: reasonText };
       }
     }
@@ -473,8 +470,9 @@ export function calculatePayrollForEmployee(
   // 1. Pekerjaan yang sudah dilunaskan (Honor Lunas) tidak akan dihitung kembali.
   // 2. Teknisi yang tidak melakukan absen pulang, maka semua pekerjaan yang diinput
   //    pada hari/tanggal yang sama tidak akan dihitung pada rekap gaji.
-  // 3. Teknisi yang melakukan absen lewat dari jam masuk + toleransi (atau perlu approval),
-  //    wajib mendapatkan approval Admin terlebih dahulu sebelum honor pekerjaan masuk ke rekap gaji.
+  // 3. Teknisi yang melakukan absen terlambat harus melalui persetujuan Admin atau PS Server terkait;
+  //    jika tidak disetujui (masih Pending Approval atau Ditolak), maka otomatis honor akan terpotong
+  //    melalui potonganTerlambatAbsen.
   const myJobs = allJobs.filter((job) => {
     const isTech = job.teknisiIds && Array.isArray(job.teknisiIds) ? job.teknisiIds.includes(employee.id) : false;
     const inRange = isDateInRange(job.tanggal);
@@ -489,18 +487,56 @@ export function calculatePayrollForEmployee(
     const hasPulang = checkTechnicianHasPulang(employee, job.tanggal, allAttendance, attLookupMap);
     if (!hasPulang) return false;
 
-    // Pastikan absensi teknisi valid dan telah disetujui (Approved) Admin jika terlambat / perlu approval
-    const attApproval = checkTechnicianAttendanceApproved(employee, job.tanggal, allAttendance, settings, attLookupMap);
-    return attApproval.isEligible;
+    return true;
   });
 
-  // Filter attendance for this employee and period
-  const myAttendance = allAttendance.filter((att) => {
-    const isTech = att.teknisiId === employee.id;
-    const inRange = isDateInRange(att.tanggal);
-    const inServer = isServerMatch(att.serverId, att.serverNama);
-    return isTech && inRange && inServer;
+  // Filter attendance for this employee and period (robust matching by ID, username, normalized key, or full name)
+  const targetEmpTechKey = getNormalizedTechKey(employee.id, employee.namaLengkap);
+  const targetEmpNameClean = (employee.namaLengkap || '').toLowerCase().trim();
+  const targetEmpIdClean = (employee.id || '').toLowerCase().trim();
+  const targetEmpUserClean = (employee.username || '').toLowerCase().trim();
+
+  const myAttendanceByDate = new Map<string, AttendanceRecord>();
+  allAttendance.forEach((att) => {
+    if (!att || !att.tanggal) return;
+    const cleanDate = sanitizeDateString(att.tanggal);
+    if (!isDateInRange(cleanDate)) return;
+
+    const aTechKey = getNormalizedTechKey(att.teknisiId, att.teknisiNama);
+    const aNameClean = (att.teknisiNama || '').toLowerCase().trim();
+    const aIdClean = (att.teknisiId || '').toLowerCase().trim();
+
+    const isTech =
+      (att.teknisiId && att.teknisiId === employee.id) ||
+      (targetEmpIdClean && aIdClean === targetEmpIdClean) ||
+      (targetEmpUserClean && (aIdClean === targetEmpUserClean || aIdClean === `emp-${targetEmpUserClean}`)) ||
+      (aTechKey && aTechKey === targetEmpTechKey) ||
+      (targetEmpNameClean && aNameClean && (targetEmpNameClean === aNameClean || aNameClean.includes(targetEmpNameClean) || targetEmpNameClean.includes(aNameClean)));
+
+    if (!isTech) return;
+
+    // Check server filter match: either the attendance record matches target server,
+    // or the attendance record has no server and the employee belongs to target server / worked on target server that day
+    let inServer = isServerMatch(att.serverId, att.serverNama);
+    if (!inServer && resolvedTargetServer) {
+      const hasAttServer = Boolean(att.serverId || att.serverNama);
+      if (!hasAttServer) {
+        const empBelongsToServer =
+          isServerMatch(employee.serverId, employee.namaServer) ||
+          Boolean(employee.serverHonors?.some(sh => sh.serverId === resolvedTargetServer.id || (sh.namaServer && sh.namaServer.toLowerCase().trim() === resolvedTargetServer.namaServer.toLowerCase().trim())));
+        const workedOnServerThatDay = myJobs.some(j => sanitizeDateString(j.tanggal) === cleanDate);
+        if (empBelongsToServer || workedOnServerThatDay) {
+          inServer = true;
+        }
+      }
+    }
+    if (!inServer) return;
+
+    if (!myAttendanceByDate.has(cleanDate)) {
+      myAttendanceByDate.set(cleanDate, att);
+    }
   });
+  const myAttendance = Array.from(myAttendanceByDate.values());
 
   // 1. Status Karyawan & Scope Server
   // Catatan Penting:
@@ -918,11 +954,75 @@ export function calculatePayrollForEmployee(
   const honorTetapServer = serverBreakdowns.reduce((sum, sb) => sum + sb.honorTetapServer, 0);
   const honorPJWilayah = serverBreakdowns.reduce((sum, sb) => sum + sb.honorPJWilayah, 0);
 
-  // 10. Deductions (Potongan Absen & Keterlambatan)
+  // 10. Deductions (Potongan Absen & Keterlambatan Otomatis)
+  // Setiap teknisi yang melakukan absen terlambat harus melalui persetujuan Admin atau PS Server terkait.
+  // Jika tidak disetujui (baik berstatus Ditolak maupun masih Pending Approval / belum disetujui),
+  // otomatis honor akan terpotong sebesar potonganPerKeterlambatan (default Rp 25.000).
+  const appSettingsForLate = settings || StorageService.getSettings();
+  const stdMasukStr = sanitizeTimeString(appSettingsForLate?.jamMasukDefinisikan, '08:00');
+  const toleransiMenit = Number(appSettingsForLate?.toleransiKeterlambatanMenit ?? 15);
+  const defaultPotonganTerlambat = Number(appSettingsForLate?.potonganPerKeterlambatan) || 25000;
+  const [stdInH, stdInM] = stdMasukStr.split(':').map(Number);
+  const maxOnTimeMinutes = (stdInH || 8) * 60 + (stdInM || 0) + toleransiMenit;
+  const resolvedAttKeysSet = new Set(StorageService.getResolvedAttendanceKeys());
+
   let potonganTerlambatAbsen = 0;
   myAttendance.forEach(att => {
-    if (att.status === 'Ditolak' || (att.status === 'Terlambat' && att.needsApproval)) {
-      potonganTerlambatAbsen += att.potonganOtomatis || 25000;
+    const cleanDate = sanitizeDateString(att.tanggal);
+
+    // Abaikan jika periode tanggal absensi ini sudah pernah dilunaskan penuh di HonorLunas
+    const isDateSettledInHonorLunas = (settledList || []).some(hl => {
+      if (hl.teknisiId !== employee.id || hl.isParsial) return false;
+      const sMatch = !resolvedTargetServer || hl.serverId === resolvedTargetServer.id || hl.serverId === 'all' || hl.namaServer === resolvedTargetServer.namaServer || hl.namaServer === 'Semua Server';
+      if (!sMatch) return false;
+      return Boolean(hl.periodeAwal && hl.periodeAkhir && cleanDate >= hl.periodeAwal && cleanDate <= hl.periodeAkhir);
+    });
+    if (isDateSettledInHonorLunas) return;
+
+    const jamMasukClean = att.jamMasuk ? sanitizeTimeString(att.jamMasuk, '') : '';
+    let isLateCheckIn = false;
+    if (jamMasukClean && jamMasukClean.includes(':')) {
+      const [h, m] = jamMasukClean.split(':').map(Number);
+      if ((h || 0) * 60 + (m || 0) > maxOnTimeMinutes) {
+        isLateCheckIn = true;
+      }
+    }
+
+    const isRejectedAtt =
+      att.status === 'Ditolak' ||
+      Boolean(att.keterangan?.includes('[Ditolak Admin]') || att.keterangan?.includes('[Ditolak PS Server]'));
+
+    const techKey = getNormalizedTechKey(att.teknisiId, att.teknisiNama);
+    const groupKey = `${cleanDate}_${techKey}`.toLowerCase();
+    const dateTechIdKey = `${cleanDate}_${att.teknisiId}`.toLowerCase();
+    const dateTechNamaKey = `${cleanDate}_${(att.teknisiNama || '').toLowerCase().trim()}`;
+
+    const isExplicitlyApprovedAtt =
+      !isRejectedAtt && (
+        att.isApproved === true ||
+        resolvedAttKeysSet.has(groupKey) ||
+        resolvedAttKeysSet.has((att.id || '').toLowerCase()) ||
+        resolvedAttKeysSet.has(dateTechIdKey) ||
+        resolvedAttKeysSet.has(dateTechNamaKey) ||
+        att.isManual === true ||
+        att.id?.startsWith('att-manual-') ||
+        Boolean(att.keterangan?.includes('[Disetujui Admin]') || att.keterangan?.includes('[Disetujui PS Server]') || att.keterangan?.includes('[Absen Manual Admin]')) ||
+        Boolean(att.keteranganPulang?.toLowerCase().includes('admin') || att.keteranganPulang?.toLowerCase().includes('manual')) ||
+        (!isLateCheckIn && att.status === 'Hadir' && !att.needsApproval)
+      );
+
+    const hasLateOrPendingIssue = Boolean(
+      isLateCheckIn ||
+      isRejectedAtt ||
+      att.needsApproval ||
+      att.status === 'Pending Approval' ||
+      att.status === 'Terlambat' ||
+      att.approvalType?.toLowerCase().includes('terlambat')
+    );
+
+    if (hasLateOrPendingIssue && !isExplicitlyApprovedAtt) {
+      const nominalPotongan = Number(att.potonganOtomatis) || defaultPotonganTerlambat;
+      potonganTerlambatAbsen += nominalPotongan;
     }
   });
 

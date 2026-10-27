@@ -1221,12 +1221,18 @@ export function buildGoogleSheetsSyncPayload(data: {
           ? '[Foto Pulang Tersimpan]'
           : rawPulang;
 
-        const isApprovedHadir = !isPending && (a.status === 'Hadir' || !a.status) && (a.isApproved === true || Boolean(a.approvalType) || a.keterangan?.includes('[Disetujui Admin]'));
+        const defaultPotongan = Number(data.settings?.potonganPerKeterlambatan) || 25000;
+        const isRejected = a.status === 'Ditolak' || Boolean(a.keterangan?.includes('[Ditolak Admin]') || a.keterangan?.includes('[Ditolak PS Server]'));
+        const isApprovedHadir = !isPending && !isRejected && (a.status === 'Hadir' || !a.status) && (a.isApproved === true || Boolean(a.approvalType) || a.keterangan?.includes('[Disetujui Admin]') || a.keterangan?.includes('[Disetujui PS Server]'));
         let ketCell = a.keterangan || (isPending ? (a.approvalType || 'Perlu Approval') : '');
-        if (isApprovedHadir && ketCell && !ketCell.includes('[Disetujui Admin]') && !ketCell.includes('[Absen Manual Admin]')) {
+        if (isApprovedHadir && ketCell && !ketCell.includes('[Disetujui Admin]') && !ketCell.includes('[Disetujui PS Server]') && !ketCell.includes('[Absen Manual Admin]')) {
           ketCell = `${ketCell} [Disetujui Admin]`;
         } else if (isApprovedHadir && !ketCell && a.approvalType) {
           ketCell = `${a.approvalType} [Disetujui Admin]`;
+        } else if (isRejected && ketCell && !ketCell.includes('[Ditolak Admin]') && !ketCell.includes('[Ditolak PS Server]')) {
+          ketCell = `${ketCell} [Ditolak Admin]`;
+        } else if (isRejected && !ketCell) {
+          ketCell = `${a.approvalType || 'Terlambat'} [Ditolak Admin]`;
         }
 
         return [
@@ -1242,16 +1248,18 @@ export function buildGoogleSheetsSyncPayload(data: {
           a.serverNama || '',
           a.distanceMeter || 0,
           a.isWithinRadius ? 'Ya' : 'Tidak',
-          isPending ? 'Pending Approval' : (a.status || 'Hadir'),
+          isPending ? 'Pending Approval' : (isRejected ? 'Ditolak' : (a.status || 'Hadir')),
           ketCell,
-          isPending ? (a.potonganOtomatis || 0) : (a.status === 'Ditolak' ? (a.potonganOtomatis || 25000) : 0)
+          isPending ? (Number(a.potonganOtomatis) || defaultPotongan) : (isRejected ? (Number(a.potonganOtomatis) || defaultPotongan) : 0)
         ];
       })
     ],
     ApprovalAbsensi: [
       ['ID', 'Tanggal', 'Teknisi ID', 'Teknisi Nama', 'Jam Masuk', 'Jam Pulang', 'Latitude', 'Longitude', 'Jarak (m)', 'Dalam Radius', 'Foto Proof URL', 'Status', 'Needs Approval', 'Approval Type', 'Potongan Otomatis'],
       ...sortedAttendanceForSheets.map(a => {
-        const isPending = Boolean(a.needsApproval || a.status === 'Pending Approval');
+        const defaultPotongan = Number(data.settings?.potonganPerKeterlambatan) || 25000;
+        const isPending = Boolean(a.needsApproval || a.status === 'Pending Approval' || a.status === 'Terlambat');
+        const isRejected = a.status === 'Ditolak' || Boolean(a.keterangan?.includes('[Ditolak Admin]') || a.keterangan?.includes('[Ditolak PS Server]'));
         const rawMasuk = sanitizePhotoUrl(a.fotoProofUrl);
         const cleanFotoMasuk = rawMasuk && rawMasuk.startsWith('data:image') && rawMasuk.length > 48000
           ? '[Foto Masuk Tersimpan]'
@@ -1269,10 +1277,10 @@ export function buildGoogleSheetsSyncPayload(data: {
           a.distanceMeter || 0,
           a.isWithinRadius ? 'Ya' : 'Tidak',
           cleanFotoMasuk,
-          isPending ? 'Pending Approval' : (a.status || 'Hadir'),
+          isPending ? 'Pending Approval' : (isRejected ? 'Ditolak' : (a.status || 'Hadir')),
           isPending ? 'Ya' : 'Tidak',
-          a.approvalType || (isPending ? 'Terlambat' : ''),
-          isPending ? (a.potonganOtomatis || 0) : (a.status === 'Ditolak' ? (a.potonganOtomatis || 25000) : 0)
+          a.approvalType || (isPending || isRejected ? 'Terlambat' : ''),
+          isPending ? (Number(a.potonganOtomatis) || defaultPotongan) : (isRejected ? (Number(a.potonganOtomatis) || defaultPotongan) : 0)
         ];
       })
     ],
@@ -2396,23 +2404,59 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
         const lowerTechId = (techId || rawTechId).toLowerCase();
         const lowerTechNama = rawTechNama.toLowerCase();
 
+        // Evaluate business rules first (without alreadyApproved) to see if check-in was late / outside radius / early check-out
+        const rawRuleEval = evaluateAttendanceApproval({
+          jamMasuk: cleanJamMasuk,
+          jamPulang: cleanJamPulang,
+          tanggal: cleanTgl,
+          isWithinRadius: isWithinRad,
+          distanceMeter: distVal,
+          settings: result.settings,
+          alreadyApproved: false
+        });
+
+        const isSheetRejected =
+          /^(ditolak|rejected)$/i.test(statusVal) ||
+          rawKetVal.includes('[Ditolak Admin]') ||
+          rawKetVal.includes('[Ditolak PS Server]');
+
         const isSheetApproved =
-          /^(approved|disetujui)$/i.test(statusVal) ||
-          rawKetVal.includes('[Disetujui Admin]') ||
-          rawKetVal.includes('[Absen Manual Admin]');
-        const isSheetRejected = /^(ditolak|rejected)$/i.test(statusVal);
-        const isSheetHadir = /^(hadir)$/i.test(statusVal) && needsApprovalVal !== 'ya' && needsApprovalVal !== 'true' && !/pending/i.test(needsApprovalVal);
+          !isSheetRejected && (
+            /^(approved|disetujui)$/i.test(statusVal) ||
+            rawKetVal.includes('[Disetujui Admin]') ||
+            rawKetVal.includes('[Disetujui PS Server]') ||
+            rawKetVal.includes('[Absen Manual Admin]') ||
+            (needsApprovalCol >= 0 && /^(hadir)$/i.test(statusVal) && (needsApprovalVal === 'tidak' || needsApprovalVal === 'false' || needsApprovalVal === 'no'))
+          );
 
-        const isExplicitlyResolvedByAdmin = 
-          resolvedKeysSet.has(lowerGroupKey) ||
-          resolvedKeysSet.has(lowerRowId) ||
-          (lowerTechId && resolvedKeysSet.has(`${cleanTgl}_${lowerTechId}`)) ||
-          (lowerTechNama && resolvedKeysSet.has(`${cleanTgl}_${lowerTechNama}`)) ||
-          isSheetApproved ||
-          isSheetHadir ||
-          isSheetRejected;
+        const isSheetHadir =
+          !isSheetRejected &&
+          /^(hadir)$/i.test(statusVal) &&
+          needsApprovalVal !== 'ya' &&
+          needsApprovalVal !== 'true' &&
+          !/pending/i.test(needsApprovalVal) &&
+          (!rawRuleEval.needsApproval || isSheetApproved);
 
-        if ((isSheetApproved || isSheetHadir) && !isSheetRejected) {
+        const isExplicitlyResolvedByAdmin =
+          !isSheetRejected && (
+            resolvedKeysSet.has(lowerGroupKey) ||
+            resolvedKeysSet.has(lowerRowId) ||
+            (lowerTechId && resolvedKeysSet.has(`${cleanTgl}_${lowerTechId}`)) ||
+            (lowerTechNama && resolvedKeysSet.has(`${cleanTgl}_${lowerTechNama}`)) ||
+            isSheetApproved ||
+            isSheetHadir
+          );
+
+        if (isSheetRejected) {
+          const keysToRemove = [
+            lowerGroupKey,
+            lowerRowId,
+            lowerTechId ? `${cleanTgl}_${lowerTechId}` : '',
+            lowerTechNama ? `${cleanTgl}_${lowerTechNama}` : ''
+          ].filter(Boolean);
+          keysToRemove.forEach(k => resolvedKeysSet.delete(k));
+          StorageService.removeResolvedAttendanceKeys(keysToRemove);
+        } else if (isSheetApproved || isSheetHadir) {
           const keysToRemember = [
             lowerGroupKey,
             lowerRowId,
@@ -2431,13 +2475,13 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
           isWithinRadius: isWithinRad,
           distanceMeter: distVal,
           settings: result.settings,
-          alreadyApproved: isExplicitlyResolvedByAdmin && !isSheetRejected
+          alreadyApproved: isExplicitlyResolvedByAdmin
         });
 
-        const isPending = !isExplicitlyResolvedByAdmin && (
-          /pending/i.test(statusVal) || 
-          needsApprovalVal === 'ya' || 
-          needsApprovalVal === 'true' || 
+        const isPending = !isExplicitlyResolvedByAdmin && !isSheetRejected && (
+          /pending/i.test(statusVal) ||
+          needsApprovalVal === 'ya' ||
+          needsApprovalVal === 'true' ||
           statusVal.toLowerCase() === 'terlambat' ||
           evalRes.needsApproval
         );
@@ -2445,9 +2489,12 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
         let finalNeedsApproval = false;
         let finalStatus: AbsensiStatus = 'Hadir';
 
-        if (isExplicitlyResolvedByAdmin) {
+        if (isSheetRejected) {
           finalNeedsApproval = false;
-          finalStatus = isSheetRejected ? 'Ditolak' : 'Hadir';
+          finalStatus = 'Ditolak';
+        } else if (isExplicitlyResolvedByAdmin) {
+          finalNeedsApproval = false;
+          finalStatus = 'Hadir';
         } else if (isPending || evalRes.needsApproval) {
           finalNeedsApproval = true;
           finalStatus = 'Pending Approval';
@@ -2466,8 +2513,9 @@ export function parseParsedSheetsToState(sheetsData: Record<string, any[][]> | a
           cleanJamPulang = sanitizeTimeString(result.settings?.jamPulangDefinisikan, '17:00');
         }
 
-        const finalPotongan = finalNeedsApproval
-          ? (Number(row[potCol]) || evalRes.potonganOtomatis || 25000)
+        const defaultPotonganTerlambat = Number(result.settings?.potonganPerKeterlambatan) || 25000;
+        const finalPotongan = (finalNeedsApproval || finalStatus === 'Ditolak')
+          ? (Number(row[potCol]) || evalRes.potonganOtomatis || rawRuleEval.potonganOtomatis || defaultPotonganTerlambat)
           : (finalStatus === 'Hadir' ? 0 : (Number(row[potCol]) || 0));
 
         let rawServerId = serverIdCol >= 0 ? String(row[serverIdCol] || '').trim() : '';

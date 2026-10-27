@@ -160,6 +160,21 @@ const ApprovalAbsensiViewComponent: React.FC<ApprovalAbsensiViewProps> = ({
         ) {
           return true;
         }
+        // Fallback: check technician's assigned server in employees list
+        const empList = employees && employees.length > 0 ? employees : StorageService.getEmployees();
+        const techEmp = empList.find(e =>
+          e.id === a.teknisiId ||
+          (e.namaLengkap && a.teknisiNama && e.namaLengkap.toLowerCase().trim() === a.teknisiNama.toLowerCase().trim())
+        );
+        if (techEmp) {
+          if (
+            techEmp.serverId === userServer.id ||
+            (techEmp.namaServer && techEmp.namaServer.toLowerCase().trim() === userServer.namaServer.toLowerCase().trim()) ||
+            techEmp.serverHonors?.some(sh => sh.serverId === userServer.id || (sh.namaServer && sh.namaServer.toLowerCase().trim() === userServer.namaServer.toLowerCase().trim()))
+          ) {
+            return true;
+          }
+        }
       }
       return false;
     }
@@ -962,17 +977,56 @@ const ApprovalAbsensiViewComponent: React.FC<ApprovalAbsensiViewProps> = ({
 
                           {/* STATUS */}
                           <td className="p-3.5">
-                            <span
-                              className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
-                                att.status === 'Hadir'
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : att.status === 'Terlambat' || att.status === 'Pending Approval'
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : 'bg-rose-100 text-rose-800'
-                              }`}
-                            >
-                              {att.status}
-                            </span>
+                            <div className="flex flex-col items-start gap-1">
+                              <span
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
+                                  att.status === 'Hadir'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : att.status === 'Terlambat' || att.status === 'Pending Approval'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-rose-100 text-rose-800'
+                                }`}
+                              >
+                                {att.status}
+                              </span>
+                              {(att.status === 'Pending Approval' || att.status === 'Terlambat' || att.status === 'Ditolak') && (
+                                <span className="text-[10px] font-bold text-rose-600">
+                                  Potong Otomatis: {formatRupiah(att.potonganOtomatis || 25000)}
+                                </span>
+                              )}
+                              {(att.status === 'Pending Approval' || att.status === 'Terlambat' || att.status === 'Ditolak') && (
+                                <div className="flex items-center gap-1 pt-0.5">
+                                  <button
+                                    onClick={async () => {
+                                      setActionFeedback(`⏳ Menyetujui absensi ${att.teknisiNama}...`);
+                                      await onApproveAttendance(att.id, true);
+                                      setActionFeedback(`✅ Absensi ${att.teknisiNama} (${att.tanggal}) disetujui! Potongan keterlambatan dihapus.`);
+                                      setTimeout(() => setActionFeedback(null), 4000);
+                                    }}
+                                    className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold cursor-pointer flex items-center gap-0.5"
+                                    title="Setujui Absen Terlambat (Bebas Potongan)"
+                                  >
+                                    <Check className="w-3 h-3" />
+                                    <span>Setujui</span>
+                                  </button>
+                                  {att.status !== 'Ditolak' && (
+                                    <button
+                                      onClick={async () => {
+                                        setActionFeedback(`⏳ Menolak absensi ${att.teknisiNama}...`);
+                                        await onApproveAttendance(att.id, false);
+                                        setActionFeedback(`ℹ️ Absensi ${att.teknisiNama} (${att.tanggal}) ditolak. Potongan otomatis berlaku.`);
+                                        setTimeout(() => setActionFeedback(null), 4000);
+                                      }}
+                                      className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-[10px] font-bold cursor-pointer flex items-center gap-0.5"
+                                      title="Tolak Absen Terlambat (Potong Otomatis)"
+                                    >
+                                      <X className="w-3 h-3" />
+                                      <span>Tolak</span>
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </td>
 
                           {/* AKSI */}

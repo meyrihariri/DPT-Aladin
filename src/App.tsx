@@ -1250,6 +1250,50 @@ export default function App() {
     }).catch(() => {});
   };
 
+  // Helper to check if an attendance record belongs to the current PS Server's server
+  const isAttendanceForCurrentUserServer = React.useCallback((a: AttendanceRecord): boolean => {
+    if (!currentUser || currentUser.role === 'Admin') return true;
+    if (currentUser.role === 'Penanggungjawab Server') {
+      const assignedServerId = currentUser.serverId;
+      const assignedServerNama = currentUser.namaServer;
+      if (assignedServerId && (a.serverId === assignedServerId || a.serverNama === assignedServerId)) return true;
+      if (assignedServerNama && a.serverNama && a.serverNama.toLowerCase().trim() === assignedServerNama.toLowerCase().trim()) return true;
+
+      const userServer = servers.find(s =>
+        s.id === assignedServerId ||
+        (assignedServerNama && s.namaServer.toLowerCase().trim() === assignedServerNama.toLowerCase().trim()) ||
+        s.penanggungJawabId === currentUser.id ||
+        (s.penanggungJawabNama && currentUser.namaLengkap && s.penanggungJawabNama.toLowerCase().trim() === currentUser.namaLengkap.toLowerCase().trim())
+      );
+
+      if (userServer) {
+        if (
+          a.serverId === userServer.id ||
+          a.serverNama === userServer.id ||
+          (a.serverNama && a.serverNama.toLowerCase().trim() === userServer.namaServer.toLowerCase().trim())
+        ) {
+          return true;
+        }
+        // Fallback: check technician's assigned server in employees list
+        const techEmp = employees.find(e =>
+          e.id === a.teknisiId ||
+          (e.namaLengkap && a.teknisiNama && e.namaLengkap.toLowerCase().trim() === a.teknisiNama.toLowerCase().trim())
+        );
+        if (techEmp) {
+          if (
+            techEmp.serverId === userServer.id ||
+            (techEmp.namaServer && techEmp.namaServer.toLowerCase().trim() === userServer.namaServer.toLowerCase().trim()) ||
+            techEmp.serverHonors?.some(sh => sh.serverId === userServer.id || (sh.namaServer && sh.namaServer.toLowerCase().trim() === userServer.namaServer.toLowerCase().trim()))
+          ) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+    return true;
+  }, [currentUser, servers, employees]);
+
   // Pending Approvals Count - Memoized to prevent heavy re-calculations on every render/click
   const pendingApprovalsCount = useMemo(() => {
     const deletedIds = new Set(StorageService.getDeletedAttendanceIds());
@@ -1258,6 +1302,7 @@ export default function App() {
 
     const pendingAttCount = attendanceList.filter(a => {
       if (!a || !a.id || deletedIds.has(a.id)) return false;
+      if (!isAttendanceForCurrentUserServer(a)) return false;
       const cleanDate = sanitizeDateString(a.tanggal);
       const techKey = getNormalizedTechKey(a.teknisiId, a.teknisiNama);
       const groupKey = `${cleanDate}_${techKey}`.toLowerCase();
@@ -1280,7 +1325,7 @@ export default function App() {
 
     const pendingLeaveCount = leaveRequests.filter(l => l.status === 'Pending').length;
     return pendingAttCount + pendingLeaveCount;
-  }, [attendanceList, leaveRequests]);
+  }, [attendanceList, leaveRequests, isAttendanceForCurrentUserServer]);
 
   // Master Data CRUD Handlers
   const handleSaveServer = (server: ServerData) => {
@@ -1628,20 +1673,29 @@ export default function App() {
     sendSyncToGoogleSheets({ planningTasks: next });
   };
 
-  // Approval Handlers
+  // Approval Handlers (Admin & PS Server)
   const handleApproveAttendance = async (id: string, isApproved: boolean): Promise<{ success: boolean; message?: string }> => {
     const targetRecord = attendanceList.find(a => a.id === id);
     const cleanDate = targetRecord ? sanitizeDateString(targetRecord.tanggal) : null;
     const targetTechKey = targetRecord ? getNormalizedTechKey(targetRecord.teknisiId, targetRecord.teknisiNama) : null;
     const targetGroupKey = cleanDate && targetTechKey ? `${cleanDate}_${targetTechKey}` : null;
 
-    const keysToAdd: string[] = [];
-    if (id) keysToAdd.push(id);
-    if (targetGroupKey) keysToAdd.push(targetGroupKey);
-    if (cleanDate && targetRecord?.teknisiId) keysToAdd.push(`${cleanDate}_${targetRecord.teknisiId}`);
-    if (cleanDate && targetRecord?.teknisiNama) keysToAdd.push(`${cleanDate}_${targetRecord.teknisiNama}`);
+    const keysToManage: string[] = [];
+    if (id) keysToManage.push(id);
+    if (targetGroupKey) keysToManage.push(targetGroupKey);
+    if (cleanDate && targetRecord?.teknisiId) keysToManage.push(`${cleanDate}_${targetRecord.teknisiId}`);
+    if (cleanDate && targetRecord?.teknisiNama) keysToManage.push(`${cleanDate}_${targetRecord.teknisiNama}`);
 
-    StorageService.addResolvedAttendanceKeys(keysToAdd);
+    if (isApproved) {
+      StorageService.addResolvedAttendanceKeys(keysToManage);
+    } else {
+      StorageService.removeResolvedAttendanceKeys(keysToManage);
+    }
+
+    const defaultPotongan = Number(settings?.potonganPerKeterlambatan) || 25000;
+    const isPsServerUser = currentUser?.role === 'Penanggungjawab Server';
+    const approvalTag = isPsServerUser ? '[Disetujui PS Server] [Disetujui Admin]' : '[Disetujui Admin]';
+    const rejectTag = isPsServerUser ? '[Ditolak PS Server] [Ditolak Admin]' : '[Ditolak Admin]';
 
     const next = attendanceList.map(a => {
       const aDate = sanitizeDateString(a.tanggal);
@@ -1650,17 +1704,24 @@ export default function App() {
 
       const isMatch = a.id === id || (targetGroupKey && aGroupKey === targetGroupKey);
       if (isMatch) {
-        const baseKet = (a.keterangan || a.approvalType || '').trim();
+        const cleanedBaseKet = (a.keterangan || a.approvalType || '')
+          .replace(/\[Disetujui Admin\]/g, '')
+          .replace(/\[Disetujui PS Server\]/g, '')
+          .replace(/\[Ditolak Admin\]/g, '')
+          .replace(/\[Ditolak PS Server\]/g, '')
+          .trim();
+
         const updatedKet = isApproved
-          ? (baseKet && !baseKet.includes('[Disetujui Admin]') ? `${baseKet} [Disetujui Admin]` : (baseKet || '[Disetujui Admin]'))
-          : baseKet;
+          ? (cleanedBaseKet ? `${cleanedBaseKet} ${approvalTag}` : approvalTag)
+          : (cleanedBaseKet ? `${cleanedBaseKet} ${rejectTag}` : `Terlambat ${rejectTag}`);
+
         return {
           ...a,
           status: (isApproved ? 'Hadir' : 'Ditolak') as AttendanceRecord['status'],
           needsApproval: false,
           isApproved: isApproved,
           keterangan: updatedKet,
-          potonganOtomatis: isApproved ? 0 : (a.potonganOtomatis || 25000)
+          potonganOtomatis: isApproved ? 0 : (Number(a.potonganOtomatis) || defaultPotongan)
         };
       }
       return a;
@@ -1677,12 +1738,15 @@ export default function App() {
     return await sendSyncToGoogleSheets({ attendanceList: consolidated });
   };
 
-  // Bulk Approve all pending attendance
+  // Bulk Approve all pending attendance (respecting PS Server scope if logged in as PS Server)
   const handleApproveAllAttendance = async (): Promise<{ success: boolean; message?: string }> => {
     const keysToAdd: string[] = [];
+    const isPsServerUser = currentUser?.role === 'Penanggungjawab Server';
+    const approvalTag = isPsServerUser ? '[Disetujui PS Server] [Disetujui Admin]' : '[Disetujui Admin]';
+
     const next = attendanceList.map(a => {
-      const isPending = Boolean(a.needsApproval || a.status === 'Pending Approval');
-      if (isPending) {
+      const isPending = Boolean(a.needsApproval || a.status === 'Pending Approval' || a.status === 'Terlambat');
+      if (isPending && isAttendanceForCurrentUserServer(a)) {
         const cleanDate = sanitizeDateString(a.tanggal);
         const techKey = getNormalizedTechKey(a.teknisiId, a.teknisiNama);
         if (a.id) keysToAdd.push(a.id);
@@ -1690,8 +1754,13 @@ export default function App() {
         if (cleanDate && a.teknisiId) keysToAdd.push(`${cleanDate}_${a.teknisiId}`);
         if (cleanDate && a.teknisiNama) keysToAdd.push(`${cleanDate}_${a.teknisiNama}`);
 
-        const baseKet = (a.keterangan || a.approvalType || '').trim();
-        const updatedKet = baseKet && !baseKet.includes('[Disetujui Admin]') ? `${baseKet} [Disetujui Admin]` : (baseKet || '[Disetujui Admin]');
+        const cleanedBaseKet = (a.keterangan || a.approvalType || '')
+          .replace(/\[Disetujui Admin\]/g, '')
+          .replace(/\[Disetujui PS Server\]/g, '')
+          .replace(/\[Ditolak Admin\]/g, '')
+          .replace(/\[Ditolak PS Server\]/g, '')
+          .trim();
+        const updatedKet = cleanedBaseKet ? `${cleanedBaseKet} ${approvalTag}` : approvalTag;
 
         return {
           ...a,

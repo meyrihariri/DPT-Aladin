@@ -553,29 +553,43 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
     const dateTechIdKey = `${cleanDate}_${r.teknisiId}`.toLowerCase();
     const dateTechNamaKey = `${cleanDate}_${(r.teknisiNama || '').toLowerCase().trim()}`;
 
-    // Check if this record or this technician on this specific date was explicitly approved by admin
-    const isExplicitlyResolved = 
-      resolvedKeys.has(groupKey.toLowerCase()) || 
-      resolvedKeys.has(r.id.toLowerCase()) || 
+    // Load default late deduction from settings
+    let defaultPotonganTerlambat = 25000;
+    try {
+      const s = StorageService.getSettings();
+      if (s?.potonganPerKeterlambatan) defaultPotonganTerlambat = Number(s.potonganPerKeterlambatan) || 25000;
+    } catch {}
+
+    const isRejected = r.status === 'Ditolak' || Boolean(r.keterangan?.includes('[Ditolak Admin]') || r.keterangan?.includes('[Ditolak PS Server]'));
+
+    // Check if this record or this technician on this specific date was explicitly approved by admin or PS Server
+    const hasExplicitApprovalFlag =
+      resolvedKeys.has(groupKey.toLowerCase()) ||
+      resolvedKeys.has(r.id.toLowerCase()) ||
       resolvedKeys.has(dateTechIdKey) ||
       resolvedKeys.has(dateTechNamaKey) ||
       r.isManual === true ||
       r.id.startsWith('att-manual-') ||
       r.isApproved === true ||
       r.keterangan?.includes('[Disetujui Admin]') ||
+      r.keterangan?.includes('[Disetujui PS Server]') ||
       r.keteranganPulang?.toLowerCase().includes('admin') ||
       r.keteranganPulang?.toLowerCase().includes('manual') ||
       r.keterangan?.includes('[Absen Manual Admin]') ||
       r.keterangan?.toLowerCase().includes('absen manual') ||
-      (r.jamPulang && r.jamPulang !== '-' && r.jamPulang.trim().length > 0 && (r.isManual || r.isApproved)) ||
-      (r.status === 'Hadir' && r.needsApproval === false) ||
-      (r.status === 'Hadir' && !r.needsApproval);
+      (r.jamPulang && r.jamPulang !== '-' && r.jamPulang.trim().length > 0 && (r.isManual || r.isApproved));
 
-    const isRejected = r.status === 'Ditolak';
+    const isExplicitlyResolved = !isRejected && (
+      hasExplicitApprovalFlag ||
+      (!rIsLate && !rIsEarly && r.isWithinRadius !== false && r.status === 'Hadir' && !r.needsApproval)
+    );
 
     const rNeedsApproval = !isExplicitlyResolved && !isRejected && (
-      r.status === 'Pending Approval' || 
-      r.needsApproval === true || 
+      rIsLate ||
+      rIsEarly ||
+      r.isWithinRadius === false ||
+      r.status === 'Pending Approval' ||
+      r.needsApproval === true ||
       r.status === 'Terlambat'
     );
 
@@ -646,17 +660,23 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
         jamPulang: rawInPulang,
         fotoProofUrl: pickBestPhotoUrl(r.fotoProofUrl),
         fotoPulangUrl: initFotoPulang,
-        ...(isExplicitlyResolved ? {
-          status: (isRejected ? 'Ditolak' : 'Hadir') as AttendanceRecord['status'],
+        ...(isRejected ? {
+          status: 'Ditolak' as AttendanceRecord['status'],
           needsApproval: false,
-          isApproved: !isRejected,
-          potonganOtomatis: isRejected ? (r.potonganOtomatis || 25000) : 0
+          isApproved: false,
+          approvalType: r.approvalType || (rIsLate ? 'Terlambat' : (rIsEarly ? 'Pulang Awal' : 'Terlambat')),
+          potonganOtomatis: Number(r.potonganOtomatis) || defaultPotonganTerlambat
+        } : isExplicitlyResolved ? {
+          status: 'Hadir' as AttendanceRecord['status'],
+          needsApproval: false,
+          isApproved: true,
+          potonganOtomatis: 0
         } : (rNeedsApproval ? {
           status: 'Pending Approval' as AttendanceRecord['status'],
           needsApproval: true,
           isApproved: false,
           approvalType: rIsLate ? 'Terlambat' : (rIsEarly ? 'Pulang Awal' : (r.approvalType || 'Terlambat')),
-          potonganOtomatis: rIsLate ? (r.potonganOtomatis || 25000) : (r.potonganOtomatis || 0)
+          potonganOtomatis: rIsLate ? (Number(r.potonganOtomatis) || defaultPotonganTerlambat) : (Number(r.potonganOtomatis) || 0)
         } : {}))
       });
       const listForDate = byDateKeys.get(cleanDate);
@@ -757,9 +777,19 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
           const dateTechIdKey = `${cleanDate}_${targetTechId}`.toLowerCase();
           const dateTechNamaKey = `${cleanDate}_${targetTechNama}`;
 
-          const isResolvedByAdmin = 
-            resolvedKeys.has(groupKey.toLowerCase()) || 
-            resolvedKeys.has((existing.id || '').toLowerCase()) || 
+          const isMergedRejected =
+            r.status === 'Ditolak' ||
+            existing.status === 'Ditolak' ||
+            Boolean(
+              r.keterangan?.includes('[Ditolak Admin]') ||
+              existing.keterangan?.includes('[Ditolak Admin]') ||
+              r.keterangan?.includes('[Ditolak PS Server]') ||
+              existing.keterangan?.includes('[Ditolak PS Server]')
+            );
+
+          const hasExplicitMergedApproval =
+            resolvedKeys.has(groupKey.toLowerCase()) ||
+            resolvedKeys.has((existing.id || '').toLowerCase()) ||
             resolvedKeys.has((r.id || '').toLowerCase()) ||
             resolvedKeys.has(dateTechIdKey) ||
             resolvedKeys.has(dateTechNamaKey) ||
@@ -769,29 +799,44 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
             existing.id?.startsWith('att-manual-') ||
             existing.keterangan?.includes('[Disetujui Admin]') ||
             r.keterangan?.includes('[Disetujui Admin]') ||
+            existing.keterangan?.includes('[Disetujui PS Server]') ||
+            r.keterangan?.includes('[Disetujui PS Server]') ||
             existing.keteranganPulang?.toLowerCase().includes('admin') ||
             r.keteranganPulang?.toLowerCase().includes('admin') ||
             existing.keteranganPulang?.toLowerCase().includes('manual') ||
             r.keteranganPulang?.toLowerCase().includes('manual') ||
             existing.isApproved === true ||
-            r.isApproved === true ||
-            (existing.status === 'Hadir' && existing.needsApproval === false) ||
-            (r.status === 'Hadir' && r.needsApproval === false) ||
-            (existing.status === 'Hadir' && !existing.needsApproval) ||
-            (r.status === 'Hadir' && !r.needsApproval);
+            r.isApproved === true;
 
-          const isRejected = r.status === 'Ditolak' || existing.status === 'Ditolak';
+          const isOutsideRad = (r.isWithinRadius === false || existing.isWithinRadius === false);
 
-          if (isResolvedByAdmin) {
+          const isResolvedByAdmin = !isMergedRejected && (
+            hasExplicitMergedApproval ||
+            (!isLate && !isEarly && !isOutsideRad && (
+              (existing.status === 'Hadir' && !existing.needsApproval) ||
+              (r.status === 'Hadir' && !r.needsApproval)
+            ))
+          );
+
+          if (isMergedRejected) {
             return {
-              status: (isRejected ? 'Ditolak' : 'Hadir') as AttendanceRecord['status'],
+              status: 'Ditolak' as AttendanceRecord['status'],
               needsApproval: false,
-              isApproved: !isRejected,
-              potonganOtomatis: isRejected ? (r.potonganOtomatis || existing.potonganOtomatis || 25000) : 0
+              isApproved: false,
+              approvalType: existing.approvalType || r.approvalType || (isLate ? 'Terlambat' : 'Terlambat'),
+              potonganOtomatis: Number(r.potonganOtomatis) || Number(existing.potonganOtomatis) || defaultPotonganTerlambat
             };
           }
 
-          const isOutsideRad = (r.isWithinRadius === false || existing.isWithinRadius === false);
+          if (isResolvedByAdmin) {
+            return {
+              status: 'Hadir' as AttendanceRecord['status'],
+              needsApproval: false,
+              isApproved: true,
+              potonganOtomatis: 0
+            };
+          }
+
           const isPending = Boolean(
             isLate || isEarly || isOutsideRad ||
             existing.needsApproval || r.needsApproval ||
@@ -811,7 +856,7 @@ export function consolidateAttendanceRecords(records: AttendanceRecord[]): Atten
               needsApproval: true,
               isApproved: false,
               approvalType: appType,
-              potonganOtomatis: isLate ? (r.potonganOtomatis || existing.potonganOtomatis || 25000) : (r.potonganOtomatis || existing.potonganOtomatis || 0)
+              potonganOtomatis: isLate ? (Number(r.potonganOtomatis) || Number(existing.potonganOtomatis) || defaultPotonganTerlambat) : (Number(r.potonganOtomatis) || Number(existing.potonganOtomatis) || 0)
             };
           }
 
@@ -1395,6 +1440,13 @@ export const StorageService = {
     const current = StorageService.getResolvedAttendanceKeys();
     const clean = key.trim().toLowerCase();
     setStorage(STORAGE_KEYS.RESOLVED_ATTENDANCE, current.filter(k => k !== clean));
+  },
+
+  removeResolvedAttendanceKeys: (keys: string[]) => {
+    if (!keys || keys.length === 0) return;
+    const current = StorageService.getResolvedAttendanceKeys();
+    const removeSet = new Set(keys.filter(Boolean).map(k => k.trim().toLowerCase()));
+    setStorage(STORAGE_KEYS.RESOLVED_ATTENDANCE, current.filter(k => !removeSet.has(k)));
   },
 
   // Lembur Approval persistent tracking across reloads & devices
